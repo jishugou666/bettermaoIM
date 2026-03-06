@@ -1,0 +1,1093 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>盒子IM</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background-color: #f2f2f7;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    
+    .container {
+      display: flex;
+      height: 95vh;
+      max-width: 1400px;
+      margin: 2.5vh auto;
+      background-color: #fff;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+    
+    .sidebar {
+      width: 300px;
+      border-right: 1px solid #e0e0e0;
+      display: flex;
+      flex-direction: column;
+      background: #f2f2f7;
+      border-top-left-radius: 16px;
+      border-bottom-left-radius: 16px;
+    }
+    
+    .sidebar-header {
+      padding: 16px;
+      border-bottom: 1px solid #e0e0e0;
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+      background: #f2f2f7;
+    }
+    
+    .mac-dots {
+      display: flex;
+      gap: 8px;
+    }
+    
+    .mac-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      cursor: pointer;
+    }
+    
+    .mac-dot.red {
+      background-color: #ff5f56;
+    }
+    
+    .mac-dot.yellow {
+      background-color: #ffbd2e;
+    }
+    
+    .mac-dot.green {
+      background-color: #27ca3f;
+    }
+    
+    .search-box {
+      padding: 12px;
+      border-bottom: 1px solid #e0e0e0;
+      background: #f2f2f7;
+    }
+    
+    .search-input {
+      width: 100%;
+      padding: 10px 16px;
+      border: 1px solid #e0e0e0;
+      border-radius: 20px;
+      outline: none;
+      font-size: 14px;
+      background: #f2f2f7;
+      transition: all 0.3s ease;
+    }
+    
+    .search-input:focus {
+      border-color: #007aff;
+      background: white;
+      box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+    }
+    
+    .chat-list {
+      flex: 1;
+      overflow-y: auto;
+    }
+    
+    .chat-item {
+      padding: 16px;
+      border-bottom: 1px solid #e0e0e0;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      transition: all 0.3s ease;
+    }
+    
+    .chat-item:hover {
+      background-color: #f2f2f7;
+    }
+    
+    .avatar {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #007aff, #5ac8fa);
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 20px;
+      font-weight: 600;
+      margin-right: 16px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .chat-info {
+      flex: 1;
+    }
+    
+    .chat-name {
+      font-size: 16px;
+      font-weight: 500;
+      margin-bottom: 5px;
+    }
+    
+    .chat-last-message {
+      font-size: 14px;
+      color: #999;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    .chat-time {
+      font-size: 12px;
+      color: #999;
+    }
+    
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: #f2f2f7;
+      border-top-right-radius: 16px;
+      border-bottom-right-radius: 16px;
+    }
+    
+    .chat-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid #e0e0e0;
+      display: flex;
+      align-items: center;
+      background: #f2f2f7;
+    }
+    
+    .chat-header-info {
+      flex: 1;
+    }
+    
+    .chat-header-name {
+      font-size: 18px;
+      font-weight: 600;
+      color: #1c1c1e;
+    }
+    
+    .chat-body {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      background-color: #f2f2f7;
+      background-image: linear-gradient(0deg, rgba(0, 122, 255, 0.05) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(0, 122, 255, 0.05) 1px, transparent 1px);
+      background-size: 20px 20px;
+    }
+    
+    .message {
+      margin-bottom: 12px;
+      display: flex;
+    }
+    
+    .message.received {
+      justify-content: flex-start;
+    }
+    
+    .message.sent {
+      justify-content: flex-end;
+    }
+    
+    .message-content {
+      max-width: 70%;
+      padding: 16px 20px;
+      border-radius: 20px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s ease;
+      font-size: 16px;
+      line-height: 1.5;
+    }
+    
+    .message.received .message-content {
+      background-color: #fff;
+      border-bottom-left-radius: 4px;
+    }
+    
+    .message.sent .message-content {
+      background: linear-gradient(135deg, #007aff, #5ac8fa);
+      color: #fff;
+      border-bottom-right-radius: 4px;
+    }
+    
+    .message-time {
+      font-size: 12px;
+      color: #999;
+      margin-top: 6px;
+      text-align: right;
+    }
+    
+    .message.received .message-time {
+      color: #999;
+    }
+    
+    .message.sent .message-time {
+      color: rgba(255, 255, 255, 0.8);
+    }
+    
+    .chat-footer {
+      padding: 16px 20px;
+      border-top: 1px solid #e0e0e0;
+      display: flex;
+      align-items: center;
+      background: #f2f2f7;
+    }
+    
+    .input-box {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      background-color: #f2f2f7;
+      border-radius: 20px;
+      padding: 0 16px;
+      margin-right: 10px;
+      border: 1px solid #e0e0e0;
+      transition: all 0.3s ease;
+    }
+    
+    .message-input {
+      flex: 1;
+      border: none;
+      background-color: transparent;
+      padding: 12px 0;
+      outline: none;
+      font-size: 16px;
+      color: #1c1c1e;
+    }
+    
+    .input-box:focus-within {
+      border-color: #007aff;
+      background: white;
+      box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+    }
+    
+    .send-btn {
+      background: linear-gradient(180deg, #007aff, #0066cc);
+      color: #fff;
+      border: none;
+      border-radius: 20px;
+      width: 50px;
+      height: 50px;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      box-shadow: 0 2px 4px rgba(0, 122, 255, 0.3);
+      transition: all 0.3s ease;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    
+    .send-btn:hover {
+      background: linear-gradient(180deg, #0088ff, #0066cc);
+      box-shadow: 0 4px 8px rgba(0, 122, 255, 0.4);
+      transform: translateY(-1px);
+    }
+    
+    .send-btn:active {
+      background: linear-gradient(180deg, #0066cc, #0052a3);
+      box-shadow: 0 1px 2px rgba(0, 122, 255, 0.3);
+      transform: translateY(0);
+    }
+    
+    .login-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: #f2f2f7;
+    }
+    
+    .login-form {
+      background-color: #fff;
+      padding: 40px;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      width: 400px;
+    }
+    
+    .login-form h2 {
+      text-align: center;
+      margin-bottom: 30px;
+      color: #333;
+    }
+    
+    .form-group {
+      margin-bottom: 20px;
+    }
+    
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 14px;
+      color: #666;
+    }
+    
+    .form-group input {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 16px;
+      outline: none;
+      background: #f2f2f7;
+      transition: all 0.3s ease;
+    }
+    
+    .form-group input:focus {
+      border-color: #007aff;
+      background: white;
+      box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+    }
+    
+    .login-btn {
+      width: 100%;
+      padding: 12px;
+      background: linear-gradient(180deg, #007aff, #0066cc);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+      margin-top: 20px;
+      box-shadow: 0 2px 4px rgba(0, 122, 255, 0.3);
+      transition: all 0.3s ease;
+    }
+    
+    .login-btn:hover {
+      background: linear-gradient(180deg, #0088ff, #0066cc);
+      box-shadow: 0 4px 8px rgba(0, 122, 255, 0.4);
+      transform: translateY(-1px);
+    }
+    
+    .login-btn:active {
+      background: linear-gradient(180deg, #0066cc, #0052a3);
+      box-shadow: 0 1px 2px rgba(0, 122, 255, 0.3);
+      transform: translateY(0);
+    }
+    
+    .register-link {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 14px;
+      color: #666;
+    }
+    
+    .register-link a {
+      color: #1890ff;
+      text-decoration: none;
+    }
+    
+    .info-card {
+      width: 300px;
+      border-left: 1px solid #e0e0e0;
+      background: #f2f2f7;
+      border-top-right-radius: 16px;
+      border-bottom-right-radius: 16px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <!-- 登录页面 -->
+    <div v-if="!isLoggedIn" class="login-container">
+      <div class="login-form">
+        <h2>盒子IM</h2>
+        <div v-if="!showRegister">
+          <div class="form-group">
+            <label for="username">用户名</label>
+            <input type="text" id="username" v-model="loginForm.username" placeholder="请输入用户名">
+          </div>
+          <div class="form-group">
+            <label for="password">密码</label>
+            <input type="password" id="password" v-model="loginForm.password" placeholder="请输入密码">
+          </div>
+          <button class="login-btn" @click="login">登录</button>
+          <div class="register-link">
+            没有账号？<a href="#" @click.prevent="showRegister = true">立即注册</a>
+          </div>
+        </div>
+        
+        <!-- 注册表单 -->
+        <div v-if="showRegister" style="margin-top: 30px; padding-top: 30px; border-top: 1px solid #e0e0e0;">
+          <h3>注册</h3>
+          <div class="form-group">
+            <label for="regUsername">用户名</label>
+            <input type="text" id="regUsername" v-model="registerForm.username" placeholder="请输入用户名">
+          </div>
+          <div class="form-group">
+            <label for="regNickname">昵称</label>
+            <input type="text" id="regNickname" v-model="registerForm.nickname" placeholder="请输入昵称">
+          </div>
+          <div class="form-group">
+            <label for="regPassword">密码</label>
+            <input type="password" id="regPassword" v-model="registerForm.password" placeholder="请输入密码">
+          </div>
+          <button class="login-btn" @click="register">注册</button>
+          <div class="register-link">
+            已有账号？<a href="#" @click.prevent="showRegister = false">返回登录</a>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 聊天页面 -->
+    <div v-else class="container">
+      <!-- 左侧边栏 -->
+      <div class="sidebar">
+        <div class="sidebar-header">
+          <div class="mac-dots" style="margin-right: 16px;">
+            <div class="mac-dot red"></div>
+            <div class="mac-dot yellow"></div>
+            <div class="mac-dot green"></div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 12px; flex: 1;">
+            <div class="avatar" style="width: 36px; height: 36px; font-size: 16px;">{{ currentUser.username?.charAt(0) || 'U' }}</div>
+            <div>
+              <div style="font-size: 14px; font-weight: 500; color: #1c1c1e;">{{ currentUser.nickname || currentUser.username }}</div>
+              <div style="font-size: 12px; color: #999;">{{ currentUser.username }}</div>
+            </div>
+          </div>
+        </div>
+        <div class="search-box">
+          <input type="text" class="search-input" placeholder="搜索好友或群聊">
+        </div>
+        <!-- 标签页 -->
+        <div style="display: flex; border-bottom: 1px solid #e0e0e0;">
+          <div 
+            style="flex: 1; text-align: center; padding: 10px; cursor: pointer;"
+            :class="{ 'active': activeTab === 'friends' }"
+            @click="activeTab = 'friends'"
+          >
+            好友
+          </div>
+          <div 
+            style="flex: 1; text-align: center; padding: 10px; cursor: pointer;"
+            :class="{ 'active': activeTab === 'groups' }"
+            @click="activeTab = 'groups'"
+          >
+            群聊
+          </div>
+        </div>
+        <div class="chat-list">
+          <!-- 好友列表 -->
+          <div v-if="activeTab === 'friends'">
+            <div 
+              v-for="user in users" 
+              :key="user.id"
+              class="chat-item"
+              @click="selectChat({ id: user.id, name: user.nickname || user.username, type: 'user' })"
+            >
+              <div class="avatar">{{ (user.nickname || user.username).charAt(0) }}</div>
+              <div class="chat-info">
+                <div class="chat-name">{{ user.nickname || user.username }}</div>
+                <div class="chat-last-message">{{ getLastMessage(user.id, 'user') }}</div>
+              </div>
+              <div class="chat-time">{{ getLastMessageTime(user.id, 'user') }}</div>
+            </div>
+          </div>
+          <!-- 群聊列表 -->
+          <div v-else>
+            <div 
+              v-for="group in groups" 
+              :key="group.id"
+              class="chat-item"
+              @click="selectChat({ id: group.id, name: group.name, type: 'group' })"
+            >
+              <div class="avatar">{{ group.name.charAt(0) }}</div>
+              <div class="chat-info">
+                <div class="chat-name">{{ group.name }}</div>
+                <div class="chat-last-message">{{ getLastMessage(group.id, 'group') }}</div>
+              </div>
+              <div class="chat-time">{{ getLastMessageTime(group.id, 'group') }}</div>
+            </div>
+          </div>
+        </div>
+        <!-- 底部按钮 -->
+        <div style="padding: 12px 16px; border-top: 1px solid #e0e0e0; background: #f2f2f7; display: flex; gap: 8px; justify-content: space-around;">
+          <button @click="showAddFriendModal = true" style="flex: 1; padding: 8px; background: #f2f2f7; color: #007aff; border: 1px solid #007aff; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; gap: 4px;">
+            + 好友
+          </button>
+          <button @click="showCreateGroupModal = true" style="flex: 1; padding: 8px; background: #f2f2f7; color: #34c759; border: 1px solid #34c759; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; gap: 4px;">
+            + 群聊
+          </button>
+          <button @click="logout" style="flex: 1; padding: 8px; background: #f2f2f7; color: #ff3b30; border: 1px solid #ff3b30; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; gap: 4px;">
+            退出
+          </button>
+        </div>
+      </div>
+      
+      <!-- 主内容区 -->
+      <div class="main-content">
+        <div v-if="selectedChat" class="chat-header">
+          <div class="avatar">{{ selectedChat.name.charAt(0) }}</div>
+          <div class="chat-header-info">
+            <div class="chat-header-name">{{ selectedChat.name }}</div>
+            <div v-if="selectedChat.type === 'group'" style="font-size: 12px; color: #999;">
+              {{ groups.find(g => g.id === selectedChat.id)?.memberCount || 0 }}人
+            </div>
+          </div>
+          <div style="display: flex; gap: 10px;">
+            <button @click="markAsRead" v-if="selectedChat.type === 'user'" style="background: none; border: none; cursor: pointer;">
+              标记已读
+            </button>
+            <button style="background: none; border: none; cursor: pointer;">
+              更多
+            </button>
+          </div>
+        </div>
+        <div v-else class="chat-header">
+          <div class="chat-header-info">
+            <div class="chat-header-name">请选择好友或群聊开始聊天</div>
+          </div>
+        </div>
+        
+        <div class="chat-body">
+          <div 
+            v-for="message in messages" 
+            :key="message.id"
+            :class="['message', message.fromUserId === currentUser.id ? 'sent' : 'received']"
+          >
+            <div class="message-content" @contextmenu.prevent="recallMessage(message.id)" v-if="message.fromUserId === currentUser.id">
+              {{ message.content }}
+              <div class="message-time">{{ formatTime(message.createTime) }}</div>
+            </div>
+            <div class="message-content" v-else>
+              {{ message.content }}
+              <div class="message-time">{{ formatTime(message.createTime) }}</div>
+            </div>
+          </div>
+        </div>
+        
+
+        <div class="chat-footer">
+          <div style="display: flex; gap: 10px; margin-right: 10px;">
+            <button @click="showEmojiPicker = !showEmojiPicker" style="background: rgba(0, 0, 0, 0.05); border: none; width: 40px; height: 40px; border-radius: 20px; cursor: pointer; font-size: 20px; display: flex; justify-content: center; align-items: center; transition: all 0.3s ease;">
+              😊
+            </button>
+            <button @click="selectImage" style="background: rgba(0, 0, 0, 0.05); border: none; width: 40px; height: 40px; border-radius: 20px; cursor: pointer; font-size: 20px; display: flex; justify-content: center; align-items: center; transition: all 0.3s ease;">
+              📷
+            </button>
+            <button @click="startRecording" style="background: rgba(0, 0, 0, 0.05); border: none; width: 40px; height: 40px; border-radius: 20px; cursor: pointer; font-size: 20px; display: flex; justify-content: center; align-items: center; transition: all 0.3s ease;">
+              🎤
+            </button>
+          </div>
+          <div class="input-box">
+            <input 
+              type="text" 
+              class="message-input" 
+              v-model="messageInput" 
+              placeholder="请输入消息" 
+              @keyup.enter="sendMessage"
+            >
+          </div>
+          <button class="send-btn" @click="sendMessage">
+            发送
+          </button>
+        </div>
+        
+        <!-- 表情选择器 -->
+        <div v-if="showEmojiPicker" style="position: absolute; bottom: 80px; left: 320px; background: white; border: 1px solid #e0e0e0; border-radius: 12px; padding: 16px; z-index: 100; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
+          <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 12px;">
+            <span v-for="emoji in emojis" :key="emoji" @click="selectEmoji(emoji)" style="font-size: 24px; cursor: pointer; text-align: center; padding: 8px; border-radius: 8px; transition: all 0.3s ease;">{{ emoji }}</span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 详细信息卡片 -->
+      <div v-if="selectedChat" class="info-card">
+        <div style="text-align: center; margin-bottom: 24px;">
+          <div style="width: 80px; height: 80px; border-radius: 40px; background: linear-gradient(135deg, #007aff, #5ac8fa); color: white; display: flex; justify-content: center; align-items: center; font-size: 32px; font-weight: 600; margin: 0 auto 16px;">{{ selectedChat.name.charAt(0) }}</div>
+          <h3 style="font-size: 18px; font-weight: 600; color: #1c1c1e;">{{ selectedChat.name }}</h3>
+          <p v-if="selectedChat.type === 'group'" style="font-size: 14px; color: #999;">{{ groups.find(g => g.id === selectedChat.id)?.memberCount || 0 }}人</p>
+        </div>
+        <div style="border-top: 1px solid #e0e0e0; padding-top: 20px;">
+          <h4 style="font-size: 14px; font-weight: 600; color: #3a3a3c; margin-bottom: 16px;">详细信息</h4>
+          <div v-if="selectedChat.type === 'user'" style="font-size: 14px; color: #666; line-height: 1.5;">
+            <p>昵称: {{ selectedChat.name }}</p>
+            <p>账号: {{ selectedChat.id }}</p>
+            <p>状态: 在线</p>
+          </div>
+          <div v-else style="font-size: 14px; color: #666; line-height: 1.5;">
+            <p>群聊名称: {{ selectedChat.name }}</p>
+            <p>群号: {{ selectedChat.id }}</p>
+            <p>成员数量: {{ groups.find(g => g.id === selectedChat.id)?.memberCount || 0 }}人</p>
+          </div>
+        </div>
+        <div style="border-top: 1px solid #e0e0e0; padding-top: 20px; margin-top: 20px;">
+          <h4 style="font-size: 14px; font-weight: 600; color: #3a3a3c; margin-bottom: 16px;">操作</h4>
+          <button v-if="selectedChat.type === 'user'" style="width: 100%; padding: 10px; background: linear-gradient(135deg, #007aff, #5ac8fa); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 500; box-shadow: 0 2px 4px rgba(0, 122, 255, 0.3); transition: all 0.3s ease; margin-bottom: 10px;">
+            发送消息
+          </button>
+          <button v-else style="width: 100%; padding: 10px; background: linear-gradient(135deg, #34c759, #30d158); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 500; box-shadow: 0 2px 4px rgba(52, 199, 89, 0.3); transition: all 0.3s ease; margin-bottom: 10px;">
+            发送消息
+          </button>
+          <button style="width: 100%; padding: 10px; background: rgba(0, 0, 0, 0.05); color: #3a3a3c; border: 1px solid #e0e0e0; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 500; transition: all 0.3s ease;">
+            更多
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 添加好友模态框 -->
+    <div v-if="showAddFriendModal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 1000; backdrop-filter: blur(10px);">
+      <div style="background: white; padding: 30px; border-radius: 12px; width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
+        <h3 style="font-size: 20px; font-weight: 600; margin-bottom: 24px; text-align: center; color: #1c1c1e;">添加好友</h3>
+        <div style="margin-top: 20px;">
+          <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500; color: #3a3a3c;">用户名</label>
+          <input type="text" v-model="addFriendForm.username" placeholder="请输入用户名" style="width: 100%; padding: 12px; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 16px; background: #f2f2f7; transition: all 0.3s ease;">
+        </div>
+        <div style="margin-top: 24px; display: flex; gap: 12px; justify-content: flex-end;">
+          <button @click="showAddFriendModal = false" style="padding: 10px 20px; border: 1px solid #e0e0e0; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 500; color: #3a3a3c; background: #f2f2f7; transition: all 0.3s ease;">
+            取消
+          </button>
+          <button @click="addFriend" style="padding: 10px 20px; background: linear-gradient(180deg, #007aff, #0066cc); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 500; box-shadow: 0 2px 4px rgba(0, 122, 255, 0.3); transition: all 0.3s ease;">
+            添加
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 创建群聊模态框 -->
+    <div v-if="showCreateGroupModal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 1000; backdrop-filter: blur(10px);">
+      <div style="background: white; padding: 30px; border-radius: 12px; width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
+        <h3 style="font-size: 20px; font-weight: 600; margin-bottom: 24px; text-align: center; color: #1c1c1e;">创建群聊</h3>
+        <div style="margin-top: 20px;">
+          <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500; color: #3a3a3c;">群聊名称</label>
+          <input type="text" v-model="createGroupForm.name" placeholder="请输入群聊名称" style="width: 100%; padding: 12px; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 16px; background: #f2f2f7; transition: all 0.3s ease;">
+        </div>
+        <div style="margin-top: 24px; display: flex; gap: 12px; justify-content: flex-end;">
+          <button @click="showCreateGroupModal = false" style="padding: 10px 20px; border: 1px solid #e0e0e0; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 500; color: #3a3a3c; background: #f2f2f7; transition: all 0.3s ease;">
+            取消
+          </button>
+          <button @click="createGroup" style="padding: 10px 20px; background: linear-gradient(180deg, #007aff, #0066cc); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 500; box-shadow: 0 2px 4px rgba(0, 122, 255, 0.3); transition: all 0.3s ease;">
+            创建
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/socket.io-client@4.7.2/dist/socket.io.min.js"></script>
+  <script>
+    new Vue({
+      el: '#app',
+      data: {
+        isLoggedIn: false,
+        currentUser: {},
+        users: [],
+        groups: [],
+        selectedChat: null,
+        messages: [],
+        messageInput: '',
+        loginForm: {
+          username: '',
+          password: ''
+        },
+        registerForm: {
+          username: '',
+          nickname: '',
+          password: ''
+        },
+        addFriendForm: {
+          username: ''
+        },
+        createGroupForm: {
+          name: ''
+        },
+        showRegister: false,
+        showAddFriendModal: false,
+        showCreateGroupModal: false,
+        showEmojiPicker: false,
+        emojis: ['😀', '😃', '😄', '😁', '😆', '😅', '😂', '🤣', '😊', '😇', '🙂', '🙃', '😉', '😌', '😍', '🥰', '😘', '😗', '😙', '😚', '😋', '😛', '😝', '😜', '🤪', '🤨', '🧐', '🤓', '😎', '🤩', '🥳', '😏', '😒', '😞', '😔', '😟', '😕', '🙁', '☹️', '😣', '😖', '😫', '😩', '🥺', '😢', '😭', '😤', '😠', '😡', '🤬', '🤯', '😳', '🥵', '🥶', '😱', '😨', '😰', '😥', '😓', '🤗', '🤔', '🤭', '🤫', '🤥', '😶', '😐', '😑', '😬', '🙄', '😯', '😦', '😧', '😮', '😲', '🥱', '😴', '🤤', '😪', '😵', '🤐', '🥴', '🤢', '🤮', '🤧', '🥵', '🤒', '🤕', '🤢'],
+        socket: null,
+        activeTab: 'friends' // friends or groups
+      },
+      mounted() {
+        // 检查本地存储中的用户信息
+        const userInfo = localStorage.getItem('userInfo');
+        if (userInfo) {
+          this.currentUser = JSON.parse(userInfo);
+          this.isLoggedIn = true;
+          this.initSocket();
+          this.getUsers();
+          this.getGroups();
+        }
+      },
+      methods: {
+        // 登录
+        async login() {
+          try {
+            const response = await fetch('http://localhost:3000/api/login', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify(this.loginForm)
+            });
+            const data = await response.json();
+            if (data.code === 0) {
+              this.currentUser = data.data;
+              this.isLoggedIn = true;
+              localStorage.setItem('userInfo', JSON.stringify(data.data));
+              this.initSocket();
+              this.getUsers();
+              this.getGroups();
+            } else {
+              this.showMessage(data.message);
+            }
+          } catch (error) {
+            console.error('Login error:', error);
+            this.showMessage('登录失败，请稍后重试');
+          }
+        },
+        
+        // 注册
+        async register() {
+          try {
+            const response = await fetch('http://localhost:3000/api/register', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify(this.registerForm)
+            });
+            const data = await response.json();
+            if (data.code === 0) {
+              this.showMessage('注册成功，请登录');
+              this.showRegister = false;
+            } else {
+              this.showMessage(data.message);
+            }
+          } catch (error) {
+            console.error('Register error:', error);
+            this.showMessage('注册失败，请稍后重试');
+          }
+        },
+        
+        // 退出登录
+        logout() {
+          localStorage.removeItem('userInfo');
+          this.isLoggedIn = false;
+          this.currentUser = {};
+          this.selectedChat = null;
+          this.messages = [];
+          if (this.socket) {
+            this.socket.disconnect();
+          }
+        },
+        
+        // 初始化WebSocket连接
+        initSocket() {
+          this.socket = io('http://localhost:3001');
+          this.socket.on('connect', () => {
+            console.log('Connected to socket server');
+            this.socket.emit('login', { userId: this.currentUser.id });
+          });
+          
+          this.socket.on('message', (message) => {
+            this.messages.push(message);
+            // 滚动到底部
+            this.scrollToBottom();
+          });
+        },
+        
+        // 获取用户列表
+        async getUsers() {
+          try {
+            const response = await fetch('http://localhost:3000/api/users');
+            const data = await response.json();
+            if (data.code === 0) {
+              // 过滤掉当前用户
+              this.users = data.data.filter(user => user.id !== this.currentUser.id);
+            }
+          } catch (error) {
+            console.error('Get users error:', error);
+          }
+        },
+        
+        // 获取群聊列表
+        async getGroups() {
+          try {
+            const response = await fetch('http://localhost:3000/api/groups');
+            const data = await response.json();
+            if (data.code === 0) {
+              this.groups = data.data;
+            }
+          } catch (error) {
+            console.error('Get groups error:', error);
+          }
+        },
+        
+        // 选择聊天对象
+        selectChat(chat) {
+          this.selectedChat = chat;
+          this.messages = [];
+          // 获取历史消息
+          this.getMessages();
+        },
+        
+        // 获取历史消息
+        async getMessages() {
+          if (!this.selectedChat) return;
+          
+          try {
+            const url = this.selectedChat.type === 'user' 
+              ? `http://localhost:3000/api/messages?userId=${this.selectedChat.id}&currentUserId=${this.currentUser.id}`
+              : `http://localhost:3000/api/group-messages?groupId=${this.selectedChat.id}`;
+              
+            const response = await fetch(url);
+            const data = await response.json();
+            if (data.code === 0) {
+              this.messages = data.data;
+              this.scrollToBottom();
+            }
+          } catch (error) {
+            console.error('Get messages error:', error);
+          }
+        },
+        
+        // 发送消息
+        async sendMessage() {
+          if (!this.selectedChat || !this.messageInput.trim()) return;
+          
+          const message = {
+            fromUserId: this.currentUser.id,
+            content: this.messageInput.trim(),
+            type: 1 // 文本消息
+          };
+          
+          if (this.selectedChat.type === 'user') {
+            message.toUserId = this.selectedChat.id;
+          } else {
+            message.groupId = this.selectedChat.id;
+          }
+          
+          try {
+            const url = this.selectedChat.type === 'user' 
+              ? 'http://localhost:3000/api/send-message'
+              : 'http://localhost:3000/api/send-group-message';
+              
+            const response = await fetch(url, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify(message)
+            });
+            const data = await response.json();
+            if (data.code === 0) {
+              // 添加到本地消息列表
+              this.messages.push({
+                id: data.data.messageId,
+                ...message,
+                createTime: new Date().toISOString()
+              });
+              this.messageInput = '';
+              // 滚动到底部
+              this.scrollToBottom();
+            }
+          } catch (error) {
+            console.error('Send message error:', error);
+          }
+        },
+        
+        // 撤回消息
+        async recallMessage(messageId) {
+          try {
+            const response = await fetch('http://localhost:3000/api/recall-message', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ messageId })
+            });
+            const data = await response.json();
+            if (data.code === 0) {
+              // 更新本地消息状态
+              const message = this.messages.find(m => m.id === messageId);
+              if (message) {
+                message.content = '[消息已撤回]';
+                message.status = 4; // 撤回状态
+              }
+            }
+          } catch (error) {
+            console.error('Recall message error:', error);
+          }
+        },
+        
+        // 标记消息已读
+        async markAsRead() {
+          if (!this.selectedChat || this.selectedChat.type !== 'user') return;
+          
+          try {
+            const response = await fetch('http://localhost:3000/api/mark-as-read', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                fromUserId: this.selectedChat.id,
+                toUserId: this.currentUser.id
+              })
+            });
+            const data = await response.json();
+            if (data.code === 0) {
+              // 更新本地消息状态
+              this.messages.forEach(message => {
+                if (message.fromUserId === this.selectedChat.id) {
+                  message.status = 3; // 已读状态
+                }
+              });
+            }
+          } catch (error) {
+            console.error('Mark as read error:', error);
+          }
+        },
+        
+        // 获取最后一条消息
+        getLastMessage(id, type) {
+          // 这里可以根据实际情况获取最后一条消息
+          return '你好，最近怎么样？';
+        },
+        
+        // 获取最后一条消息时间
+        getLastMessageTime(id, type) {
+          // 这里可以根据实际情况获取最后一条消息时间
+          return '10:00';
+        },
+        
+        // 格式化时间
+        formatTime(time) {
+          return new Date(time).toLocaleTimeString();
+        },
+        
+        // 滚动到底部
+        scrollToBottom() {
+          setTimeout(() => {
+            const chatBody = document.querySelector('.chat-body');
+            if (chatBody) {
+              chatBody.scrollTop = chatBody.scrollHeight;
+            }
+          }, 100);
+        },
+        
+        // 添加好友
+        async addFriend() {
+          try {
+            const response = await fetch('http://localhost:3000/api/add-friend', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                userId: this.currentUser.id,
+                friendUsername: this.addFriendForm.username
+              })
+            });
+            const data = await response.json();
+            if (data.code === 0) {
+              this.showMessage('添加好友成功');
+              this.showAddFriendModal = false;
+              this.getUsers();
+            } else {
+              this.showMessage(data.message);
+            }
+          } catch (error) {
+            console.error('Add friend error:', error);
+            this.showMessage('添加好友失败，请稍后重试');
+          }
+        },
+        
+        // 创建群聊
+        async createGroup() {
+          try {
+            const response = await fetch('http://localhost:3000/api/create-group', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                creatorId: this.currentUser.id,
+                groupName: this.createGroupForm.name
+              })
+            });
+            const data = await response.json();
+            if (data.code === 0) {
+              this.showMessage('创建群聊成功');
+              this.showCreateGroupModal = false;
+              this.getGroups();
+            } else {
+              this.showMessage(data.message);
+            }
+          } catch (error) {
+            console.error('Create group error:', error);
+            this.showMessage('创建群聊失败，请稍后重试');
+          }
+        },
+        
+        // 选择表情
+        selectEmoji(emoji) {
+          this.messageInput += emoji;
+          this.showEmojiPicker = false;
+        },
+        
+        // 选择图片
+        selectImage() {
+          this.showMessage('图片选择功能暂未实现');
+        },
+        
+        // 开始录音
+        startRecording() {
+          this.showMessage('语音录制功能暂未实现');
+        },
+        
+        // 显示提示消息
+        showMessage(message) {
+          // 创建提示框元素
+          const notification = document.createElement('div');
+          notification.style.position = 'fixed';
+          notification.style.top = '20px';
+          notification.style.right = '20px';
+          notification.style.background = '#333';
+          notification.style.color = 'white';
+          notification.style.padding = '12px 20px';
+          notification.style.borderRadius = '4px';
+          notification.style.zIndex = '9999';
+          notification.style.boxShadow = '0 2px 8px rgba(0,0,0,0.2)';
+          notification.style.transition = 'all 0.3s ease';
+          notification.textContent = message;
+          
+          // 添加到页面
+          document.body.appendChild(notification);
+          
+          // 3秒后移除
+          setTimeout(() => {
+            notification.style.opacity = '0';
+            setTimeout(() => {
+              document.body.removeChild(notification);
+            }, 300);
+          }, 3000);
+        }
+      }
+    });
+  </script>
+</body>
+</html>
