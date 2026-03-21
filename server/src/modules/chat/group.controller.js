@@ -75,6 +75,17 @@ class GroupController {
       next(error);
     }
   }
+
+  async setAdmin(req, res, next) {
+    try {
+      const { id, userId } = req.params;
+      
+      await groupService.setAdmin(req.user.id, parseInt(id), parseInt(userId));
+      res.json({ success: true, message: 'Admin set successfully' });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 module.exports = new GroupController();

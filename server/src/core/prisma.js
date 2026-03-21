@@ -274,9 +274,58 @@ const prisma = {
       return await query('SELECT * FROM Groups');
     },
     findUnique: async (params) => {
-      const { where } = params;
+      const { where, include } = params;
       if (where.id) {
-        return await get('SELECT * FROM Groups WHERE id = ?', [where.id]);
+        const group = await get('SELECT * FROM Groups WHERE id = ?', [where.id]);
+        
+        // 处理include选项
+        if (group && include) {
+          // 处理creator include
+          if (include.creator) {
+            const creator = await get('SELECT * FROM User WHERE id = ?', [group.creatorId]);
+            if (creator) {
+              group.creator = {};
+              if (include.creator.select) {
+                // 只包含指定的字段
+                for (const field of Object.keys(include.creator.select)) {
+                  group.creator[field] = creator[field];
+                }
+              } else {
+                group.creator = creator;
+              }
+            }
+          }
+          
+          // 处理members include
+          if (include.members) {
+            const members = await query('SELECT * FROM GroupMember WHERE groupId = ?', [group.id]);
+            
+            // 处理members的include选项
+            if (include.members.include) {
+              for (const member of members) {
+                // 处理user include
+                if (include.members.include.user) {
+                  const user = await get('SELECT * FROM User WHERE id = ?', [member.userId]);
+                  if (user) {
+                    member.user = {};
+                    if (include.members.include.user.select) {
+                      // 只包含指定的字段
+                      for (const field of Object.keys(include.members.include.user.select)) {
+                        member.user[field] = user[field];
+                      }
+                    } else {
+                      member.user = user;
+                    }
+                  }
+                }
+              }
+            }
+            
+            group.members = members;
+          }
+        }
+        
+        return group;
       }
       return null;
     },
@@ -388,11 +437,38 @@ const prisma = {
             [memberData.groupId, memberData.userId, memberData.role || 'MEMBER']
           );
           count++;
-        } catch (err) {
-          console.error('Error creating group member:', err.message);
+        }
+        catch (error) {
+          console.error('Error creating group member:', error);
         }
       }
       return { count };
+    },
+    update: async (params) => {
+      const { where, data } = params;
+      let fields = [];
+      let values = [];
+      
+      if (data.role !== undefined) {
+        fields.push('role = ?');
+        values.push(data.role);
+      }
+      
+      if (where.groupId_userId) {
+        const { groupId, userId } = where.groupId_userId;
+        values.push(groupId);
+        values.push(userId);
+        
+        if (fields.length > 0) {
+          await run(
+            `UPDATE GroupMember SET ${fields.join(', ')} WHERE groupId = ? AND userId = ?`,
+            values
+          );
+        }
+        
+        return await get('SELECT * FROM GroupMember WHERE groupId = ? AND userId = ?', [groupId, userId]);
+      }
+      return null;
     },
     delete: async () => {
       return { count: 0 };

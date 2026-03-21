@@ -16,6 +16,7 @@ router.get('/groups', groupController.getGroups);
 router.get('/groups/:id', groupController.getGroupDetails);
 router.post('/groups/:id/members', groupController.addMembers);
 router.delete('/groups/:id/members/:userId', groupController.kickMember);
+router.post('/groups/:id/members/:userId/admin', groupController.setAdmin);
 router.post('/groups/:id/transfer', groupController.transferOwnership);
 
 // Unread & Read status

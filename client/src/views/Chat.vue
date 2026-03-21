@@ -201,84 +201,84 @@
         <!-- 右侧详细信息 -->
         <transition name="slide-fade">
           <div v-if="chatStore.activeConversationId" class="details-sidebar">
-          <div class="details-header">
-            <h3>{{ chatStore.activeConversationType === 'group' ? $t('chat.group_settings') : '个人信息' }}</h3>
-          </div>
-          <div class="details-content">
-            <!-- 个人信息展示 -->
-            <div v-if="chatStore.activeConversationType === 'user'" class="user-details">
-              <div class="user-avatar-section">
-                <div class="avatar-container" @click="showAvatarModal = true">
-                  <Avatar :username="chatStore.activeTarget?.username" :src="chatStore.activeTarget?.avatar" :size="80" />
-                  <span class="avatar-overlay">👁️</span>
-                </div>
-                <h4>{{ chatStore.activeTarget?.username }}</h4>
-                <span class="status-badge" :class="{ online: chatStore.onlineUsers.has(chatStore.activeConversationId) }">
-                  {{ chatStore.onlineUsers.has(chatStore.activeConversationId) ? '在线' : '离线' }}
-                </span>
-              </div>
-              
-              <div class="bio-section">
-                <h5>关于</h5>
-                <div class="bio-content" :class="{ expanded: expandedBio }">
-                  {{ chatStore.activeTarget?.bio || '暂无个人简介' }}
-                </div>
-                <button v-if="(chatStore.activeTarget?.bio || '').length > 100" class="expand-btn" @click="expandedBio = !expandedBio">
-                  {{ expandedBio ? '收起' : '展开' }}
-                </button>
-              </div>
-              
-              <div class="recent-activity">
-                <h5>最近动态</h5>
-                <div class="activity-timeline">
-                  <div v-for="(activity, index) in userActivities" :key="index" class="activity-item">
-                    <div class="activity-dot"></div>
-                    <div class="activity-content">
-                      <div class="activity-text">{{ activity.text }}</div>
-                      <div class="activity-time">{{ activity.time }}</div>
-                    </div>
+            <div class="details-header">
+              <h3>{{ chatStore.activeConversationType === 'group' ? $t('chat.group_settings') : '个人信息' }}</h3>
+            </div>
+            <div class="details-content">
+              <!-- 个人信息展示 -->
+              <div v-if="chatStore.activeConversationType === 'user'" class="user-details">
+                <div class="user-avatar-section">
+                  <div class="avatar-container" @click="showAvatarModal = true">
+                    <Avatar :username="chatStore.activeTarget?.username" :src="chatStore.activeTarget?.avatar" :size="80" />
+                    <span class="avatar-overlay">👁️</span>
                   </div>
-                  <div v-if="userActivities.length === 0" class="empty-activity">暂无最近动态</div>
+                  <h4>{{ chatStore.activeTarget?.username }}</h4>
+                  <span class="status-badge" :class="{ online: chatStore.onlineUsers.has(chatStore.activeConversationId) }">
+                    {{ chatStore.onlineUsers.has(chatStore.activeConversationId) ? '在线' : '离线' }}
+                  </span>
                 </div>
+                
+                <div class="bio-section">
+                  <h5>关于</h5>
+                  <div class="bio-content" :class="{ expanded: expandedBio }">
+                    {{ chatStore.activeTarget?.bio || '暂无个人简介' }}
+                  </div>
+                  <button v-if="(chatStore.activeTarget?.bio || '').length > 100" class="expand-btn" @click="expandedBio = !expandedBio">
+                    {{ expandedBio ? '收起' : '展开' }}
+                  </button>
+                </div>
+                
+                <div class="recent-activity">
+                  <h5>最近动态</h5>
+                  <div class="activity-timeline">
+                    <div v-for="(activity, index) in userActivities" :key="index" class="activity-item">
+                      <div class="activity-dot"></div>
+                      <div class="activity-content">
+                        <div class="activity-text">{{ activity.text }}</div>
+                        <div class="activity-time">{{ activity.time }}</div>
+                      </div>
+                    </div>
+                    <div v-if="userActivities.length === 0" class="empty-activity">暂无最近动态</div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- 群聊信息展示 -->
+              <div v-else class="group-details">
+                <div class="group-header">
+                  <div class="avatar-container" @click="showAvatarModal = true">
+                    <Avatar :username="chatStore.activeTarget?.name" :src="chatStore.activeTarget?.avatar" color="#dbeafe" text-color="#2563eb" :size="80" />
+                    <span class="avatar-overlay">👁️</span>
+                  </div>
+                  <div class="group-info">
+                    <h4 @click="showGroupNameEdit = true">{{ chatStore.activeTarget?.name }}</h4>
+                    <p class="group-description">{{ chatStore.activeTarget?.description || '暂无描述' }}</p>
+                  </div>
+                </div>
+                
+                <div class="member-list-section">
+                  <h5>成员 ({{ groupMembers.length || 0 }})</h5>
+                  <div class="member-list">
+                    <div 
+                      v-for="member in groupMembers" 
+                      :key="member.id" 
+                      class="member-item"
+                      @contextmenu.prevent="showMemberContextMenu($event, member)"
+                    >
+                      <Avatar :username="member.username" :src="member.avatar" :size="40" />
+                      <div class="member-info">
+                        <span class="member-name">{{ member.username }}</span>
+                        <span v-if="member.id === chatStore.activeTarget?.creatorId" class="member-badge owner">群主</span>
+                        <span v-else-if="member.role === 'ADMIN'" class="member-badge admin">管理员</span>
+                      </div>
+                    </div>
+                    <div v-if="groupMembers.length === 0" class="empty-members">暂无成员</div>
+                  </div>
+                </div>
+                
+                <button class="action-btn" @click="showGroupSettingsModal = true">{{ $t('chat.group_settings') }}</button>
               </div>
             </div>
-            
-            <!-- 群聊信息展示 -->
-            <div v-else class="group-details">
-              <div class="group-header">
-                <div class="avatar-container" @click="showAvatarModal = true">
-                  <Avatar :username="chatStore.activeTarget?.name" :src="chatStore.activeTarget?.avatar" color="#dbeafe" text-color="#2563eb" :size="80" />
-                  <span class="avatar-overlay">👁️</span>
-                </div>
-                <div class="group-info">
-                  <h4 @click="showGroupNameEdit = true">{{ chatStore.activeTarget?.name }}</h4>
-                  <p class="group-description">{{ chatStore.activeTarget?.description || '暂无描述' }}</p>
-                </div>
-              </div>
-              
-              <div class="member-list-section">
-                <h5>成员 ({{ groupMembers.length || 0 }})</h5>
-                <div class="member-list">
-                  <div 
-                    v-for="member in groupMembers" 
-                    :key="member.id" 
-                    class="member-item"
-                    @contextmenu.prevent="showMemberContextMenu($event, member)"
-                  >
-                    <Avatar :username="member.username" :src="member.avatar" :size="40" />
-                    <div class="member-info">
-                      <span class="member-name">{{ member.username }}</span>
-                      <span v-if="member.id === chatStore.activeTarget?.creatorId" class="member-badge owner">群主</span>
-                      <span v-else-if="member.role === 'ADMIN'" class="member-badge admin">管理员</span>
-                    </div>
-                  </div>
-                  <div v-if="groupMembers.length === 0" class="empty-members">暂无成员</div>
-                </div>
-              </div>
-              
-              <button class="action-btn" @click="showGroupSettingsModal = true">{{ $t('chat.group_settings') }}</button>
-            </div>
-          </div>
           </div>
         </transition>
       </div>
@@ -463,10 +463,10 @@
     <!-- Member Context Menu -->
     <div v-if="memberContextMenu.show" class="context-menu" :style="{ top: memberContextMenu.y + 'px', left: memberContextMenu.x + 'px' }">
       <div class="menu-item" @click="setAdmin(memberContextMenu.member.id)" v-if="isGroupOwner && memberContextMenu.member.role !== 'ADMIN'">
-        👑 Set as Admin
+        👑 设置管理员
       </div>
       <div class="menu-item delete" @click="kickMember(memberContextMenu.member.id)" v-if="isGroupAdmin && memberContextMenu.member.id !== authStore.user?.id">
-        🚫 Remove Member
+        🚫 移除成员
       </div>
     </div>
 
@@ -538,11 +538,51 @@ const showCustomEmoji = ref(false)
 const emojis = ref(['😊', '😂', '😍', '🤔', '😢', '👍', '👎', '❤️', '🎉', '🔥', '🤣', '🙏', '🤩', '😎', '😡', '🤗', '🤫', '🤭', '🤔', '🤓', '😴', '😷', '🤒', '🤕', '🤢', '🤮', '🤧', '🥵', '🥶', '🥳', '🥺', '🤠', '🥰', '😘', '😋', '🤤', '😱', '😖', '😣', '😞', '😓', '😩', '😫', '🥱', '😤', '😠', '😡', '🤬', '😈', '👿', '💀', '👻', '👽', '🤖', '💩', '😺', '😸', '😹', '😻', '😼', '😽', '🙀', '😿', '😾'])
 const showAvatarModal = ref(false)
 const expandedBio = ref(false)
-const userActivities = ref([
-  { text: '发布了一条新动态：今天天气真好！', time: '1小时前' },
-  { text: '加入了群聊：测试群', time: '2天前' },
-  { text: '更新了个人资料：添加了新头像', time: '3天前' }
-])
+const userActivities = ref([])
+
+// 获取用户动态
+const fetchUserActivities = async (userId) => {
+  try {
+    console.log('Fetching user activities for user ID:', userId);
+    const res = await axios.get(`/api/moment/feed`, {
+      headers: { Authorization: `Bearer ${authStore.token}` }
+    });
+    console.log('User activities received:', res.data);
+    
+    // 转换数据格式
+    userActivities.value = res.data.map(moment => ({
+      text: `发布了一条新动态：${moment.content}`,
+      time: formatTimeAgo(moment.createdAt)
+    }));
+    console.log('Mapped user activities:', userActivities.value);
+  } catch (error) {
+    console.error('Failed to fetch user activities:', error);
+    userActivities.value = [];
+  }
+}
+
+// 格式化时间
+const formatTimeAgo = (dateString) => {
+  const now = new Date();
+  const date = new Date(dateString);
+  const diffMs = now - date;
+  const diffSecs = Math.floor(diffMs / 1000);
+  const diffMins = Math.floor(diffSecs / 60);
+  const diffHours = Math.floor(diffMins / 60);
+  const diffDays = Math.floor(diffHours / 24);
+  
+  if (diffSecs < 60) {
+    return '刚刚';
+  } else if (diffMins < 60) {
+    return `${diffMins}分钟前`;
+  } else if (diffHours < 24) {
+    return `${diffHours}小时前`;
+  } else if (diffDays < 7) {
+    return `${diffDays}天前`;
+  } else {
+    return date.toLocaleDateString();
+  }
+}
 const memberContextMenu = ref({
   show: false,
   x: 0,
@@ -715,25 +755,30 @@ watch(() => chatStore.activeConversationId, scrollToBottom)
 watch(
   [() => chatStore.activeConversationId, () => chatStore.activeConversationType],
   async ([newId, newType]) => {
+    console.log('Watch triggered:', { newId, newType });
     if (newId) {
       await chatStore.fetchHistory(newId, newType)
       // 如果是群聊，自动获取群成员信息
       if (newType === 'group') {
         try {
           console.log('Loading group members for group ID:', newId);
+          console.log('Auth token exists:', !!authStore.token);
           const res = await axios.get(`/api/chat/groups/${newId}`, {
             headers: { Authorization: `Bearer ${authStore.token}` }
           });
           console.log('Group data received:', res.data);
+          console.log('Group members array:', res.data.members);
+          console.log('Group members length:', res.data.members ? res.data.members.length : 'undefined');
           const group = res.data;
           // Map members correctly
           if (group && group.members) {
-            console.log('Group members:', group.members);
+            console.log('Processing group members:', group.members);
             groupMembers.value = group.members.map(m => ({
               ...m.user,
               role: m.role
             }));
             console.log('Mapped group members:', groupMembers.value);
+            console.log('Mapped group members length:', groupMembers.value.length);
           } else {
             console.error('Group data is invalid:', group);
             groupMembers.value = [];
@@ -743,9 +788,23 @@ watch(
           if (error.response) {
             console.error('Response data:', error.response.data);
             console.error('Response status:', error.response.status);
+          } else if (error.request) {
+            console.error('Request error:', error.request);
+          } else {
+            console.error('Error message:', error.message);
           }
         }
+      } else {
+        console.log('Not a group conversation, clearing group members');
+        groupMembers.value = [];
+        // 如果是用户会话，获取用户动态
+        console.log('Loading user activities for user ID:', newId);
+        await fetchUserActivities(newId);
       }
+    } else {
+      console.log('No active conversation, clearing group members');
+      groupMembers.value = [];
+      userActivities.value = [];
     }
   },
   { immediate: true }
@@ -950,11 +1009,21 @@ const showMemberContextMenu = (e, member) => {
 }
 
 const setAdmin = async (memberId) => {
-  // 这里应该调用API设置管理员
-  console.log('Set admin:', memberId);
-  memberContextMenu.value.show = false;
-  // 刷新成员列表
-  await showGroupSettings();
+  try {
+    const res = await axios.post(`/api/chat/groups/${chatStore.activeConversationId}/members/${memberId}/admin`, {}, {
+      headers: { Authorization: `Bearer ${authStore.token}` }
+    });
+    console.log('Set admin response:', res.data);
+    memberContextMenu.value.show = false;
+    // 刷新成员列表
+    await showGroupSettings();
+  } catch (error) {
+    console.error('Failed to set admin:', error);
+    if (error.response) {
+      console.error('Response data:', error.response.data);
+      console.error('Response status:', error.response.status);
+    }
+  }
 }
 
 const openConversation = (message) => {
@@ -1456,7 +1525,7 @@ const markAllAsRead = () => {
 .user-details {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1rem;
   flex-shrink: 0;
 }
 
@@ -1584,7 +1653,7 @@ const markAllAsRead = () => {
 
 .recent-activity {
   background: white;
-  padding: 1rem;
+  padding: 0.75rem;
   border-radius: 12px;
   flex: 1;
   display: flex;
@@ -1593,21 +1662,21 @@ const markAllAsRead = () => {
 }
 
 .recent-activity h5 {
-  margin: 0 0 0.75rem 0;
-  font-size: 0.9rem;
+  margin: 0 0 0.5rem 0;
+  font-size: 0.85rem;
   font-weight: 600;
   color: var(--text-color);
 }
 
 .activity-timeline {
   position: relative;
-  padding-left: 1rem;
+  padding-left: 0.75rem;
   flex: 1;
   overflow-y: auto;
-  padding-right: 0.5rem;
+  padding-right: 0.25rem;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.75rem;
   min-height: 0;
 }
 
@@ -1623,24 +1692,25 @@ const markAllAsRead = () => {
 
 .activity-item {
   position: relative;
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
 }
 
 .activity-dot {
   position: absolute;
-  left: -1rem;
-  top: 0.3rem;
-  width: 8px;
-  height: 8px;
+  left: -0.75rem;
+  top: 0.25rem;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   background: var(--primary-color);
-  border: 2px solid white;
-  box-shadow: 0 0 0 2px var(--primary-color);
+  border: 1px solid white;
+  box-shadow: 0 0 0 1px var(--primary-color);
 }
 
 .activity-content {
   background: #f9fafb;
-  padding: 0.75rem;
+  padding: 0.5rem;
+  font-size: 0.8rem;
   border-radius: 8px;
 }
 

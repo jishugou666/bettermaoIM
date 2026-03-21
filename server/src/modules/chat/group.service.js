@@ -211,6 +211,31 @@ class GroupService {
       })
     ]);
   }
+
+  async setAdmin(initiatorId, groupId, targetUserId) {
+    // 1. Verify initiator is creator
+    const group = await prisma.group.findUnique({ where: { id: groupId } });
+    if (group.creatorId !== initiatorId) {
+      throw new Error('Only group creator can set admin');
+    }
+
+    // 2. Verify target is a member
+    const target = await prisma.groupMember.findUnique({
+      where: {
+        groupId_userId: { groupId, userId: targetUserId }
+      }
+    });
+
+    if (!target) {
+      throw new Error('Target user must be a group member');
+    }
+
+    // 3. Set target as admin
+    return await prisma.groupMember.update({
+      where: { groupId_userId: { groupId, userId: targetUserId } },
+      data: { role: 'ADMIN' }
+    });
+  }
 }
 
 module.exports = new GroupService();
