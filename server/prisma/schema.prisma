@@ -211,3 +211,18 @@ model Comment {
   user      User     @relation(fields: [userId], references: [id])
   moment    Moment   @relation(fields: [momentId], references: [id])
 }
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  type      String   // message, friend_request, moment, system
+  title     String
+  message   String
+  read      Boolean  @default(false)
+  relatedId Int?     // ID of related entity (e.g., message ID, friend request ID, moment ID)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id])
+}
+

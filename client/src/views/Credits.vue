@@ -34,7 +34,7 @@
       <div class="tasks-section card">
         <h3>{{ $t('credit.daily_tasks') }}</h3>
         <div class="task-list">
-          <div v-for="task in creditStore.tasks" :key="task.key" class="task-item">
+          <div v-for="task in creditStore.tasks" :key="task.key" class="task-item" :class="{ 'completed': task.completed }">
             <div class="task-info">
               <span class="task-name">{{ $t(`credit.task_${task.key}`) }}</span>
               <span class="task-reward">+{{ task.reward }} 💰</span>
@@ -47,7 +47,10 @@
             >
               {{ getTaskAction(task.key).label }}
             </button>
-            <span v-else class="completed-badge">✓ {{ $t('credit.done') }}</span>
+            <div v-else class="completed-badge">
+              <span class="completed-icon">✓</span>
+              <span class="completed-text">{{ $t('credit.done') }}</span>
+            </div>
           </div>
         </div>
       </div>
@@ -161,6 +164,7 @@ const handleTaskAction = async (taskKey) => {
     if (result) {
       showToast(result.message)
       await creditStore.fetchTransactions()
+      await creditStore.fetchTasks() // 确保任务状态被正确更新
     }
   }
 }
@@ -391,8 +395,31 @@ h3 {
 }
 
 .completed-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   color: var(--success);
   font-weight: 600;
+  background-color: #d1fae5;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+}
+
+.completed-icon {
+  background-color: var(--success);
+  color: white;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+}
+
+.task-item.completed {
+  background-color: #f0fdf4;
+  border-left: 4px solid var(--success);
 }
 
 .tx-type {

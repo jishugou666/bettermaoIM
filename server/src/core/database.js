@@ -142,8 +142,7 @@ function initDatabase() {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       userId INTEGER,
       taskKey TEXT,
-      completedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-      UNIQUE(userId, taskKey)
+      completedAt DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   `, (err) => {
     if (err) console.error('Error creating TaskLog table:', err.message);

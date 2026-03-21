@@ -44,7 +44,28 @@
 
         <div class="form-group">
           <label>{{ $t('profile.tags') }}</label>
-          <input v-model="form.tags" :placeholder="$t('profile.tags')" />
+          <div class="tags-input-container">
+            <div class="tags-list">
+              <span 
+                v-for="(tag, index) in tagsList" 
+                :key="index"
+                class="tag"
+                :style="{ backgroundColor: getTagColor(tag) }"
+              >
+                {{ tag }}
+                <button type="button" class="tag-remove" @click="removeTag(index)">×</button>
+              </span>
+            </div>
+            <div class="tag-input-wrapper">
+              <input 
+                v-model="newTag"
+                :placeholder="$t('profile.add_tag')"
+                @keyup.enter="addTag"
+                @blur="addTag"
+              />
+              <button type="button" class="add-tag-btn" @click="addTag">+</button>
+            </div>
+          </div>
         </div>
 
         <button type="submit" class="save-btn" :disabled="userStore.loading">
@@ -91,6 +112,9 @@ const form = reactive({
   avatar: ''
 })
 
+const tagsList = ref([])
+const newTag = ref('')
+
 onMounted(async () => {
   await userStore.fetchProfile()
   profile.value = userStore.profile
@@ -103,6 +127,11 @@ onMounted(async () => {
     form.location = profile.value.location || ''
     form.tags = profile.value.tags || ''
     form.avatar = profile.value.avatar || ''
+    
+    // Parse tags into array
+    if (profile.value.tags) {
+      tagsList.value = profile.value.tags.split(',').map(tag => tag.trim()).filter(tag => tag)
+    }
   }
 })
 
@@ -124,10 +153,43 @@ const handleFileChange = async (e) => {
   }
 }
 
+const addTag = () => {
+  const tag = newTag.value.trim()
+  if (tag && !tagsList.value.includes(tag)) {
+    tagsList.value.push(tag)
+    newTag.value = ''
+  }
+}
+
+const removeTag = (index) => {
+  tagsList.value.splice(index, 1)
+}
+
+const getTagColor = (tag) => {
+  // Generate consistent color based on tag content
+  const colors = [
+    '#4F46E5', '#10B981', '#F59E0B', '#EF4444',
+    '#8B5CF6', '#EC4899', '#14B8A6', '#F97316'
+  ]
+  let hash = 0
+  for (let i = 0; i < tag.length; i++) {
+    hash = tag.charCodeAt(i) + ((hash << 5) - hash)
+  }
+  const index = Math.abs(hash) % colors.length
+  return colors[index]
+}
+
 const saveProfile = async () => {
+  // Update form.tags with the current tagsList
+  form.tags = tagsList.value.join(',')
+  
   const success = await userStore.updateProfile(form)
   if (success) {
-    showToast('Profile updated successfully!')
+    showToast('资料更新成功！')
+    // 刷新本地profile数据，确保UI显示最新状态
+    profile.value = userStore.profile
+  } else {
+    showToast('资料更新失败，请稍后重试')
   }
 }
 
@@ -274,6 +336,69 @@ input:focus, textarea:focus, select:focus {
 
 .hidden {
   display: none;
+}
+
+.tags-input-container {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 0.75rem;
+  min-height: 60px;
+}
+
+.tags-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  color: white;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.tag-remove {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1rem;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0;
+  margin-left: 0.25rem;
+}
+
+.tag-input-wrapper {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.tag-input-wrapper input {
+  flex: 1;
+  border: none;
+  padding: 0;
+  outline: none;
+}
+
+.add-tag-btn {
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  font-weight: bold;
 }
 
 .toast {

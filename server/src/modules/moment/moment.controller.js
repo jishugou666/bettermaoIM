@@ -32,6 +32,22 @@ class MomentController {
     }
   }
 
+  async getUserMoments(req, res, next) {
+    try {
+      const { userId } = req.params;
+      const { limit, offset } = req.query;
+      const moments = await momentService.getUserMoments(
+        parseInt(userId),
+        req.user.id,
+        limit ? parseInt(limit) : undefined,
+        offset ? parseInt(offset) : undefined
+      );
+      res.json(moments);
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async toggleLike(req, res, next) {
     try {
       const { id } = req.params;
@@ -75,6 +91,16 @@ class MomentController {
         offset ? parseInt(offset) : undefined
       );
       res.json(comments);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getMomentById(req, res, next) {
+    try {
+      const { id } = req.params;
+      const moment = await momentService.getMomentById(parseInt(id), req.user.id);
+      res.json(moment);
     } catch (error) {
       next(error);
     }

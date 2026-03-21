@@ -2,7 +2,7 @@
   <div class="moments-layout">
     <div class="header-section card">
       <button class="back-btn" @click="router.push('/')">← {{ $t('common.back') }}</button>
-      <h2>{{ $t('moments.title') }}</h2>
+      <h2>朋友圈</h2>
       <div class="search-bar">
         <input 
           v-model="searchQuery" 
@@ -11,7 +11,7 @@
         />
         <span v-if="isSearching" class="search-loader">...</span>
       </div>
-      <button class="new-post-btn" @click="showPostModal = true" :title="$t('moments.new_post')">✍️</button>
+      <button class="new-post-btn" @click="showPostModal = true" title="发布动态">✍️</button>
     </div>
 
     <div class="feed-container">
@@ -23,7 +23,7 @@
         {{ $t('moments.no_moments') }}
       </div>
 
-      <div v-for="moment in filteredFeed" :key="moment.id" class="moment-card card">
+      <div v-for="moment in filteredFeed" :key="moment.id" class="moment-card card" @click="navigateToMoment(moment.id)" style="cursor: pointer; position: relative; z-index: 1;">
         <div class="moment-header">
           <Avatar :username="moment.user.username" :src="moment.user.avatar" />
           <div class="user-info">
@@ -40,7 +40,7 @@
               :key="idx" 
               :src="getFullUrl(img)" 
               class="moment-img" 
-              @click="window.open(getFullUrl(img), '_blank')"
+              @click.stop="window.open(getFullUrl(img), '_blank')"
             />
           </div>
         </div>
@@ -49,45 +49,28 @@
           <button 
             class="action-btn" 
             :class="{ active: moment.isLiked }"
-            @click="momentStore.toggleLike(moment.id)"
+            @click.stop="momentStore.toggleLike(moment.id)"
           >
             <span class="icon">❤️</span>
             <span class="count">{{ moment._count.likes }}</span>
           </button>
           <button 
             class="action-btn" 
-            @click="toggleComments(moment.id)"
+            @click.stop="navigateToMoment(moment.id)"
           >
             <span class="icon">💬</span>
             <span class="count">{{ moment._count.comments }}</span>
           </button>
           <button 
             class="action-btn" 
-            @click="openTipModal(moment.user.id)"
+            @click.stop="openTipModal(moment.user.id)"
           >
             <span class="icon">💰</span>
             <span class="label">{{ $t('moments.tip') }}</span>
           </button>
         </div>
 
-        <!-- Comments Section -->
-        <div v-if="activeCommentId === moment.id" class="comments-section">
-          <div class="comments-list">
-            <div v-if="!momentStore.comments[moment.id]" class="loading-comments">{{ $t('common.loading') }}</div>
-            <div v-else v-for="comment in momentStore.comments[moment.id]" :key="comment.id" class="comment-item">
-              <span class="comment-user">{{ comment.user.username }}:</span>
-              <span class="comment-content">{{ comment.content }}</span>
-            </div>
-          </div>
-          <div class="comment-input-wrapper">
-            <input 
-              v-model="newComment" 
-              :placeholder="$t('moments.write_comment')" 
-              @keyup.enter="handleComment(moment.id)"
-            />
-            <button @click="handleComment(moment.id)" :disabled="!newComment.trim()">{{ $t('common.send') }}</button>
-          </div>
-        </div>
+
       </div>
     </div>
 
@@ -149,8 +132,7 @@ const showTipModal = ref(false)
 const tipTargetUserId = ref(null)
 
 const newContent = ref('')
-const activeCommentId = ref(null)
-const newComment = ref('')
+
 const searchQuery = ref('')
 const isSearching = ref(false)
 let searchTimeout = null
@@ -233,17 +215,6 @@ const handlePost = async () => {
   }
 }
 
-const toggleComments = async (momentId) => {
-  if (activeCommentId.value === momentId) {
-    activeCommentId.value = null
-  } else {
-    activeCommentId.value = momentId
-    if (!momentStore.comments[momentId]) {
-      await momentStore.fetchComments(momentId)
-    }
-  }
-}
-
 const openTipModal = (userId) => {
   tipTargetUserId.value = userId
   showTipModal.value = true
@@ -253,16 +224,14 @@ const handleTipSuccess = (amount) => {
   alert(`Successfully sent ${amount} credits!`)
 }
 
-const handleComment = async (momentId) => {
-  if (!newComment.value.trim()) return
-  const success = await momentStore.createComment(momentId, newComment.value)
-  if (success) {
-    newComment.value = ''
-  }
-}
-
 const formatTime = (dateStr) => {
   return new Date(dateStr).toLocaleString()
+}
+
+// 跳转到动态详细页
+const navigateToMoment = (momentId) => {
+  console.log('Navigating to moment:', momentId);
+  router.push(`/moment/${momentId}`);
 }
 </script>
 

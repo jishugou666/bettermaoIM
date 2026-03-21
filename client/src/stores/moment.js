@@ -100,6 +100,22 @@ export const useMomentStore = defineStore('moment', {
         console.error('Failed to comment', err);
         return false;
       }
+    },
+
+    async fetchMomentDetail(momentId) {
+      try {
+        const response = await axios.get(`/api/moment/${momentId}`, {
+          headers: { Authorization: `Bearer ${useAuthStore().token}` }
+        });
+        return {
+          ...response.data,
+          images: response.data.images ? JSON.parse(response.data.images) : [],
+          isLiked: response.data.likes && response.data.likes.length > 0
+        };
+      } catch (err) {
+        console.error('Failed to fetch moment detail', err);
+        return null;
+      }
     }
   }
 })

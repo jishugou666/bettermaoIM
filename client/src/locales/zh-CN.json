@@ -30,6 +30,8 @@
     "register_btn": "创建账户",
     "no_account": "新用户？创建账户",
     "has_account": "已有账户？登录",
+    "login": "登录",
+    "register": "注册",
     "login_failed": "登录失败",
     "register_failed": "注册失败",
     "email_placeholder": "请输入电子邮件",

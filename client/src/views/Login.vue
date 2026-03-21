@@ -9,12 +9,12 @@
 
       <form @submit.prevent="handleLogin" class="auth-form">
         <div class="form-group">
-          <label>{{ $t('auth.email') }}</label>
+          <label>用户名或电子邮件</label>
           <div class="input-wrapper">
             <input 
               v-model="email" 
-              type="email" 
-              :placeholder="$t('auth.email_placeholder')" 
+              type="text" 
+              placeholder="请输入用户名或电子邮件" 
               required 
               :class="{ 'error': authStore.error }"
             />
@@ -46,7 +46,7 @@
       </form>
 
       <div class="auth-footer">
-        <p>{{ $t('auth.no_account').split('?')[0] }}? <router-link to="/register">{{ $t('auth.no_account').split('?')[1] || 'Create an account' }}</router-link></p>
+        <p>{{ $t('auth.no_account') }} <router-link to="/register">{{ $t('auth.register') }}</router-link></p>
         <div class="lang-switch-wrapper">
           <LanguageSwitcher />
         </div>
@@ -91,12 +91,15 @@ const handleLogin = async () => {
 }
 
 .auth-card {
-  background: white;
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
   width: 100%;
   max-width: 420px;
   padding: 2.5rem;
   border-radius: 24px;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  box-shadow: var(--glass-shadow);
 }
 
 .auth-header {

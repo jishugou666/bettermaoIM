@@ -40,11 +40,12 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
-      path: '/community',
-      name: 'community',
-      component: () => import('../views/Community.vue'),
+      path: '/moment/:id',
+      name: 'moment-detail',
+      component: () => import('../views/MomentDetail.vue'),
       meta: { requiresAuth: true }
     },
+
     {
       path: '/login',
       name: 'login',

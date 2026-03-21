@@ -10,10 +10,10 @@
   --border-radius: 12px;
   --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
   /* 毛玻璃效果变量 */
-  --glass-bg: rgba(255, 255, 255, 0.7);
-  --glass-border: rgba(255, 255, 255, 0.2);
-  --glass-blur: 10px;
-  --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+  --glass-bg: rgba(255, 255, 255, 0.5);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-blur: 15px;
+  --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
 }
 
 /* 毛玻璃效果基础类 */

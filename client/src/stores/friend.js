@@ -14,12 +14,22 @@ export const useFriendStore = defineStore('friend', {
   actions: {
     async fetchFriends() {
       try {
+        const authStore = useAuthStore();
+        if (!authStore.token) {
+          console.error('No auth token');
+          return;
+        }
         const response = await axios.get('/api/friend', {
-          headers: { Authorization: `Bearer ${useAuthStore().token}` }
+          headers: { Authorization: `Bearer ${authStore.token}` }
         });
+        console.log('Fetched friends:', response.data);
         this.friends = response.data;
       } catch (err) {
         console.error('Failed to fetch friends', err);
+        if (err.response) {
+          console.error('Response data:', err.response.data);
+          console.error('Response status:', err.response.status);
+        }
       }
     },
 

@@ -57,17 +57,12 @@
 
         <div class="card feature-card clickable" @click="router.push('/moments')">
           <div class="feature-icon">📸</div>
-          <h3>{{ $t('nav.moments') }}</h3>
-          <p>{{ $t('moments.title') }}</p>
-          <button class="feature-btn primary">{{ $t('home.explore_feed') }}</button>
+          <h3>朋友圈</h3>
+          <p>分享生活瞬间</p>
+          <button class="feature-btn primary">查看朋友圈</button>
         </div>
 
-        <div class="card feature-card clickable" @click="router.push('/community')">
-          <div class="feature-icon">🌍</div>
-          <h3>{{ $t('nav.community') }}</h3>
-          <p>{{ $t('home.community_desc') }}</p>
-          <button class="feature-btn primary">{{ $t('home.enter_community') }}</button>
-        </div>
+
 
         <div class="card feature-card clickable" @click="router.push('/profile')">
           <div class="feature-icon">👤</div>
@@ -103,7 +98,7 @@
           <div v-if="notifications.length === 0" class="empty-notifications">
             {{ $t('notification.no_notifications') }}
           </div>
-          <div v-else v-for="notification in notifications" :key="notification.id" class="notification-item">
+          <div v-else v-for="notification in notifications" :key="notification.id" class="notification-item clickable" @click="handleNotificationClick(notification)">
             <div class="notification-icon">{{ notification.icon }}</div>
             <div class="notification-content">
               <div class="notification-title">{{ notification.title }}</div>
@@ -128,39 +123,104 @@ import { useAuthStore } from '../stores/auth'
 import { useRouter } from 'vue-router'
 import Avatar from '../components/Avatar.vue'
 import LanguageSwitcher from '../components/LanguageSwitcher.vue'
+import axios from 'axios'
 
 const authStore = useAuthStore()
 const router = useRouter()
 
 // 消息通知相关状态
 const showNotifications = ref(false)
-const notifications = ref([
-  {
-    id: 1,
-    icon: '💬',
-    title: '新消息',
-    message: '技术狗 给你发送了一条新消息',
-    time: '5分钟前',
-    read: false
-  },
-  {
-    id: 2,
-    icon: '👥',
-    title: '好友请求',
-    message: '技术秒 请求添加你为好友',
-    time: '1小时前',
-    read: false
-  },
-  {
-    id: 3,
-    icon: '🌍',
-    title: '社区动态',
-    message: '你发布的帖子收到了新的评论',
-    time: '2小时前',
-    read: true
+const notifications = ref([])
+const unreadCount = ref(0)
+
+// 从后端API获取通知
+const fetchNotifications = async () => {
+  try {
+    const response = await axios.get('/api/notification', {
+      headers: { Authorization: `Bearer ${authStore.token}` }
+    })
+    notifications.value = response.data.map(notification => ({
+      ...notification,
+      icon: getNotificationIcon(notification.type),
+      time: formatTimeAgo(notification.createdAt)
+    }))
+    updateUnreadCount()
+  } catch (error) {
+    console.error('Failed to fetch notifications:', error)
   }
-])
-const unreadCount = ref(2)
+}
+
+// 获取通知图标
+const getNotificationIcon = (type) => {
+  switch (type) {
+    case 'message': return '💬'
+    case 'friend_request': return '👥'
+    case 'moment': return '🌍'
+    case 'system': return '📢'
+    default: return '🔔'
+  }
+}
+
+// 格式化时间
+const formatTimeAgo = (dateString) => {
+  const now = new Date()
+  const date = new Date(dateString)
+  const diffMs = now - date
+  const diffSecs = Math.floor(diffMs / 1000)
+  const diffMins = Math.floor(diffSecs / 60)
+  const diffHours = Math.floor(diffMins / 60)
+  const diffDays = Math.floor(diffHours / 24)
+  
+  if (diffSecs < 60) {
+    return '刚刚'
+  } else if (diffMins < 60) {
+    return `${diffMins}分钟前`
+  } else if (diffHours < 24) {
+    return `${diffHours}小时前`
+  } else if (diffDays < 7) {
+    return `${diffDays}天前`
+  } else {
+    return date.toLocaleDateString()
+  }
+}
+
+// 更新未读消息计数
+const updateUnreadCount = () => {
+  unreadCount.value = notifications.value.filter(n => !n.read).length
+}
+
+// 标记通知为已读
+const markNotificationAsRead = async (notificationId) => {
+  try {
+    await axios.put(`/api/notification/${notificationId}/read`, {}, {
+      headers: { Authorization: `Bearer ${authStore.token}` }
+    })
+    // 更新本地状态
+    const notification = notifications.value.find(n => n.id === notificationId)
+    if (notification) {
+      notification.read = true
+      updateUnreadCount()
+    }
+  } catch (error) {
+    console.error('Failed to mark notification as read:', error)
+  }
+}
+
+// 标记所有通知为已读
+const markAllAsRead = async () => {
+  try {
+    await axios.put('/api/notification/read-all', {}, {
+      headers: { Authorization: `Bearer ${authStore.token}` }
+    })
+    // 更新本地状态
+    notifications.value.forEach(notification => {
+      notification.read = true
+    })
+    unreadCount.value = 0
+  } catch (error) {
+    console.error('Failed to mark all notifications as read:', error)
+  }
+}
 
 const fetchUserData = async () => {
   if (!authStore.user) {
@@ -168,19 +228,33 @@ const fetchUserData = async () => {
   }
 }
 
-const markAllAsRead = () => {
-  notifications.value.forEach(notification => {
-    notification.read = true
-  })
-  unreadCount.value = 0
+const handleNotificationClick = async (notification) => {
+  // 标记为已读
+  if (!notification.read) {
+    await markNotificationAsRead(notification.id)
+  }
+  
+  // 根据通知类型跳转到对应页面
+  if (notification.type === 'message') {
+    router.push('/chat')
+  } else if (notification.type === 'friend_request') {
+    router.push('/friends')
+  } else if (notification.type === 'moment') {
+    router.push('/moments') // 因为已经移除了社区，所以跳转到朋友圈
+  }
+  
+  // 关闭通知面板
+  showNotifications.value = false
 }
 
 onMounted(async () => {
   await fetchUserData()
+  await fetchNotifications()
 })
 
 onActivated(async () => {
   await fetchUserData()
+  await fetchNotifications()
 })
 
 const logout = () => {

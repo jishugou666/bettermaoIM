@@ -216,6 +216,18 @@
                   <span class="status-badge" :class="{ online: chatStore.onlineUsers.has(chatStore.activeConversationId) }">
                     {{ chatStore.onlineUsers.has(chatStore.activeConversationId) ? '在线' : '离线' }}
                   </span>
+                  
+                  <!-- 标签显示 -->
+                  <div v-if="chatStore.activeTarget?.tags" class="user-tags">
+                    <span 
+                      v-for="(tag, index) in chatStore.activeTarget.tags.split(',').map(tag => tag.trim()).filter(tag => tag)" 
+                      :key="index"
+                      class="tag"
+                      :style="{ backgroundColor: getTagColor(tag) }"
+                    >
+                      {{ tag }}
+                    </span>
+                  </div>
                 </div>
                 
                 <div class="bio-section">
@@ -234,7 +246,9 @@
                     <div v-for="(activity, index) in userActivities" :key="index" class="activity-item">
                       <div class="activity-dot"></div>
                       <div class="activity-content">
-                        <div class="activity-text">{{ activity.text }}</div>
+                        <div class="activity-text moment-link" @click="navigateToMoment(activity.id)">
+                          {{ activity.text }}
+                        </div>
                         <div class="activity-time">{{ activity.time }}</div>
                       </div>
                     </div>
@@ -544,13 +558,14 @@ const userActivities = ref([])
 const fetchUserActivities = async (userId) => {
   try {
     console.log('Fetching user activities for user ID:', userId);
-    const res = await axios.get(`/api/moment/feed`, {
+    const res = await axios.get(`/api/moment/user/${userId}`, {
       headers: { Authorization: `Bearer ${authStore.token}` }
     });
     console.log('User activities received:', res.data);
     
     // 转换数据格式
     userActivities.value = res.data.map(moment => ({
+      id: moment.id,
       text: `发布了一条新动态：${moment.content}`,
       time: formatTimeAgo(moment.createdAt)
     }));
@@ -582,6 +597,13 @@ const formatTimeAgo = (dateString) => {
   } else {
     return date.toLocaleDateString();
   }
+}
+
+// 跳转到动态页面
+const navigateToMoment = (momentId) => {
+  console.log('Navigating to moment:', momentId);
+  // 使用Vue Router跳转到动态页面
+  router.push(`/moment/${momentId}`);
 }
 const memberContextMenu = ref({
   show: false,
@@ -976,20 +998,21 @@ const formatTime = (dateStr) => {
   return new Date(dateStr).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 }
 
-const formatTimeAgo = (dateStr) => {
-  const date = new Date(dateStr);
-  const now = new Date();
-  const diffMs = now - date;
-  const diffSec = Math.floor(diffMs / 1000);
-  const diffMin = Math.floor(diffSec / 60);
-  const diffHour = Math.floor(diffMin / 60);
-  const diffDay = Math.floor(diffHour / 24);
-
-  if (diffDay > 0) return diffDay + 'd';
-  if (diffHour > 0) return diffHour + 'h';
-  if (diffMin > 0) return diffMin + 'm';
-  return 'now';
+const getTagColor = (tag) => {
+  // Generate consistent color based on tag content
+  const colors = [
+    '#4F46E5', '#10B981', '#F59E0B', '#EF4444',
+    '#8B5CF6', '#EC4899', '#14B8A6', '#F97316'
+  ]
+  let hash = 0
+  for (let i = 0; i < tag.length; i++) {
+    hash = tag.charCodeAt(i) + ((hash << 5) - hash)
+  }
+  const index = Math.abs(hash) % colors.length
+  return colors[index]
 }
+
+
 
 const addEmoji = (emoji) => {
   newMessage.value += emoji;
@@ -1525,7 +1548,7 @@ const markAllAsRead = () => {
 .user-details {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.5rem;
   flex-shrink: 0;
 }
 
@@ -1611,11 +1634,29 @@ const markAllAsRead = () => {
   color: #065f46;
 }
 
+.user-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  justify-content: center;
+}
+
+.user-tags .tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  color: white;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
 .bio-section {
   background: white;
-  padding: 1rem;
+  padding: 0.75rem;
   border-radius: 12px;
-  margin-bottom: 1rem;
 }
 
 .bio-section h5 {
@@ -1659,6 +1700,8 @@ const markAllAsRead = () => {
   display: flex;
   flex-direction: column;
   min-height: 0;
+  max-height: 200px;
+  overflow-y: auto;
 }
 
 .recent-activity h5 {
@@ -1670,7 +1713,7 @@ const markAllAsRead = () => {
 
 .activity-timeline {
   position: relative;
-  padding-left: 0.75rem;
+  padding-left: 1rem;
   flex: 1;
   overflow-y: auto;
   padding-right: 0.25rem;
@@ -1683,7 +1726,7 @@ const markAllAsRead = () => {
 .activity-timeline::before {
   content: '';
   position: absolute;
-  left: 0.25rem;
+  left: 0.35rem;
   top: 0;
   bottom: 0;
   width: 2px;
@@ -1697,7 +1740,7 @@ const markAllAsRead = () => {
 
 .activity-dot {
   position: absolute;
-  left: -0.75rem;
+  left: -0.65rem;
   top: 0.25rem;
   width: 6px;
   height: 6px;
@@ -1705,6 +1748,7 @@ const markAllAsRead = () => {
   background: var(--primary-color);
   border: 1px solid white;
   box-shadow: 0 0 0 1px var(--primary-color);
+  z-index: 1;
 }
 
 .activity-content {
@@ -1712,6 +1756,17 @@ const markAllAsRead = () => {
   padding: 0.5rem;
   font-size: 0.8rem;
   border-radius: 8px;
+}
+
+.moment-link {
+  cursor: pointer;
+  color: var(--primary-color);
+  transition: all 0.2s ease;
+}
+
+.moment-link:hover {
+  color: var(--primary-hover);
+  transform: translateY(-1px);
 }
 
 .activity-text {

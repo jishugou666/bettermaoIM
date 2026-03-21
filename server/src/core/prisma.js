@@ -582,23 +582,10 @@ const prisma = {
         [data.userId, data.type, data.amount, data.remark]
       );
       return await get('SELECT * FROM CreditTransaction WHERE id = ?', [result.lastID]);
-    }
-  },
-
-  // TaskLog方法
-  taskLog: {
-    create: async (params) => {
-      const { data } = params;
-      const result = await run(
-        `INSERT OR IGNORE INTO TaskLog (userId, taskKey) 
-         VALUES (?, ?)`,
-        [data.userId, data.taskKey]
-      );
-      return await get('SELECT * FROM TaskLog WHERE userId = ? AND taskKey = ?', [data.userId, data.taskKey]);
     },
-    findFirst: async (params) => {
-      const { where } = params;
-      let sql = 'SELECT * FROM TaskLog WHERE 1=1';
+    findMany: async (params) => {
+      const { where, orderBy, take } = params || {};
+      let sql = 'SELECT * FROM CreditTransaction WHERE 1=1';
       const paramsArray = [];
       
       if (where) {
@@ -606,17 +593,25 @@ const prisma = {
           sql += ' AND userId = ?';
           paramsArray.push(where.userId);
         }
-        if (where.taskKey) {
-          sql += ' AND taskKey = ?';
-          paramsArray.push(where.taskKey);
-        }
       }
       
-      sql += ' LIMIT 1';
+      if (orderBy) {
+        for (const [field, direction] of Object.entries(orderBy)) {
+          sql += ` ORDER BY ${field} ${direction}`;
+        }
+      } else {
+        sql += ' ORDER BY createdAt DESC';
+      }
       
-      return await get(sql, paramsArray);
+      if (take) {
+        sql += ` LIMIT ${take}`;
+      }
+      
+      return await query(sql, paramsArray);
     }
   },
+
+
 
   // Friendship方法
   friendship: {
@@ -626,28 +621,45 @@ const prisma = {
       const paramsArray = [];
       
       if (where) {
-        if (where.userId) {
-          sql += ' AND userId = ?';
-          paramsArray.push(where.userId);
-        }
-        if (where.friendId) {
-          sql += ' AND friendId = ?';
-          paramsArray.push(where.friendId);
-        }
-        if (where.status) {
-          sql += ' AND status = ?';
-          paramsArray.push(where.status);
-        }
         if (where.OR) {
           sql += ' AND (';
           const orConditions = [];
           for (const condition of where.OR) {
-            if (condition.userId && condition.friendId) {
-              orConditions.push('(userId = ? AND friendId = ?)');
-              paramsArray.push(condition.userId, condition.friendId);
+            const conditionParts = [];
+            if (condition.userId) {
+              conditionParts.push('userId = ?');
+              paramsArray.push(condition.userId);
+            }
+            if (condition.friendId) {
+              conditionParts.push('friendId = ?');
+              paramsArray.push(condition.friendId);
+            }
+            if (condition.status) {
+              conditionParts.push('status = ?');
+              paramsArray.push(condition.status);
+            }
+            if (conditionParts.length > 0) {
+              orConditions.push('(' + conditionParts.join(' AND ') + ')');
             }
           }
-          sql += orConditions.join(' OR ') + ')';
+          if (orConditions.length > 0) {
+            sql += orConditions.join(' OR ') + ')';
+          } else {
+            sql += ')';
+          }
+        } else {
+          if (where.userId) {
+            sql += ' AND userId = ?';
+            paramsArray.push(where.userId);
+          }
+          if (where.friendId) {
+            sql += ' AND friendId = ?';
+            paramsArray.push(where.friendId);
+          }
+          if (where.status) {
+            sql += ' AND status = ?';
+            paramsArray.push(where.status);
+          }
         }
       }
       
@@ -657,13 +669,13 @@ const prisma = {
       if (include) {
         for (const friendship of friendships) {
           if (include.user) {
-            const user = await get('SELECT * FROM User WHERE id = ?', [friendship.userId]);
+            const user = await get('SELECT id, username, avatar FROM User WHERE id = ?', [friendship.userId]);
             if (user) {
               friendship.user = user;
             }
           }
           if (include.friend) {
-            const friend = await get('SELECT * FROM User WHERE id = ?', [friendship.friendId]);
+            const friend = await get('SELECT id, username, avatar FROM User WHERE id = ?', [friendship.friendId]);
             if (friend) {
               friendship.friend = friend;
             }

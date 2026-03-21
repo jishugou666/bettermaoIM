@@ -1,5 +1,6 @@
 const prisma = require('../../core/prisma');
 const redisClient = require('../../core/redis');
+const notificationService = require('../notification/notification.service');
 
 const TASKS = {
   DAILY_LOGIN: {
@@ -281,6 +282,16 @@ class CreditService {
       // Update Redis after successful transaction
       await redisClient.incrBy(limitKey, amount);
       await redisClient.expire(limitKey, 86400); // 24h
+      
+      // Send notification to receiver
+      const sender = await prisma.user.findUnique({ where: { id: fromUserId } });
+      await notificationService.createNotification(toUserId, {
+        type: 'tip_received',
+        title: '收到打赏',
+        message: `${sender.username} 给你打赏了 ${amount} 金币！`,
+        relatedId: result.txReceiver.id
+      });
+      
       return result;
     });
   }

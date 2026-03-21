@@ -14,6 +14,7 @@ const userRoutes = require('./modules/user/user.routes');
 const momentRoutes = require('./modules/moment/moment.routes');
 const uploadRoutes = require('./modules/upload/upload.routes');
 const communityRoutes = require('./modules/community/community.routes');
+const notificationRoutes = require('./modules/notification/notification.routes');
 const socketAuthMiddleware = require('./core/socketAuth');
 const chatSocket = require('./socket/chat.socket');
 const redisClient = require('./core/redis');
@@ -83,6 +84,7 @@ app.use('/user', userRoutes);
 app.use('/moment', momentRoutes);
 app.use('/upload', uploadRoutes);
 app.use('/community', communityRoutes);
+app.use('/notification', notificationRoutes);
 
 // Error handling
 app.use((err, req, res, next) => {

@@ -50,7 +50,7 @@
       </form>
 
       <div class="auth-footer">
-        <p>{{ $t('auth.has_account').split('?')[0] }}? <router-link to="/login">{{ $t('auth.has_account').split('?')[1] || 'Sign in' }}</router-link></p>
+        <p>{{ $t('auth.has_account') }} <router-link to="/login">{{ $t('auth.login') }}</router-link></p>
         <div class="lang-switch-wrapper">
           <LanguageSwitcher />
         </div>
@@ -97,12 +97,15 @@ const handleRegister = async () => {
 }
 
 .auth-card {
-  background: white;
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
   width: 100%;
   max-width: 420px;
   padding: 2.5rem;
   border-radius: 24px;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  box-shadow: var(--glass-shadow);
 }
 
 .auth-header {
