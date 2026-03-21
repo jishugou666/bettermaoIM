@@ -1,0 +1,213 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  username  String   @unique
+  password  String
+  nickname  String?
+  avatar    String?
+  bio       String?
+  role      String   @default("USER")
+  isVip     Boolean  @default(false)
+  gender    String?  // MALE, FEMALE, OTHER
+  location  String?
+  tags      String?  // JSON string or comma separated tags
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  sentMessages     Message[] @relation("SentMessages")
+  receivedMessages Message[] @relation("ReceivedMessages")
+  
+  friendshipsInitiated Friendship[] @relation("FriendshipInitiator")
+  friendshipsReceived  Friendship[] @relation("FriendshipReceiver")
+
+  credit           UserCredit?
+  creditTransactions CreditTransaction[]
+
+  moments          Moment[]
+  likes            Like[]
+  comments         Comment[]
+  
+  posts            Post[]
+  postComments     PostComment[]
+  postLikes        PostLike[]
+
+  groupsCreated    Group[]   @relation("GroupCreator")
+  groupMemberships GroupMember[]
+}
+
+// ... existing models ...
+
+model Post {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  title     String
+  content   String
+  category  String   @default("general")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id])
+  comments  PostComment[]
+  likes     PostLike[]
+}
+
+model PostComment {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  postId    Int
+  parentId  Int?     // For nested comments (reply to comment)
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id])
+  post      Post     @relation(fields: [postId], references: [id])
+  parent    PostComment? @relation("CommentReplies", fields: [parentId], references: [id])
+  replies   PostComment[] @relation("CommentReplies")
+}
+
+model PostLike {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  postId    Int
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
+  post      Post     @relation(fields: [postId], references: [id])
+
+  @@unique([userId, postId])
+}
+
+model Message {
+  id         Int      @id @default(autoincrement())
+  content    String
+  type       String   @default("text") // text, image, code
+  senderId   Int
+  receiverId Int?     // Nullable for group messages
+  groupId    Int?     // Nullable for private messages
+  isRead     Boolean  @default(false)
+  isRecalled Boolean  @default(false)
+  isEdited   Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  sender     User     @relation("SentMessages", fields: [senderId], references: [id])
+  receiver   User?    @relation("ReceivedMessages", fields: [receiverId], references: [id])
+  group      Group?   @relation(fields: [groupId], references: [id])
+}
+
+model Group {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+  avatar      String?
+  creatorId   Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  creator     User     @relation("GroupCreator", fields: [creatorId], references: [id])
+  members     GroupMember[]
+  messages    Message[]
+}
+
+model GroupMember {
+  id        Int      @id @default(autoincrement())
+  groupId   Int
+  userId    Int
+  role      String   @default("MEMBER") // ADMIN, MEMBER
+  joinedAt  DateTime @default(now())
+
+  group     Group    @relation(fields: [groupId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@unique([groupId, userId])
+}
+
+model Friendship {
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  friendId   Int
+  status     String   @default("PENDING") // PENDING, ACCEPTED, BLOCKED
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user       User     @relation("FriendshipInitiator", fields: [userId], references: [id])
+  friend     User     @relation("FriendshipReceiver", fields: [friendId], references: [id])
+
+  @@unique([userId, friendId])
+}
+
+model UserCredit {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @unique
+  balance   Int      @default(0)
+  totalEarned Int    @default(0)
+  updatedAt DateTime @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model CreditTransaction {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  type      String   // daily_login, profile_complete, chat_message, etc.
+  amount    Int
+  remark    String?
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model TaskLog {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  taskKey   String   // daily_login, profile_complete
+  completedAt DateTime @default(now())
+
+  @@index([userId, taskKey])
+}
+
+model Moment {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  content   String
+  images    String?  // JSON string of image URLs
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id])
+  likes     Like[]
+  comments  Comment[]
+}
+
+model Like {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  momentId  Int
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
+  moment    Moment   @relation(fields: [momentId], references: [id])
+
+  @@unique([userId, momentId])
+}
+
+model Comment {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  momentId  Int
+  content   String
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
+  moment    Moment   @relation(fields: [momentId], references: [id])
+}

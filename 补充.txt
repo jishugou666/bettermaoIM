@@ -1,0 +1,60 @@
+前端技术栈补充说明
+青年开发者IM平台 · 附录文档
+补充至 v3.0 主文档  |  前端选型：Vue3 + Vite + Pinia + Vue Router
+一、前端选型结论
+主文档 v3.0 中前端框架表述为「Vue3/React 二选一」，本文档明确最终选型为 Vue3，并补充完整技术栈组合和选型理由。
+
+  最终选型：Vue3 + Vite + Pinia + Vue Router 4。这套组合轻量、构建快、中文文档完整，是本项目在 1h1g 服务器约束下的最优前端方案。
+
+二、完整前端技术栈
+
+技术	版本	用途	选用理由
+Vue 3	3.x（Composition API）	核心 UI 框架	上手快、中文文档、响应式数据天然适合 IM 实时场景
+Vite	5.x	构建工具	比 Webpack 快 10 倍以上，开发体验好，打包体积小
+Pinia	2.x	全局状态管理	Vue3 官方推荐，比 Vuex 写法更简洁，管理消息、Credit 余额等全局状态
+Vue Router 4	4.x	路由管理	官方配套，支持懒加载（社区页面第二阶段再加载，不影响 IM 首屏速度）
+Socket.IO Client	4.x	WebSocket 通信	与后端 Socket.IO 配套，断线重连、事件管理开箱即用
+highlight.js	11.x	代码块语法高亮	轻量，按需引入语言包，不引入全部避免包体积过大
+marked	9.x	Markdown 渲染	社区帖子 Markdown 渲染用，轻量，1h1g 前端带宽友好
+axios	1.x	HTTP 请求	请求拦截器统一注入 JWT Token，响应拦截器统一处理错误
+
+⚠  highlight.js 按需引入语言包，不要 import hljs from 'highlight.js' 全量引入，否则打包体积会膨胀到 1MB+，影响首屏加载速度。
+
+三、选 Vue3 而非 React 的原因
+
+上手速度：Vue3 的响应式（ref/reactive）比 React Hooks 的心智模型更直观，没有闭包陷阱、useEffect 依赖项等常见坑，更快出成果。
+中文生态：Vue3 官方文档有完整中文版，国内社区（掘金、B站教程）资源丰富，遇到问题好搜答案，适合独立开发者。
+IM 场景适配：Socket.IO 实时推送的消息列表、在线状态用 Vue3 响应式数据处理非常自然，不需要像 React 那样反复考虑渲染时机。
+Credit 余额展示：Pinia 全局状态管理 Credit 余额，任何组件打赏/兑换后余额实时更新，写法比 Redux/Zustand 简洁很多。
+打包体积：Vue3 + Vite 打包后体积通常在 200-400KB（gzip 后），比同等 React 项目略小，对 1h1g 带宽更友好。
+
+  如果后续想找工作主打 React，可以在社区模块开发时用 React 重构练手，但第一阶段优先用 Vue3 把产品跑起来。
+
+四、推荐项目目录结构
+
+src/
+  assets/          # 静态资源（图标、全局样式）
+  components/      # 通用组件（消息气泡、代码块、Credit徽章）
+  views/           # 页面级组件
+    im/            # IM 相关页面（聊天、好友、群聊）
+    community/     # 社区页面（第二阶段，暂放占位组件）
+    credit/        # Credit 页面（余额、流水、兑换）
+    auth/          # 登录/注册
+  stores/          # Pinia 状态（user、chat、credit）
+  router/          # Vue Router 路由配置
+  api/             # axios 请求封装（按模块拆分）
+  utils/           # 工具函数（时间格式化、消息处理）
+  socket/          # Socket.IO 初始化和事件监听
+
+⚠  socket/ 目录单独拆出来管理 WebSocket 连接和事件，不要把 socket.on 散落在各个组件里，后期维护会很混乱。
+
+五、Credit 体系前端关键实现
+
+全局余额：Pinia creditStore 存储余额，任意页面打赏/兑换后调用 store.fetchBalance() 刷新，导航栏实时显示。
+任务上报：登录成功后前端自动调用 POST /api/credit/task/complete（task_key: daily_login），无需用户手动操作。
+打赏组件：封装通用 TipModal 组件，传入 target_user_id 即可复用，IM 聊天窗口和社区帖子页都调同一个组件。
+兑换页面：展示当前余额和兑换所需 Credit，余额不足时按钮 disabled 并提示差多少，引导用户完成任务或充值。
+
+  打赏档位（5 / 10 / 30 / 50 / 自定义）用组件封装一次，IM 和社区复用，不要写两套。
+
+前端技术栈补充说明 · 附录文档  |  补充至 v3.0 主文档
