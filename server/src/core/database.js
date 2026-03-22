@@ -238,6 +238,24 @@ function initDatabase() {
     else console.log('PostLike table created or already exists');
   });
 
+  // 创建通知表
+  db.run(`
+    CREATE TABLE IF NOT EXISTS Notification (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      userId INTEGER,
+      type TEXT,
+      title TEXT,
+      message TEXT,
+      relatedId INTEGER,
+      read BOOLEAN DEFAULT 0,
+      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `, (err) => {
+    if (err) console.error('Error creating Notification table:', err.message);
+    else console.log('Notification table created or already exists');
+  });
+
   // 添加测试用户
   db.get('SELECT * FROM User WHERE email = ?', ['test@example.com'], (err, row) => {
     if (err) {

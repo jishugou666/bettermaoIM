@@ -97,7 +97,7 @@ export const useChatStore = defineStore('chat', {
 
     async fetchUnreadCounts() {
       try {
-        const response = await axios.get('/chat/unread', {
+        const response = await axios.get('/api/chat/unread', {
           headers: { Authorization: `Bearer ${useAuthStore().token}` }
         });
         this.unreadCounts = response.data;
@@ -113,7 +113,7 @@ export const useChatStore = defineStore('chat', {
       this.unreadCounts[type][targetId] = 0;
 
       try {
-        await axios.post('/chat/read', { targetId, type }, {
+        await axios.post('/api/chat/read', { targetId, type }, {
           headers: { Authorization: `Bearer ${useAuthStore().token}` }
         });
       } catch (err) {
@@ -124,13 +124,13 @@ export const useChatStore = defineStore('chat', {
     async fetchConversations() {
       try {
         // Fetch P2P conversations (users)
-        const usersRes = await axios.get('/chat/conversations', {
+        const usersRes = await axios.get('/api/chat/conversations', {
           headers: { Authorization: `Bearer ${useAuthStore().token}` }
         });
         this.conversations = usersRes.data;
 
         // Fetch Groups
-        const groupsRes = await axios.get('/chat/groups', {
+        const groupsRes = await axios.get('/api/chat/groups', {
           headers: { Authorization: `Bearer ${useAuthStore().token}` }
         });
         this.groups = groupsRes.data;
@@ -150,9 +150,9 @@ export const useChatStore = defineStore('chat', {
       if (this.messages[targetId]) return; 
 
       try {
-        let url = `/chat/history/${targetId}`;
+        let url = `/api/chat/history/${targetId}`;
         if (type === 'group') {
-          url = `/chat/group-history/${targetId}`;
+          url = `/api/chat/group-history/${targetId}`;
         }
 
         const response = await axios.get(url, {
@@ -295,7 +295,7 @@ export const useChatStore = defineStore('chat', {
 
     async createGroup(name, description, memberIds) {
       try {
-        const response = await axios.post('/chat/groups', {
+        const response = await axios.post('/api/chat/groups', {
           name,
           description,
           memberIds
@@ -317,7 +317,7 @@ export const useChatStore = defineStore('chat', {
 
     async kickMember(groupId, userId) {
       try {
-        await axios.delete(`/chat/groups/${groupId}/members/${userId}`, {
+        await axios.delete(`/api/chat/groups/${groupId}/members/${userId}`, {
           headers: { Authorization: `Bearer ${useAuthStore().token}` }
         });
         // Optimistically update or fetch?
@@ -333,7 +333,7 @@ export const useChatStore = defineStore('chat', {
 
     async transferOwnership(groupId, newOwnerId) {
       try {
-        await axios.post(`/chat/groups/${groupId}/transfer`, { newOwnerId }, {
+        await axios.post(`/api/chat/groups/${groupId}/transfer`, { newOwnerId }, {
           headers: { Authorization: `Bearer ${useAuthStore().token}` }
         });
         return true;
@@ -345,7 +345,7 @@ export const useChatStore = defineStore('chat', {
 
     async addMembers(groupId, userIds) {
       try {
-        await axios.post(`/chat/groups/${groupId}/members`, { userIds }, {
+        await axios.post(`/api/chat/groups/${groupId}/members`, { userIds }, {
           headers: { Authorization: `Bearer ${useAuthStore().token}` }
         });
         return true;

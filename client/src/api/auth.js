@@ -5,7 +5,7 @@ const API_URL = import.meta.env.VITE_API_BASE || '';
 
 // 登录
 const login = async (credentials) => {
-  const response = await fetch(`${API_URL}/auth/login`, {
+  const response = await fetch(`${API_URL}/api/auth/login`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
@@ -23,7 +23,7 @@ const login = async (credentials) => {
 
 // 注册
 const register = async (userData) => {
-  const response = await fetch(`${API_URL}/auth/register`, {
+  const response = await fetch(`${API_URL}/api/auth/register`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
@@ -43,7 +43,7 @@ const register = async (userData) => {
 const getMe = async () => {
   const token = localStorage.getItem('token');
   
-  const response = await fetch(`${API_URL}/auth/me`, {
+  const response = await fetch(`${API_URL}/api/auth/me`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',

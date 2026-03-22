@@ -14,7 +14,7 @@ export const useUserStore = defineStore('user', {
     async fetchProfile() {
       this.loading = true;
       try {
-        const response = await axios.get('/user/profile', {
+        const response = await axios.get('/api/user/profile', {
           headers: { Authorization: `Bearer ${useAuthStore().token}` }
         });
         this.profile = response.data;
@@ -32,7 +32,7 @@ export const useUserStore = defineStore('user', {
     async updateProfile(data) {
       this.loading = true;
       try {
-        const response = await axios.put('/user/profile', data, {
+        const response = await axios.put('/api/user/profile', data, {
           headers: { Authorization: `Bearer ${useAuthStore().token}` }
         });
         this.profile = response.data;

@@ -13,7 +13,7 @@ export const useMomentStore = defineStore('moment', {
     async fetchFeed() {
       this.loading = true;
       try {
-        const response = await axios.get('/moment/feed', {
+        const response = await axios.get('/api/moment/feed', {
           headers: { Authorization: `Bearer ${useAuthStore().token}` }
         });
         this.feed = response.data;
@@ -26,7 +26,7 @@ export const useMomentStore = defineStore('moment', {
 
     async createMoment(content, images = []) {
       try {
-        const response = await axios.post('/moment', { content, images }, {
+        const response = await axios.post('/api/moment', { content, images }, {
           headers: { Authorization: `Bearer ${useAuthStore().token}` }
         });
         // Prepend to feed
@@ -47,7 +47,7 @@ export const useMomentStore = defineStore('moment', {
 
     async toggleLike(momentId) {
       try {
-        const response = await axios.post(`/moment/${momentId}/like`, {}, {
+        const response = await axios.post(`/api/moment/${momentId}/like`, {}, {
           headers: { Authorization: `Bearer ${useAuthStore().token}` }
         });
         
@@ -70,7 +70,7 @@ export const useMomentStore = defineStore('moment', {
 
     async fetchComments(momentId) {
       try {
-        const response = await axios.get(`/moment/${momentId}/comments`, {
+        const response = await axios.get(`/api/moment/${momentId}/comments`, {
           headers: { Authorization: `Bearer ${useAuthStore().token}` }
         });
         this.comments[momentId] = response.data;
@@ -81,7 +81,7 @@ export const useMomentStore = defineStore('moment', {
 
     async createComment(momentId, content) {
       try {
-        const response = await axios.post(`/moment/${momentId}/comments`, { content }, {
+        const response = await axios.post(`/api/moment/${momentId}/comments`, { content }, {
           headers: { Authorization: `Bearer ${useAuthStore().token}` }
         });
         
@@ -104,7 +104,7 @@ export const useMomentStore = defineStore('moment', {
 
     async fetchMomentDetail(momentId) {
       try {
-        const response = await axios.get(`/moment/${momentId}`, {
+        const response = await axios.get(`/api/moment/${momentId}`, {
           headers: { Authorization: `Bearer ${useAuthStore().token}` }
         });
         return {

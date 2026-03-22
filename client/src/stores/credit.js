@@ -14,7 +14,7 @@ export const useCreditStore = defineStore('credit', {
   actions: {
     async fetchBalance() {
       try {
-        const response = await axios.get('/credit/balance', {
+        const response = await axios.get('/api/credit/balance', {
           headers: { Authorization: `Bearer ${useAuthStore().token}` }
         });
         this.balance = response.data.balance;
@@ -26,7 +26,7 @@ export const useCreditStore = defineStore('credit', {
 
     async fetchTransactions() {
       try {
-        const response = await axios.get('/credit/transactions', {
+        const response = await axios.get('/api/credit/transactions', {
           headers: { Authorization: `Bearer ${useAuthStore().token}` }
         });
         this.transactions = response.data;
@@ -37,7 +37,7 @@ export const useCreditStore = defineStore('credit', {
 
     async fetchTasks() {
       try {
-        const response = await axios.get('/credit/tasks', {
+        const response = await axios.get('/api/credit/tasks', {
           headers: { Authorization: `Bearer ${useAuthStore().token}` }
         });
         this.tasks = response.data;
@@ -48,7 +48,7 @@ export const useCreditStore = defineStore('credit', {
 
     async reportTask(taskKey) {
       try {
-        const response = await axios.post('/credit/report', { taskKey }, {
+        const response = await axios.post('/api/credit/report', { taskKey }, {
           headers: { Authorization: `Bearer ${useAuthStore().token}` }
         });
         if (response.data.success) {
@@ -65,7 +65,7 @@ export const useCreditStore = defineStore('credit', {
 
     async tipUser(toUserId, amount, type = 'tip') {
       try {
-        const response = await axios.post('/credit/tip', { toUserId, amount, type }, {
+        const response = await axios.post('/api/credit/tip', { toUserId, amount, type }, {
           headers: { Authorization: `Bearer ${useAuthStore().token}` }
         });
         if (response.data.success) {
@@ -81,7 +81,7 @@ export const useCreditStore = defineStore('credit', {
 
     async purchaseVip() {
       try {
-        const response = await axios.post('/credit/vip', {}, {
+        const response = await axios.post('/api/credit/vip', {}, {
           headers: { Authorization: `Bearer ${useAuthStore().token}` }
         });
         if (response.data.success) {

@@ -15,28 +15,28 @@ api.interceptors.request.use((config) => {
 
 export default {
   uploadAvatar(formData) {
-    return api.post('/upload/avatar', formData, {
+    return api.post('/api/upload/avatar', formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }
     });
   },
   uploadMomentImage(formData) {
-    return api.post('/upload/moment', formData, {
+    return api.post('/api/upload/moment', formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }
     });
   },
   uploadChatImage(formData) {
-    return api.post('/upload/chat', formData, {
+    return api.post('/api/upload/chat', formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }
     });
   },
   uploadGroupFile(formData) {
-    return api.post('/upload/group-file', formData, {
+    return api.post('/api/upload/group-file', formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }

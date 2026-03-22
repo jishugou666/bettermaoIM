@@ -136,9 +136,11 @@ const unreadCount = ref(0)
 // 从后端API获取通知
 const fetchNotifications = async () => {
   try {
+    console.log('Fetching notifications with token:', authStore.token ? 'Token exists' : 'No token')
     const response = await axios.get('/api/notification', {
       headers: { Authorization: `Bearer ${authStore.token}` }
     })
+    console.log('Notification response:', response)
     notifications.value = response.data.map(notification => ({
       ...notification,
       icon: getNotificationIcon(notification.type),
@@ -147,6 +149,14 @@ const fetchNotifications = async () => {
     updateUnreadCount()
   } catch (error) {
     console.error('Failed to fetch notifications:', error)
+    if (error.response) {
+      console.error('Response status:', error.response.status)
+      console.error('Response data:', error.response.data)
+    } else if (error.request) {
+      console.error('Request error:', error.request)
+    } else {
+      console.error('Error message:', error.message)
+    }
   }
 }
 
