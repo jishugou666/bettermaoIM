@@ -1067,8 +1067,8 @@ const markAllAsRead = () => {
 
 <style scoped>
 .chat-container {
-  height: 100%;
-  width: 100%;
+  height: 100vh;
+  width: 100vw;
   margin: 0;
   padding: 0;
   overflow: hidden;
@@ -1076,7 +1076,6 @@ const markAllAsRead = () => {
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
-  background: linear-gradient(135deg, #e0e7ff 0%, #f3f4f6 100%);
   position: relative;
   z-index: 1;
 }
@@ -1094,9 +1093,7 @@ const markAllAsRead = () => {
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
   overflow: hidden;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2rem;
+  flex-direction: column;
   box-sizing: border-box;
   position: relative;
   z-index: 2;
@@ -1127,7 +1124,6 @@ const markAllAsRead = () => {
   flex-direction: column;
   height: 100%;
   min-height: 600px;
-  max-height: 600px;
 }
 
 .sidebar-card {
