@@ -1,6 +1,7 @@
 // 真实API调用
 
-const API_URL = '';
+// 根据环境变量设置API_URL
+const API_URL = import.meta.env.VITE_API_BASE || '';
 
 // 登录
 const login = async (credentials) => {
