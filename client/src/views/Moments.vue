@@ -1,76 +1,78 @@
 <template>
   <div class="moments-layout">
-    <div class="header-section card">
-      <button class="back-btn" @click="router.push('/')">← {{ $t('common.back') }}</button>
-      <h2>朋友圈</h2>
-      <div class="search-bar">
-        <input 
-          v-model="searchQuery" 
-          @input="handleSearch"
-          :placeholder="$t('common.search')" 
-        />
-        <span v-if="isSearching" class="search-loader">...</span>
-      </div>
-      <button class="new-post-btn" @click="showPostModal = true" title="发布动态">✍️</button>
-    </div>
-
-    <div class="feed-container">
-      <div v-if="momentStore.loading && momentStore.feed.length === 0" class="loader-wrapper">
-        <div class="loader"></div>
-      </div>
-      
-      <div v-else-if="momentStore.feed.length === 0" class="empty-state">
-        {{ $t('moments.no_moments') }}
+    <div class="moments-content">
+      <div class="header-section card">
+        <button class="back-btn" @click="router.push('/')">← {{ $t('common.back') }}</button>
+        <h2>朋友圈</h2>
+        <div class="search-bar">
+          <input 
+            v-model="searchQuery" 
+            @input="handleSearch"
+            :placeholder="$t('common.search')" 
+          />
+          <span v-if="isSearching" class="search-loader">...</span>
+        </div>
+        <button class="new-post-btn" @click="showPostModal = true" title="发布动态">✍️</button>
       </div>
 
-      <div v-for="moment in filteredFeed" :key="moment.id" class="moment-card card" @click="navigateToMoment(moment.id)" style="cursor: pointer; position: relative; z-index: 1;">
-        <div class="moment-header">
-          <Avatar :username="moment.user.username" :src="moment.user.avatar" />
-          <div class="user-info">
-            <span class="username">{{ moment.user.username }}</span>
-            <span class="time">{{ formatTime(moment.createdAt) }}</span>
-          </div>
+      <div class="feed-container">
+        <div v-if="momentStore.loading && momentStore.feed.length === 0" class="loader-wrapper">
+          <div class="loader"></div>
         </div>
         
-        <div class="moment-content">
-          {{ moment.content }}
-          <div v-if="moment.images && moment.images.length" class="moment-images">
-            <img 
-              v-for="(img, idx) in moment.images" 
-              :key="idx" 
-              :src="getFullUrl(img)" 
-              class="moment-img" 
-              @click.stop="window.open(getFullUrl(img), '_blank')"
-            />
+        <div v-else-if="momentStore.feed.length === 0" class="empty-state">
+          {{ $t('moments.no_moments') }}
+        </div>
+
+        <div v-for="moment in filteredFeed" :key="moment.id" class="moment-card card" @click="navigateToMoment(moment.id)" style="cursor: pointer; position: relative; z-index: 1;">
+          <div class="moment-header">
+            <Avatar :username="moment.user.username" :src="moment.user.avatar" />
+            <div class="user-info">
+              <span class="username">{{ moment.user.username }}</span>
+              <span class="time">{{ formatTime(moment.createdAt) }}</span>
+            </div>
           </div>
+          
+          <div class="moment-content">
+            {{ moment.content }}
+            <div v-if="moment.images && moment.images.length" class="moment-images">
+              <img 
+                v-for="(img, idx) in moment.images" 
+                :key="idx" 
+                :src="getFullUrl(img)" 
+                class="moment-img" 
+                @click.stop="window.open(getFullUrl(img), '_blank')"
+              />
+            </div>
+          </div>
+
+          <div class="moment-actions">
+            <button 
+              class="action-btn" 
+              :class="{ active: moment.isLiked }"
+              @click.stop="momentStore.toggleLike(moment.id)"
+            >
+              <span class="icon">❤️</span>
+              <span class="count">{{ moment._count.likes }}</span>
+            </button>
+            <button 
+              class="action-btn" 
+              @click.stop="navigateToMoment(moment.id)"
+            >
+              <span class="icon">💬</span>
+              <span class="count">{{ moment._count.comments }}</span>
+            </button>
+            <button 
+              class="action-btn" 
+              @click.stop="openTipModal(moment.user.id)"
+            >
+              <span class="icon">💰</span>
+              <span class="label">{{ $t('moments.tip') }}</span>
+            </button>
+          </div>
+
+
         </div>
-
-        <div class="moment-actions">
-          <button 
-            class="action-btn" 
-            :class="{ active: moment.isLiked }"
-            @click.stop="momentStore.toggleLike(moment.id)"
-          >
-            <span class="icon">❤️</span>
-            <span class="count">{{ moment._count.likes }}</span>
-          </button>
-          <button 
-            class="action-btn" 
-            @click.stop="navigateToMoment(moment.id)"
-          >
-            <span class="icon">💬</span>
-            <span class="count">{{ moment._count.comments }}</span>
-          </button>
-          <button 
-            class="action-btn" 
-            @click.stop="openTipModal(moment.user.id)"
-          >
-            <span class="icon">💰</span>
-            <span class="label">{{ $t('moments.tip') }}</span>
-          </button>
-        </div>
-
-
       </div>
     </div>
 
@@ -237,9 +239,20 @@ const navigateToMoment = (momentId) => {
 
 <style scoped>
 .moments-layout {
-  max-width: 600px;
-  margin: 2rem auto;
-  padding: 0 1rem;
+  min-height: 100vh;
+  width: 100vw;
+  overflow-x: hidden;
+  background: linear-gradient(135deg, #e0e7ff 0%, #f3f4f6 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem 1rem;
+  box-sizing: border-box;
+}
+
+.moments-content {
+  max-width: 800px;
+  width: 100%;
   display: flex;
   flex-direction: column;
   gap: 1.5rem;

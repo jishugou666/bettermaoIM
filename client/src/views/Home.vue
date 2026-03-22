@@ -266,7 +266,7 @@ const logout = () => {
 <style scoped>
 .app-container {
   min-height: 100vh;
-  background-color: var(--bg-color);
+  background: linear-gradient(135deg, #e0e7ff 0%, #f3f4f6 100%);
 }
 
 .navbar {

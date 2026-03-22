@@ -1,74 +1,76 @@
 <template>
   <div class="credit-layout">
-    <div class="header-section card">
-        <button class="back-btn" @click="router.push('/')">← {{ $t('common.back') }}</button>
-        <div class="balance-container">
-          <div class="balance-item">
-            <span class="label">{{ $t('credit.balance') }}</span>
-            <span class="value gold">{{ creditStore.balance }} 💰</span>
-          </div>
-          <div class="balance-divider"></div>
-          <div class="balance-item">
-            <span class="label">{{ $t('credit.total_earned') }}</span>
-            <span class="value">{{ creditStore.totalEarned }}</span>
-          </div>
-        </div>
-        <div class="vip-banner" v-if="!authStore.user?.isVip">
-          <div class="vip-info">
-            <span class="vip-icon">👑</span>
-            <div class="vip-text">
-              <h4>{{ $t('credit.vip_title') }}</h4>
-              <p>{{ $t('credit.vip_desc') }}</p>
+    <div class="credit-content">
+      <div class="header-section card">
+          <button class="back-btn" @click="router.push('/')">← {{ $t('common.back') }}</button>
+          <div class="balance-container">
+            <div class="balance-item">
+              <span class="label">{{ $t('credit.balance') }}</span>
+              <span class="value gold">{{ creditStore.balance }} 💰</span>
+            </div>
+            <div class="balance-divider"></div>
+            <div class="balance-item">
+              <span class="label">{{ $t('credit.total_earned') }}</span>
+              <span class="value">{{ creditStore.totalEarned }}</span>
             </div>
           </div>
-          <button class="vip-btn" @click="handlePurchaseVip">
-            {{ $t('credit.vip_buy') }}
-          </button>
-        </div>
-        <div class="vip-status" v-else>
-          <span class="vip-badge">👑 {{ $t('credit.vip_member') }}</span>
-        </div>
-      </div>
-
-    <div class="main-grid">
-      <div class="tasks-section card">
-        <h3>{{ $t('credit.daily_tasks') }}</h3>
-        <div class="task-list">
-          <div v-for="task in creditStore.tasks" :key="task.key" class="task-item" :class="{ 'completed': task.completed }">
-            <div class="task-info">
-              <span class="task-name">{{ $t(`credit.task_${task.key}`) }}</span>
-              <span class="task-reward">+{{ task.reward }} 💰</span>
+          <div class="vip-banner" v-if="!authStore.user?.isVip">
+            <div class="vip-info">
+              <span class="vip-icon">👑</span>
+              <div class="vip-text">
+                <h4>{{ $t('credit.vip_title') }}</h4>
+                <p>{{ $t('credit.vip_desc') }}</p>
+              </div>
             </div>
-            <button 
-              v-if="!task.completed" 
-              class="complete-btn"
-              :class="{ 'action-btn': getTaskAction(task.key).isAction }"
-              @click="handleTaskAction(task.key)"
-            >
-              {{ getTaskAction(task.key).label }}
+            <button class="vip-btn" @click="handlePurchaseVip">
+              {{ $t('credit.vip_buy') }}
             </button>
-            <div v-else class="completed-badge">
-              <span class="completed-icon">✓</span>
-              <span class="completed-text">{{ $t('credit.done') }}</span>
+          </div>
+          <div class="vip-status" v-else>
+            <span class="vip-badge">👑 {{ $t('credit.vip_member') }}</span>
+          </div>
+        </div>
+
+      <div class="main-grid">
+        <div class="tasks-section card">
+          <h3>{{ $t('credit.daily_tasks') }}</h3>
+          <div class="task-list">
+            <div v-for="task in creditStore.tasks" :key="task.key" class="task-item" :class="{ 'completed': task.completed }">
+              <div class="task-info">
+                <span class="task-name">{{ $t(`credit.task_${task.key}`) }}</span>
+                <span class="task-reward">+{{ task.reward }} 💰</span>
+              </div>
+              <button 
+                v-if="!task.completed" 
+                class="complete-btn"
+                :class="{ 'action-btn': getTaskAction(task.key).isAction }"
+                @click="handleTaskAction(task.key)"
+              >
+                {{ getTaskAction(task.key).label }}
+              </button>
+              <div v-else class="completed-badge">
+                <span class="completed-icon">✓</span>
+                <span class="completed-text">{{ $t('credit.done') }}</span>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <div class="history-section card">
-        <h3>{{ $t('credit.history') }}</h3>
-        <div class="transaction-list">
-          <div v-if="creditStore.transactions.length === 0" class="empty">
-            {{ $t('credit.no_history') }}
-          </div>
-          <div v-for="tx in creditStore.transactions" :key="tx.id" class="tx-item">
-            <div class="tx-info">
-              <span class="tx-type">{{ tx.remark }}</span>
-              <span class="tx-date">{{ formatDate(tx.createdAt) }}</span>
+        <div class="history-section card">
+          <h3>{{ $t('credit.history') }}</h3>
+          <div class="transaction-list">
+            <div v-if="creditStore.transactions.length === 0" class="empty">
+              {{ $t('credit.no_history') }}
             </div>
-            <span class="tx-amount" :class="{ plus: tx.amount > 0 }">
-              {{ tx.amount > 0 ? '+' : '' }}{{ tx.amount }}
-            </span>
+            <div v-for="tx in creditStore.transactions" :key="tx.id" class="tx-item">
+              <div class="tx-info">
+                <span class="tx-type">{{ tx.remark }}</span>
+                <span class="tx-date">{{ formatDate(tx.createdAt) }}</span>
+              </div>
+              <span class="tx-amount" :class="{ plus: tx.amount > 0 }">
+                {{ tx.amount > 0 ? '+' : '' }}{{ tx.amount }}
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -201,9 +203,20 @@ const formatDate = (dateStr) => {
 
 <style scoped>
 .credit-layout {
+  min-height: 100vh;
+  width: 100vw;
+  overflow-x: hidden;
+  background: linear-gradient(135deg, #e0e7ff 0%, #f3f4f6 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem 1rem;
+  box-sizing: border-box;
+}
+
+.credit-content {
   max-width: 1000px;
-  margin: 2rem auto;
-  padding: 0 1rem;
+  width: 100%;
   display: flex;
   flex-direction: column;
   gap: 1.5rem;

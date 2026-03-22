@@ -53,14 +53,16 @@ watch(() => authStore.token, async (newToken) => {
   --shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
-body {
+html, body {
   margin: 0;
   padding: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  background-color: var(--background);
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
 }
 
 /* 页面过渡动画 */

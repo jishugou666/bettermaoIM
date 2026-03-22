@@ -1,77 +1,79 @@
 <template>
   <div class="profile-layout">
-    <div class="header-section card">
-      <button class="back-btn" @click="router.push('/')">← {{ $t('common.back') }}</button>
-      <div class="avatar-wrapper">
-        <div class="avatar-large" :style="avatarUrl ? { backgroundImage: `url(${avatarUrl})`, backgroundSize: 'cover', color: 'transparent' } : {}">
-          {{ profile?.username?.charAt(0).toUpperCase() }}
+    <div class="profile-content">
+      <div class="header-section card">
+        <button class="back-btn" @click="router.push('/')">← {{ $t('common.back') }}</button>
+        <div class="avatar-wrapper">
+          <div class="avatar-large" :style="avatarUrl ? { backgroundImage: `url(${avatarUrl})`, backgroundSize: 'cover', color: 'transparent' } : {}">
+            {{ profile?.username?.charAt(0).toUpperCase() }}
+          </div>
+          <button class="edit-avatar-btn" @click="triggerFileInput" :title="$t('profile.change_avatar')">📷</button>
+          <input type="file" ref="fileInput" class="hidden" @change="handleFileChange" accept="image/*" />
         </div>
-        <button class="edit-avatar-btn" @click="triggerFileInput" :title="$t('profile.change_avatar')">📷</button>
-        <input type="file" ref="fileInput" class="hidden" @change="handleFileChange" accept="image/*" />
+        <h2>{{ profile?.username }}</h2>
+        <p class="role-badge">{{ profile?.role }}</p>
       </div>
-      <h2>{{ profile?.username }}</h2>
-      <p class="role-badge">{{ profile?.role }}</p>
-    </div>
 
-    <div class="form-section card">
-      <h3>{{ $t('profile.edit_title') }}</h3>
-      <form @submit.prevent="saveProfile">
-        <div class="form-group">
-          <label>{{ $t('profile.nickname') }}</label>
-          <input v-model="form.nickname" :placeholder="$t('profile.nickname')" />
-        </div>
-
-        <div class="form-group">
-          <label>{{ $t('profile.bio') }}</label>
-          <textarea v-model="form.bio" :placeholder="$t('profile.bio')" rows="3"></textarea>
-        </div>
-
-        <div class="form-row">
+      <div class="form-section card">
+        <h3>{{ $t('profile.edit_title') }}</h3>
+        <form @submit.prevent="saveProfile">
           <div class="form-group">
-            <label>{{ $t('profile.gender') }}</label>
-            <select v-model="form.gender">
-              <option value="">{{ $t('profile.select') }}</option>
-              <option value="MALE">{{ $t('profile.gender_male') }}</option>
-              <option value="FEMALE">{{ $t('profile.gender_female') }}</option>
-              <option value="OTHER">{{ $t('profile.gender_other') }}</option>
-            </select>
+            <label>{{ $t('profile.nickname') }}</label>
+            <input v-model="form.nickname" :placeholder="$t('profile.nickname')" />
           </div>
-          <div class="form-group">
-            <label>{{ $t('profile.location') }}</label>
-            <input v-model="form.location" :placeholder="$t('profile.location')" />
-          </div>
-        </div>
 
-        <div class="form-group">
-          <label>{{ $t('profile.tags') }}</label>
-          <div class="tags-input-container">
-            <div class="tags-list">
-              <span 
-                v-for="(tag, index) in tagsList" 
-                :key="index"
-                class="tag"
-                :style="{ backgroundColor: getTagColor(tag) }"
-              >
-                {{ tag }}
-                <button type="button" class="tag-remove" @click="removeTag(index)">×</button>
-              </span>
+          <div class="form-group">
+            <label>{{ $t('profile.bio') }}</label>
+            <textarea v-model="form.bio" :placeholder="$t('profile.bio')" rows="3"></textarea>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>{{ $t('profile.gender') }}</label>
+              <select v-model="form.gender">
+                <option value="">{{ $t('profile.select') }}</option>
+                <option value="MALE">{{ $t('profile.gender_male') }}</option>
+                <option value="FEMALE">{{ $t('profile.gender_female') }}</option>
+                <option value="OTHER">{{ $t('profile.gender_other') }}</option>
+              </select>
             </div>
-            <div class="tag-input-wrapper">
-              <input 
-                v-model="newTag"
-                :placeholder="$t('profile.add_tag')"
-                @keyup.enter="addTag"
-                @blur="addTag"
-              />
-              <button type="button" class="add-tag-btn" @click="addTag">+</button>
+            <div class="form-group">
+              <label>{{ $t('profile.location') }}</label>
+              <input v-model="form.location" :placeholder="$t('profile.location')" />
             </div>
           </div>
-        </div>
 
-        <button type="submit" class="save-btn" :disabled="userStore.loading">
-          {{ userStore.loading ? $t('profile.saving') : $t('profile.save_changes') }}
-        </button>
-      </form>
+          <div class="form-group">
+            <label>{{ $t('profile.tags') }}</label>
+            <div class="tags-input-container">
+              <div class="tags-list">
+                <span 
+                  v-for="(tag, index) in tagsList" 
+                  :key="index"
+                  class="tag"
+                  :style="{ backgroundColor: getTagColor(tag) }"
+                >
+                  {{ tag }}
+                  <button type="button" class="tag-remove" @click="removeTag(index)">×</button>
+                </span>
+              </div>
+              <div class="tag-input-wrapper">
+                <input 
+                  v-model="newTag"
+                  :placeholder="$t('profile.add_tag')"
+                  @keyup.enter="addTag"
+                  @blur="addTag"
+                />
+                <button type="button" class="add-tag-btn" @click="addTag">+</button>
+              </div>
+            </div>
+          </div>
+
+          <button type="submit" class="save-btn" :disabled="userStore.loading">
+            {{ userStore.loading ? $t('profile.saving') : $t('profile.save_changes') }}
+          </button>
+        </form>
+      </div>
     </div>
 
     <!-- Toast -->
@@ -203,9 +205,20 @@ const showToast = (msg) => {
 
 <style scoped>
 .profile-layout {
+  min-height: 100vh;
+  width: 100vw;
+  overflow-x: hidden;
+  background: linear-gradient(135deg, #e0e7ff 0%, #f3f4f6 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem 1rem;
+  box-sizing: border-box;
+}
+
+.profile-content {
   max-width: 600px;
-  margin: 2rem auto;
-  padding: 0 1rem;
+  width: 100%;
   display: flex;
   flex-direction: column;
   gap: 1.5rem;

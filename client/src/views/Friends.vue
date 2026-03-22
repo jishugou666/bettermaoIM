@@ -226,9 +226,12 @@ const unblockUser = async (userId) => {
 
 <style scoped>
 .friends-layout {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #e0e7ff 0%, #f3f4f6 100%);
   display: flex;
   justify-content: center;
   padding-top: 2rem;
+  margin: 0;
 }
 
 /* ... existing styles ... */

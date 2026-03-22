@@ -1,6 +1,6 @@
 <template>
   <div class="chat-container">
-    <div class="chat-card">
+    <div>
       <div class="chat-content">
         <!-- 左侧会话列表 -->
         <div class="sidebar-card">
@@ -1067,19 +1067,25 @@ const markAllAsRead = () => {
 
 <style scoped>
 .chat-container {
-  height: 100vh;
+  height: 100%;
+  width: 100%;
   margin: 0;
-  padding: 2rem;
+  padding: 0;
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
+  background: linear-gradient(135deg, #e0e7ff 0%, #f3f4f6 100%);
+  position: relative;
+  z-index: 1;
 }
 
 .chat-card {
-  width: 100%;
-  height: 100%;
+  width: 90%;
+  max-width: 1400px;
+  height: 90%;
+  max-height: 800px;
   border-radius: 16px;
   border: 1px solid var(--glass-border);
   background: var(--glass-bg);
@@ -1092,6 +1098,8 @@ const markAllAsRead = () => {
   justify-content: center;
   padding: 2rem;
   box-sizing: border-box;
+  position: relative;
+  z-index: 2;
 }
 
 .chat-content {

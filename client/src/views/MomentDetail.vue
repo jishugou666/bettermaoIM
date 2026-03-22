@@ -1,92 +1,94 @@
 <template>
   <div class="moment-detail-layout">
-    <div class="header-section card">
-      <button class="back-btn" @click="router.push('/moments')">← {{ $t('common.back') }}</button>
-      <h2>动态详情</h2>
-    </div>
-
-    <div class="moment-card card" v-if="moment">
-      <div class="moment-header">
-        <Avatar :username="moment.user.username" :src="moment.user.avatar" />
-        <div class="user-info">
-          <span class="username">{{ moment.user.username }}</span>
-          <span class="time">{{ formatTime(moment.createdAt) }}</span>
-        </div>
-      </div>
-      
-      <div class="moment-content">
-        {{ moment.content }}
-        <div v-if="moment.images && moment.images.length" class="moment-images">
-          <img 
-            v-for="(img, idx) in moment.images" 
-            :key="idx" 
-            :src="getFullUrl(img)" 
-            class="moment-img" 
-            @click="window.open(getFullUrl(img), '_blank')"
-          />
-        </div>
+    <div class="moment-detail-content">
+      <div class="header-section card">
+        <button class="back-btn" @click="router.push('/moments')">← {{ $t('common.back') }}</button>
+        <h2>动态详情</h2>
       </div>
 
-      <div class="moment-actions">
-        <button 
-          class="action-btn" 
-          :class="{ active: moment.isLiked }"
-          @click="momentStore.toggleLike(moment.id)"
-        >
-          <span class="icon">❤️</span>
-          <span class="count">{{ moment._count.likes }}</span>
-        </button>
-        <button 
-          class="action-btn" 
-          @click="scrollToComments"
-        >
-          <span class="icon">💬</span>
-          <span class="count">{{ moment._count.comments }}</span>
-        </button>
-        <button 
-          class="action-btn" 
-          @click="openTipModal(moment.user.id)"
-        >
-          <span class="icon">💰</span>
-          <span class="label">{{ $t('moments.tip') }}</span>
-        </button>
-      </div>
-
-      <!-- Comments Section -->
-      <div class="comments-section">
-        <h3>评论</h3>
-        <div class="comments-list" ref="commentsList">
-          <div v-if="momentStore.loading" class="loading-comments">{{ $t('common.loading') }}</div>
-          <div v-else-if="!momentStore.comments[moment.id] || momentStore.comments[moment.id].length === 0" class="no-comments">
-            {{ $t('moments.no_comments') }}
+      <div class="moment-card card" v-if="moment">
+        <div class="moment-header">
+          <Avatar :username="moment.user.username" :src="moment.user.avatar" />
+          <div class="user-info">
+            <span class="username">{{ moment.user.username }}</span>
+            <span class="time">{{ formatTime(moment.createdAt) }}</span>
           </div>
-          <div v-else v-for="comment in momentStore.comments[moment.id]" :key="comment.id" class="comment-item">
-            <Avatar :username="comment.user.username" :src="comment.user.avatar" :size="32" />
-            <div class="comment-content">
-              <div class="comment-header">
-                <span class="comment-user">{{ comment.user.username }}</span>
-                <span class="comment-time">{{ formatTime(comment.createdAt) }}</span>
+        </div>
+        
+        <div class="moment-content">
+          {{ moment.content }}
+          <div v-if="moment.images && moment.images.length" class="moment-images">
+            <img 
+              v-for="(img, idx) in moment.images" 
+              :key="idx" 
+              :src="getFullUrl(img)" 
+              class="moment-img" 
+              @click="window.open(getFullUrl(img), '_blank')"
+            />
+          </div>
+        </div>
+
+        <div class="moment-actions">
+          <button 
+            class="action-btn" 
+            :class="{ active: moment.isLiked }"
+            @click="momentStore.toggleLike(moment.id)"
+          >
+            <span class="icon">❤️</span>
+            <span class="count">{{ moment._count.likes }}</span>
+          </button>
+          <button 
+            class="action-btn" 
+            @click="scrollToComments"
+          >
+            <span class="icon">💬</span>
+            <span class="count">{{ moment._count.comments }}</span>
+          </button>
+          <button 
+            class="action-btn" 
+            @click="openTipModal(moment.user.id)"
+          >
+            <span class="icon">💰</span>
+            <span class="label">{{ $t('moments.tip') }}</span>
+          </button>
+        </div>
+
+        <!-- Comments Section -->
+        <div class="comments-section">
+          <h3>评论</h3>
+          <div class="comments-list" ref="commentsList">
+            <div v-if="momentStore.loading" class="loading-comments">{{ $t('common.loading') }}</div>
+            <div v-else-if="!momentStore.comments[moment.id] || momentStore.comments[moment.id].length === 0" class="no-comments">
+              {{ $t('moments.no_comments') }}
+            </div>
+            <div v-else v-for="comment in momentStore.comments[moment.id]" :key="comment.id" class="comment-item">
+              <Avatar :username="comment.user.username" :src="comment.user.avatar" :size="32" />
+              <div class="comment-content">
+                <div class="comment-header">
+                  <span class="comment-user">{{ comment.user.username }}</span>
+                  <span class="comment-time">{{ formatTime(comment.createdAt) }}</span>
+                </div>
+                <span class="comment-text">{{ comment.content }}</span>
               </div>
-              <span class="comment-text">{{ comment.content }}</span>
+            </div>
+          </div>
+          <div class="comment-input-wrapper">
+            <Avatar :username="authStore.user.username" :src="authStore.user.avatar" :size="32" />
+            <div class="input-container">
+              <input 
+                v-model="newComment" 
+                :placeholder="$t('moments.write_comment')" 
+                @keyup.enter="handleComment"
+              />
+              <button @click="handleComment" :disabled="!newComment.trim()">{{ $t('common.send') }}</button>
             </div>
           </div>
         </div>
-        <div class="comment-input-wrapper">
-          <Avatar :username="authStore.user.username" :src="authStore.user.avatar" :size="32" />
-          <div class="input-container">
-            <input 
-              v-model="newComment" 
-              :placeholder="$t('moments.write_comment')" 
-              @keyup.enter="handleComment"
-            />
-            <button @click="handleComment" :disabled="!newComment.trim()">{{ $t('common.send') }}</button>
-          </div>
-        </div>
       </div>
-    </div>
 
-    <div v-else class="loading-state">
-      <div class="loader"></div>
+      <div v-else class="loading-state">
+        <div class="loader"></div>
+      </div>
     </div>
 
     <TipModal 
@@ -180,9 +182,20 @@ watch(() => route.params.id, async () => {
 
 <style scoped>
 .moment-detail-layout {
-  max-width: 600px;
-  margin: 2rem auto;
-  padding: 0 1rem;
+  min-height: 100vh;
+  width: 100vw;
+  overflow-x: hidden;
+  background: linear-gradient(135deg, #e0e7ff 0%, #f3f4f6 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem 1rem;
+  box-sizing: border-box;
+}
+
+.moment-detail-content {
+  max-width: 800px;
+  width: 100%;
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
