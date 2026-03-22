@@ -1,6 +1,6 @@
 // 真实API调用
 
-const API_URL = '/api';
+const API_URL = '';
 
 // 登录
 const login = async (credentials) => {

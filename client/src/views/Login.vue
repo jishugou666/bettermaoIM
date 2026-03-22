@@ -67,6 +67,10 @@ const authStore = useAuthStore()
 const router = useRouter()
 
 const handleLogin = async () => {
+  if (!email.value || !password.value) {
+    authStore.error = '请输入用户名或电子邮件和密码'
+    return
+  }
   const success = await authStore.login(email.value, password.value)
   if (success) {
     router.push('/')

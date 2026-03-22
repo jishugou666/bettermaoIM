@@ -19,7 +19,7 @@ export const useFriendStore = defineStore('friend', {
           console.error('No auth token');
           return;
         }
-        const response = await axios.get('/api/friend', {
+        const response = await axios.get('/friend', {
           headers: { Authorization: `Bearer ${authStore.token}` }
         });
         console.log('Fetched friends:', response.data);
@@ -35,7 +35,7 @@ export const useFriendStore = defineStore('friend', {
 
     async fetchRequests() {
       try {
-        const response = await axios.get('/api/friend/requests', {
+        const response = await axios.get('/friend/requests', {
           headers: { Authorization: `Bearer ${useAuthStore().token}` }
         });
         this.requests = response.data;
@@ -51,7 +51,7 @@ export const useFriendStore = defineStore('friend', {
       }
       this.loading = true;
       try {
-        const response = await axios.get(`/api/friend/search?q=${query}`, {
+        const response = await axios.get(`/friend/search?q=${query}`, {
           headers: { Authorization: `Bearer ${useAuthStore().token}` }
         });
         this.searchResults = response.data;
@@ -64,7 +64,7 @@ export const useFriendStore = defineStore('friend', {
 
     async sendRequest(friendId) {
       try {
-        await axios.post('/api/friend/request', { friendId }, {
+        await axios.post('/friend/request', { friendId }, {
           headers: { Authorization: `Bearer ${useAuthStore().token}` }
         });
         // Optimistically update or re-fetch? Let's just return true for UI feedback
@@ -76,7 +76,7 @@ export const useFriendStore = defineStore('friend', {
 
     async acceptRequest(requestId) {
       try {
-        await axios.post(`/api/friend/request/${requestId}/accept`, {}, {
+        await axios.post(`/friend/request/${requestId}/accept`, {}, {
           headers: { Authorization: `Bearer ${useAuthStore().token}` }
         });
         await this.fetchRequests();
@@ -88,7 +88,7 @@ export const useFriendStore = defineStore('friend', {
 
     async fetchBlockedUsers() {
       try {
-        const response = await axios.get('/api/friend/blocked', {
+        const response = await axios.get('/friend/blocked', {
           headers: { Authorization: `Bearer ${useAuthStore().token}` }
         });
         this.blockedUsers = response.data;
@@ -99,7 +99,7 @@ export const useFriendStore = defineStore('friend', {
 
     async blockUser(userId) {
       try {
-        await axios.post(`/api/friend/${userId}/block`, {}, {
+        await axios.post(`/friend/${userId}/block`, {}, {
           headers: { Authorization: `Bearer ${useAuthStore().token}` }
         });
         await this.fetchFriends();
@@ -113,7 +113,7 @@ export const useFriendStore = defineStore('friend', {
 
     async unblockUser(userId) {
       try {
-        await axios.post(`/api/friend/${userId}/unblock`, {}, {
+        await axios.post(`/friend/${userId}/unblock`, {}, {
           headers: { Authorization: `Bearer ${useAuthStore().token}` }
         });
         await this.fetchBlockedUsers();
@@ -124,7 +124,7 @@ export const useFriendStore = defineStore('friend', {
 
     async rejectRequest(requestId) {
       try {
-        await axios.post(`/api/friend/request/${requestId}/reject`, {}, {
+        await axios.post(`/friend/request/${requestId}/reject`, {}, {
           headers: { Authorization: `Bearer ${useAuthStore().token}` }
         });
         await this.fetchRequests();
