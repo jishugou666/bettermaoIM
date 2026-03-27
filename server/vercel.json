@@ -1,0 +1,46 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "frontend/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "frontend/dist"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "src/app.js"
+    },
+    {
+      "src": "/socket.io/(.*)",
+      "dest": "src/app.js"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "frontend/dist/$1",
+      "status": 200
+    }
+  ],
+  "env": {
+    "NODE_ENV": "production",
+    "SUPABASE_URL": "${SUPABASE_URL}",
+    "SUPABASE_KEY": "${SUPABASE_KEY}",
+    "JWT_SECRET": "${JWT_SECRET}",
+    "DATABASE_URL": "${DATABASE_URL}",
+    "REDIS_URL": "${REDIS_URL}",
+    "FRONTEND_URL": "${FRONTEND_URL}",
+    "PORT": "3000"
+  },
+  "build": {
+    "env": {
+      "NODE_ENV": "production"
+    }
+  }
+}

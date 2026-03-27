@@ -17,4 +17,7 @@ router.get('/blocked', friendController.getBlockedUsers);
 router.post('/:id/block', friendController.blockUser);
 router.post('/:id/unblock', friendController.unblockUser);
 
+router.put('/:friendId', friendController.updateFriendInfo);
+router.get('/groups', friendController.getFriendGroups);
+
 module.exports = router;

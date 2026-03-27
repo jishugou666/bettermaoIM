@@ -1,4 +1,5 @@
 const communityService = require('./community.service');
+const groupService = require('../chat/group.service');
 
 class CommunityController {
   async getPosts(req, res, next) {
@@ -56,6 +57,25 @@ class CommunityController {
     try {
       const isLiked = await communityService.toggleLike(req.user.id, req.params.id);
       res.json({ isLiked });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async createDiscussionGroup(req, res, next) {
+    try {
+      const { postId, memberIds } = req.body;
+      const post = await communityService.getPostById(postId);
+      if (!post) return res.status(404).json({ message: 'Post not found' });
+
+      // 创建讨论群
+      const group = await groupService.createGroup(req.user.id, {
+        name: `讨论: ${post.title}`,
+        description: `关于帖子《${post.title}》的讨论群`,
+        memberIds: [...memberIds, post.userId] // 包含帖子作者
+      });
+
+      res.json(group);
     } catch (error) {
       next(error);
     }

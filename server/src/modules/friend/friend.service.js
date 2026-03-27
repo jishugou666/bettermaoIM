@@ -78,7 +78,17 @@ class FriendService {
       }
     });
 
-    return friendships.map(f => f.userId === userId ? f.friend : f.user);
+    return friendships.map(f => {
+      if (f.userId === userId) {
+        return {
+          ...f.friend,
+          nickname: f.nickname,
+          groupName: f.groupName
+        };
+      } else {
+        return f.user;
+      }
+    });
   }
 
   async blockUser(userId, friendId) {
@@ -186,6 +196,36 @@ class FriendService {
       take: 10
     });
   }
-}
 
-module.exports = new FriendService();
+  async updateFriendInfo(userId, friendId, { nickname, groupName }) {
+    const friendship = await prisma.friendship.findFirst({
+      where: {
+        userId,
+        friendId,
+        status: 'ACCEPTED'
+      }
+    });
+
+    if (!friendship) {
+      throw new Error('Friendship not found');
+    }
+
+    return await prisma.friendship.update({
+      where: { id: friendship.id },
+      data: { nickname, groupName }
+    });
+  }
+
+  async getFriendGroups(userId) {
+    const friendships = await prisma.friendship.findMany({
+      where: {
+        userId,
+        status: 'ACCEPTED'
+      },
+      select: { groupName: true }
+    });
+
+    const groups = [...new Set(friendships.map(f => f.groupName))];
+    return groups;
+  }
+}

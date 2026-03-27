@@ -1,5 +1,4 @@
 const prisma = require('../../core/prisma');
-const { get, run } = require('../../core/database');
 
 class MomentService {
   async createMoment(userId, { content, images }) {
@@ -71,14 +70,30 @@ class MomentService {
   }
 
   async toggleLike(userId, momentId) {
-    // 直接使用SQL查询查找点赞记录，确保返回id
-    const existing = await get('SELECT * FROM Like WHERE userId = ? AND momentId = ?', [userId, momentId]);
+    // 使用Prisma客户端查找点赞记录
+    const existing = await prisma.like.findUnique({
+      where: {
+        userId_momentId: {
+          userId,
+          momentId
+        }
+      }
+    });
 
     if (existing) {
-      await run('DELETE FROM Like WHERE id = ?', [existing.id]);
+      await prisma.like.delete({
+        where: {
+          id: existing.id
+        }
+      });
       return false; // unliked
     } else {
-      await run('INSERT OR IGNORE INTO Like (userId, momentId) VALUES (?, ?)', [userId, momentId]);
+      await prisma.like.create({
+        data: {
+          userId,
+          momentId
+        }
+      });
       return true; // liked
     }
   }
@@ -131,7 +146,7 @@ class MomentService {
 
     return {
       ...moment,
-      images: moment.images ? JSON.parse(moment.images) : [],
+      images: moment.images ? JSON.parse(m.images) : [],
       isLiked: moment.likes.length > 0
     };
   }

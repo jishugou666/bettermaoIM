@@ -88,6 +88,26 @@ class FriendController {
       next(error);
     }
   }
+
+  async updateFriendInfo(req, res, next) {
+    try {
+      const { friendId } = req.params;
+      const { nickname, groupName } = req.body;
+      await friendService.updateFriendInfo(req.user.id, parseInt(friendId), { nickname, groupName });
+      res.json({ success: true, message: 'Friend info updated successfully' });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getFriendGroups(req, res, next) {
+    try {
+      const groups = await friendService.getFriendGroups(req.user.id);
+      res.json(groups);
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 module.exports = new FriendController();

@@ -48,7 +48,7 @@ module.exports = (io, socket) => {
   // Handle message (private or group)
   socket.on('send_message', async (data) => {
     try {
-      const { receiverId, groupId, content, type } = data;
+      const { receiverId, groupId, content, type, messageId } = data;
       const senderId = socket.user.id;
 
       if (!receiverId && !groupId) {
@@ -69,7 +69,8 @@ module.exports = (io, socket) => {
         receiverId: receiverId ? parseInt(receiverId) : null,
         groupId: groupId ? parseInt(groupId) : null,
         content,
-        type
+        type,
+        messageId: messageId ? parseInt(messageId) : null
       });
 
       // 3. Emit to recipient(s)

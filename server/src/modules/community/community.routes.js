@@ -11,5 +11,6 @@ router.post('/posts', communityController.createPost);
 router.get('/posts/:id', communityController.getPostById);
 router.post('/posts/:id/comments', communityController.createComment);
 router.post('/posts/:id/like', communityController.toggleLike);
+router.post('/discussion-group', communityController.createDiscussionGroup);
 
 module.exports = router;

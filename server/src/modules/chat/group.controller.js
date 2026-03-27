@@ -86,6 +86,18 @@ class GroupController {
       next(error);
     }
   }
+
+  async updateAnnouncement(req, res, next) {
+    try {
+      const { id } = req.params;
+      const { announcement } = req.body;
+      
+      await groupService.updateAnnouncement(req.user.id, parseInt(id), announcement);
+      res.json({ success: true, message: 'Announcement updated successfully' });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 module.exports = new GroupController();

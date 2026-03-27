@@ -236,6 +236,25 @@ class GroupService {
       data: { role: 'ADMIN' }
     });
   }
+
+  async updateAnnouncement(initiatorId, groupId, announcement) {
+    // 1. Verify initiator is admin or creator
+    const initiator = await prisma.groupMember.findUnique({
+      where: {
+        groupId_userId: { groupId, userId: initiatorId }
+      }
+    });
+
+    if (!initiator || (initiator.role !== 'ADMIN' && initiator.role !== 'OWNER')) {
+      throw new Error('Only admins can update announcement');
+    }
+
+    // 2. Update announcement
+    return await prisma.group.update({
+      where: { id: groupId },
+      data: { announcement }
+    });
+  }
 }
 
 module.exports = new GroupService();

@@ -21,9 +21,31 @@ const redisClient = require('./core/redis');
 
 require('dotenv').config();
 
+// Environment variable validation for production
+if (process.env.NODE_ENV === 'production') {
+  const requiredEnvVars = ['DATABASE_URL', 'REDIS_URL', 'JWT_SECRET'];
+  const missingVars = [];
+  
+  for (const varName of requiredEnvVars) {
+    if (!process.env[varName]) {
+      missingVars.push(varName);
+    }
+  }
+  
+  if (missingVars.length > 0) {
+    console.error('❌ Missing required environment variables for production:');
+    missingVars.forEach(varName => console.error(`  - ${varName}`));
+    console.error('\nPlease set these variables in your .env file or environment.');
+    process.exit(1);
+  }
+  
+  console.log('✅ All required environment variables are set.');
+}
+
 // Logger setup
+const isDevelopment = process.env.NODE_ENV === 'development';
 const logger = winston.createLogger({
-  level: 'info',
+  level: isDevelopment ? 'debug' : 'info',
   format: winston.format.json(),
   transports: [
     new winston.transports.Console({
@@ -38,9 +60,11 @@ const httpServer = createServer(app);
 // Socket.IO setup
 const io = new Server(httpServer, {
   cors: {
-    origin: "*", // Adjust for production
+    origin: process.env.NODE_ENV === 'development' ? "*" : process.env.FRONTEND_URL || "*",
     methods: ["GET", "POST"]
-  }
+  },
+  path: '/socket.io',
+  transports: ['websocket', 'polling']
 });
 
 const path = require('path');
@@ -49,8 +73,10 @@ const path = require('path');
 app.use(helmet({
   crossOriginResourcePolicy: false, // Allow loading images from other origins (or same origin)
 }));
+
+// CORS configuration
 app.use(cors({
-  origin: '*',
+  origin: isDevelopment ? '*' : process.env.FRONTEND_URL || 'http://localhost:5173',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
@@ -59,12 +85,59 @@ app.use(express.urlencoded({ extended: true, limit: '100mb' }));
 app.use(morgan('dev'));
 app.use('/uploads', express.static(path.join(__dirname, '../../uploads')));
 
-// Rate limiting
-const limiter = rateLimit({
+// Serve frontend static files
+app.use(express.static(path.join(__dirname, '../../frontend/dist')));
+
+// History route fallback for frontend routes
+app.get('*', (req, res, next) => {
+  if (!req.path.startsWith('/api') && !req.path.startsWith('/im')) {
+    res.sendFile(path.join(__dirname, '../../frontend/dist/index.html'));
+  } else {
+    next();
+  }
+});
+
+// Rate limiting using Redis for distributed environments
+class RedisRateLimit {
+  constructor(options) {
+    this.windowMs = options.windowMs || 15 * 60 * 1000; // 15 minutes
+    this.max = options.max || 100; // limit each IP to 100 requests per windowMs
+    this.keyGenerator = options.keyGenerator || (req => req.ip);
+  }
+
+  async middleware(req, res, next) {
+    try {
+      const key = `rate_limit:${this.keyGenerator(req)}`;
+      const current = await redisClient.get(key);
+      
+      if (current) {
+        const count = parseInt(current);
+        if (count >= this.max) {
+          return res.status(429).json({
+            success: false,
+            message: 'Too many requests, please try again later.'
+          });
+        }
+        await redisClient.incr(key);
+      } else {
+        await redisClient.set(key, 1);
+        await redisClient.expire(key, Math.ceil(this.windowMs / 1000));
+      }
+      next();
+    } catch (error) {
+      console.error('Rate limit error:', error);
+      // Fallback to allowing the request if Redis fails
+      next();
+    }
+  }
+}
+
+// Create rate limiter instance
+const limiter = new RedisRateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100 // limit each IP to 100 requests per windowMs
 });
-app.use(limiter);
+app.use(limiter.middleware);
 
 // Routes
 app.get('/', (req, res) => {
@@ -89,7 +162,22 @@ app.use('/notification', notificationRoutes);
 // Error handling
 app.use((err, req, res, next) => {
   logger.error(err.stack);
-  res.status(500).json({ message: err.message || 'Something broke!' });
+  
+  // 统一错误响应格式
+  const errorResponse = {
+    success: false,
+    message: err.message || 'Something broke!',
+    error: process.env.NODE_ENV === 'development' ? err.stack : undefined
+  };
+  
+  // 根据错误类型设置不同的状态码
+  let statusCode = 500;
+  if (err.name === 'ValidationError') statusCode = 400;
+  if (err.name === 'UnauthorizedError') statusCode = 401;
+  if (err.name === 'ForbiddenError') statusCode = 403;
+  if (err.name === 'NotFoundError') statusCode = 404;
+  
+  res.status(statusCode).json(errorResponse);
 });
 
 // Socket.IO Middleware
@@ -157,7 +245,7 @@ io.on('connection', async (socket) => {
 const PORT = process.env.PORT || 3000;
 
 if (require.main === module) {
-  httpServer.listen(PORT, () => {
+  httpServer.listen(PORT, '0.0.0.0', () => {
     logger.info(`Server running on port ${PORT}`);
   });
 }

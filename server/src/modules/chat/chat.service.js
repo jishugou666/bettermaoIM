@@ -2,10 +2,23 @@ const prisma = require('../../core/prisma');
 const redisClient = require('../../core/redis');
 
 class ChatService {
-  async saveMessage({ senderId, receiverId, groupId, content, type = 'text' }) {
+  async saveMessage({ senderId, receiverId, groupId, content, type = 'text', messageId }) {
     try {
+      // 幂等处理：如果提供了messageId，检查是否已经存在
+      if (messageId) {
+        const existingMessage = await prisma.message.findFirst({
+          where: {
+            id: messageId
+          }
+        });
+        if (existingMessage) {
+          return existingMessage; // 返回已存在的消息，避免重复
+        }
+      }
+
       const message = await prisma.message.create({
         data: {
+          id: messageId, // 使用前端提供的messageId
           senderId,
           receiverId, // Nullable
           groupId,    // Nullable
