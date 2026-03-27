@@ -5,10 +5,14 @@ require('dotenv').config();
 const REDIS_URL = process.env.REDIS_URL;
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
-if (NODE_ENV === 'production' && REDIS_URL) {
-  // 生产环境使用真实Redis
+if (REDIS_URL) {
+  // 无论是开发环境还是生产环境，只要有REDIS_URL就使用真实Redis
   const redisClient = redis.createClient({
-    url: REDIS_URL
+    url: REDIS_URL,
+    socket: {
+      tls: true,
+      rejectUnauthorized: false
+    }
   });
 
   redisClient.on('error', (err) => {
@@ -21,13 +25,13 @@ if (NODE_ENV === 'production' && REDIS_URL) {
 
   module.exports = redisClient;
 } else {
-  // 开发环境使用MockRedis
+  // 只有在没有REDIS_URL时才使用MockRedis
   class MockRedis {
     constructor() {
       this.store = new Map();
       this.sets = new Map();
       this.isOpen = true;
-      console.warn('⚠️  Using in-memory MockRedis for development.');
+      console.warn('⚠️  Using in-memory MockRedis because REDIS_URL is not set.');
     }
 
     async connect() { this.isOpen = true; }

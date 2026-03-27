@@ -45,7 +45,7 @@ if (process.env.NODE_ENV === 'production') {
 // Logger setup
 const isDevelopment = process.env.NODE_ENV === 'development';
 const logger = winston.createLogger({
-  level: isDevelopment ? 'debug' : 'info',
+  level: isDevelopment ? 'debug' : 'error',
   format: winston.format.json(),
   transports: [
     new winston.transports.Console({
@@ -60,11 +60,15 @@ const httpServer = createServer(app);
 // Socket.IO setup
 const io = new Server(httpServer, {
   cors: {
-    origin: process.env.NODE_ENV === 'development' ? "*" : process.env.FRONTEND_URL || "*",
+    origin: isDevelopment ? "*" : process.env.FRONTEND_URL || "*",
     methods: ["GET", "POST"]
   },
   path: '/socket.io',
-  transports: ['websocket', 'polling']
+  transports: ['websocket', 'polling'],
+  // Vercel Serverless compatibility
+  pingInterval: 25000,
+  pingTimeout: 5000,
+  maxHttpBufferSize: 1e6
 });
 
 const path = require('path');
@@ -75,14 +79,19 @@ app.use(helmet({
 }));
 
 // CORS configuration
-app.use(cors({
-  origin: isDevelopment ? '*' : process.env.FRONTEND_URL || 'http://localhost:5173',
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
-}));
+if (isDevelopment) {
+  app.use(cors({
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+  }));
+}
+// In production, CORS is handled by Vercel's edge network
 app.use(express.json({ limit: '100mb' }));
 app.use(express.urlencoded({ extended: true, limit: '100mb' }));
-app.use(morgan('dev'));
+if (isDevelopment) {
+  app.use(morgan('dev'));
+}
 app.use('/uploads', express.static(path.join(__dirname, '../../uploads')));
 
 // Serve frontend static files

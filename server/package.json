@@ -10,7 +10,7 @@
     "build": "npm run build-frontend && npm run build-backend",
     "build-frontend": "cd ./frontend && npm install && npm run build",
     "build-backend": "npx prisma generate && mkdir dist 2>nul || mkdir dist && xcopy uploads dist/uploads /E /I /Y 2>nul || echo No uploads directory to copy",
-    "start:prod": "NODE_ENV=production node src/app.js"
+    "start:prod": "set NODE_ENV=production && node src/app.js"
   },
   "dependencies": {
     "@prisma/client": "^6.4.0",
@@ -28,7 +28,6 @@
     "multer": "^2.1.0",
     "redis": "^4.7.0",
     "socket.io": "^4.8.1",
-    "sqlite3": "^6.0.1",
     "winston": "^3.17.0"
   },
   "devDependencies": {
