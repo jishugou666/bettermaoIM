@@ -21,24 +21,26 @@ const redisClient = require('./core/redis');
 
 require('dotenv').config();
 
-// Environment variable validation for production
-if (process.env.NODE_ENV === 'production') {
-  const requiredEnvVars = ['DATABASE_URL', 'REDIS_URL', 'JWT_SECRET'];
-  const missingVars = [];
-  
-  for (const varName of requiredEnvVars) {
-    if (!process.env[varName]) {
-      missingVars.push(varName);
-    }
+// Environment variable validation
+const requiredEnvVars = ['DATABASE_URL', 'REDIS_URL', 'JWT_SECRET'];
+const missingVars = [];
+
+for (const varName of requiredEnvVars) {
+  if (!process.env[varName]) {
+    missingVars.push(varName);
   }
-  
-  if (missingVars.length > 0) {
-    console.error('❌ Missing required environment variables for production:');
-    missingVars.forEach(varName => console.error(`  - ${varName}`));
-    console.error('\nPlease set these variables in your .env file or environment.');
+}
+
+if (missingVars.length > 0) {
+  console.error('❌ Missing required environment variables:');
+  missingVars.forEach(varName => console.error(`  - ${varName}`));
+  console.error('\nPlease set these variables in your .env file or environment.');
+  if (process.env.NODE_ENV === 'production') {
     process.exit(1);
+  } else {
+    console.warn('⚠️  Running in development mode with missing environment variables.');
   }
-  
+} else {
   console.log('✅ All required environment variables are set.');
 }
 
@@ -68,7 +70,12 @@ const io = new Server(httpServer, {
   // Vercel Serverless compatibility
   pingInterval: 25000,
   pingTimeout: 5000,
-  maxHttpBufferSize: 1e6
+  maxHttpBufferSize: 1e6,
+  // Enable reconnection
+  reconnection: true,
+  reconnectionAttempts: 5,
+  reconnectionDelay: 1000,
+  reconnectionDelayMax: 5000
 });
 
 const path = require('path');
@@ -99,7 +106,7 @@ app.use(express.static(path.join(__dirname, '../../frontend/dist')));
 
 // History route fallback for frontend routes
 app.get('*', (req, res, next) => {
-  if (!req.path.startsWith('/api') && !req.path.startsWith('/im')) {
+  if (!req.path.startsWith('/api') && !req.path.startsWith('/socket.io')) {
     res.sendFile(path.join(__dirname, '../../frontend/dist/index.html'));
   } else {
     next();
