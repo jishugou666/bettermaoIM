@@ -1,0 +1,31 @@
+{
+  "name": "bettermao-im",
+  "version": "1.0.0",
+  "description": "BetterMao IM Project",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "nodemon app.js",
+    "build": "npm run build-frontend && npm run build-backend",
+    "build-frontend": "cd ./ui && npm install && npm run build",
+    "build-backend": "mkdir dist 2>nul || mkdir dist && xcopy uploads dist/uploads /E /I /Y 2>nul || echo No uploads directory to copy",
+    "start:prod": "set NODE_ENV=production && node app.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "socket.io": "^4.8.1",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "multer": "^2.1.0",
+    "sqlite3": "^5.1.7",
+    "winston": "^3.17.0",
+    "express-rate-limit": "^7.5.0",
+    "helmet": "^8.0.0",
+    "morgan": "^1.10.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.9"
+  }
+}
