@@ -1,33 +1,40 @@
-# Node.js
+# 依赖
 node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
 
-# Environment variables
+# 环境变量文件
 .env
 .env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env.*.local
 
-# IDE
+# 日志文件
+logs/
+*.log
+
+# 数据库文件
+db/*.db
+db/backups/
+
+# 上传文件
+uploads/
+
+# 构建产物
+dist/
+ui/dist/
+
+# 编辑器配置
 .vscode/
 .idea/
 *.swp
 *.swo
+*~
 
-# Logs
-logs
-*.log
-server/log.txt
-
-# Build
-dist/
-build/
-
-# OS
+# 操作系统文件
 .DS_Store
 Thumbs.db
+
+# 测试文件
+coverage/
+
+# 临时文件
+*.tmp
+*.temp

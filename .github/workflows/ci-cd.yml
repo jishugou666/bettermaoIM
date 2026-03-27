@@ -1,0 +1,66 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js 16
+        uses: actions/setup-node@v4
+        with:
+          node-version: '16'
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm install
+      - name: Lint
+        run: npm run lint
+      - name: Test
+        run: npm run test
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js 16
+        uses: actions/setup-node@v4
+        with:
+          node-version: '16'
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm install
+      - name: Build frontend
+        run: npm run build-frontend
+      - name: Build backend
+        run: npm run build-backend
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: yourusername/bettermao-im:latest
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Deploy to server
+        run: |
+          echo "Deploying to server..."
+          # 这里可以添加部署到服务器的命令
+          # 例如使用SSH连接服务器并重启服务
