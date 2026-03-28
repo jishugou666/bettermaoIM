@@ -45,8 +45,15 @@ export const useChatStore = defineStore('chat', {
       this.error = null;
       try {
         const response = await getMessages(chatId);
-        this.messages = response.messages;
-        return response.messages;
+        // 确保每条消息都有id字段
+        const messages = response.messages.map(msg => {
+          if (!msg.id && msg._id) {
+            return { ...msg, id: msg._id };
+          }
+          return msg;
+        });
+        this.messages = messages;
+        return messages;
       } catch (err) {
         this.error = err.message || 'Failed to fetch messages';
         return [];
@@ -59,9 +66,14 @@ export const useChatStore = defineStore('chat', {
       this.error = null;
       try {
         const response = await sendMessage(chatId, content, type);
+        const message = response.message;
+        // 确保消息有id字段
+        if (message && !message.id && message._id) {
+          message.id = message._id;
+        }
         // 添加到本地消息列表
-        this.messages.push(response.message);
-        return response.message;
+        this.messages.push(message);
+        return message;
       } catch (err) {
         this.error = err.message || 'Failed to send message';
         return null;
@@ -73,6 +85,10 @@ export const useChatStore = defineStore('chat', {
       this.currentChat = chat;
     },
     addMessage(message) {
+      // 确保消息有id字段
+      if (message && !message.id && message._id) {
+        message.id = message._id;
+      }
       this.messages.push(message);
     },
     clearError() {

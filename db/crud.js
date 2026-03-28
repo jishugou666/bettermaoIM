@@ -114,6 +114,7 @@ class CRUD {
   }
 }
 
+// --- 修改开始 ---
 // 导出CRUD实例
 const users = new CRUD('users');
 const friends = new CRUD('friends');
@@ -131,12 +132,18 @@ const communityComments = new CRUD('communityComments');
 const communityLikes = new CRUD('communityLikes');
 const adminUsers = new CRUD('adminUsers');
 
+// 添加兼容的别名，支持两套命名系统
+const sessions = chats;
+const sessionMembers = chatMembers;
+
 module.exports = {
   users,
   friends,
   friendRequests,
   chats,
   chatMembers,
+  sessions,
+  sessionMembers,
   messages,
   points,
   moments,
@@ -148,3 +155,4 @@ module.exports = {
   adminUsers,
   CRUD
 };
+// --- 修改结束 ---

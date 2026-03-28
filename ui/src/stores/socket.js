@@ -1,3 +1,4 @@
+// --- 修改开始 ---
 import { defineStore } from 'pinia'
 import { io } from 'socket.io-client'
 import { useChatStore } from './chat'
@@ -16,15 +17,17 @@ export const useSocketStore = defineStore('socket', {
         this.socket.disconnect();
       }
 
+      // 使用认证信息连接Socket.IO
       this.socket = io('http://localhost:3000', {
-        transports: ['websocket']
+        transports: ['websocket'],
+        auth: {
+          token: token
+        }
       });
 
       this.socket.on('connect', () => {
         console.log('Socket connected');
         this.connected = true;
-        // 发送认证 token
-        this.socket.emit('authenticate', token);
       });
 
       this.socket.on('disconnect', () => {
@@ -32,8 +35,8 @@ export const useSocketStore = defineStore('socket', {
         this.connected = false;
       });
 
-      this.socket.on('authenticated', (data) => {
-        console.log('Authenticated:', data);
+      this.socket.on('connect_error', (error) => {
+        console.error('Socket connection error:', error);
       });
 
       // 新消息
@@ -41,8 +44,13 @@ export const useSocketStore = defineStore('socket', {
         const chatStore = useChatStore();
         const authStore = useAuthStore();
         
+        console.log('Received new message:', message);
+        
         // 避免重复添加自己发送的消息
-        if (authStore.user && String(message.userId || message.sender?.id) !== String(authStore.user?.id)) {
+        const messageSenderId = message.sender_id || message.sender?.id || message.userId;
+        const currentUserId = authStore.user?._id || authStore.user?.id;
+        
+        if (authStore.user && String(messageSenderId) !== String(currentUserId)) {
           chatStore.addMessage(message);
         }
       });
@@ -72,12 +80,12 @@ export const useSocketStore = defineStore('socket', {
       });
 
       // 用户在线状态
-      this.socket.on('userOnline', (data) => {
+      this.socket.on('user:online', (data) => {
         console.log('User online:', data.userId);
       });
 
       // 用户离线状态
-      this.socket.on('userOffline', (data) => {
+      this.socket.on('user:offline', (data) => {
         console.log('User offline:', data.userId);
       });
     },
@@ -127,3 +135,4 @@ export const useSocketStore = defineStore('socket', {
     }
   }
 })
+// --- 修改结束 ---

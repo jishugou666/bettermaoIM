@@ -1,4 +1,5 @@
 const { chats, chatMembers, messages, users } = require('../db/crud');
+const { sendToSession } = require('../socket');
 
 class ChatController {
   // --- 修改开始 ---
@@ -172,17 +173,22 @@ class ChatController {
         messagesList.map(async (message) => {
           const userList = await users.read({ _id: message.userId });
           const user = userList[0];
+          const msgWithId = {
+            ...message,
+            id: message._id
+          };
           if (user) {
             return {
-              ...message,
+              ...msgWithId,
               sender: {
                 id: user._id,
                 nickname: user.nickname,
+                username: user.username,
                 avatar: user.avatar
               }
             };
           }
-          return message;
+          return msgWithId;
         })
       );
       
@@ -198,6 +204,8 @@ class ChatController {
       const { id } = req.params;
       const { content, type = 'text' } = req.body;
       
+      console.log('[sendMessage] 发送消息:', { chatId: id, userId, content });
+      
       if (!content) {
         return res.status(400).json({ error: 'Message content is required' });
       }
@@ -209,29 +217,53 @@ class ChatController {
       }
       
       // 创建消息
-      const message = await messages.create({ 
+      const messageData = { 
         chatId: id, 
         userId, 
         content, 
         type,
         createTime: new Date().toISOString()
-      });
+      };
+      
+      const message = await messages.create(messageData);
+      console.log('[sendMessage] 消息创建成功:', message);
+      
+      // 获取完整的消息对象（NeDB返回的是插入后的文档）
+      let completeMessage = message;
+      // 如果返回的是lastID，需要重新查询
+      if (message.lastID) {
+        const messageList = await messages.read({ _id: message.lastID });
+        completeMessage = messageList[0];
+      }
       
       // 获取发送者信息
       const userList = await users.read({ _id: userId });
       const user = userList[0];
       const messageWithSender = {
-        ...message,
+        ...completeMessage,
+        id: completeMessage._id,
         sender: {
           id: user._id,
           nickname: user.nickname,
+          username: user.username,
           avatar: user.avatar
         }
       };
       
+      console.log('[sendMessage] 通过Socket推送消息:', messageWithSender);
+      
+      // 通过Socket.IO推送消息给会话中的所有成员
+      try {
+        sendToSession(id, 'newMessage', messageWithSender);
+      } catch (socketErr) {
+        console.warn('[sendMessage] Socket推送失败:', socketErr.message);
+      }
+      
       res.status(200).json({ message: messageWithSender });
     } catch (error) {
-      res.status(500).json({ error: 'Internal server error' });
+      console.error('[sendMessage] 错误:', error);
+      console.error('[sendMessage] 错误堆栈:', error.stack);
+      res.status(500).json({ error: 'Internal server error', message: error.message });
     }
   }
 

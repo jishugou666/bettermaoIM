@@ -28,8 +28,8 @@ class AdminController {
     return permissions.includes(permission);
   }
 
-  // 生成JWT Token
-  generateToken(admin) {
+  // 生成JWT Token（改为静态方法，避免this上下文问题）
+  static generateToken(admin) {
     return jwt.sign(
       { id: admin._id, username: admin.username, role: admin.role },
       JWT_SECRET,
@@ -42,25 +42,41 @@ class AdminController {
     try {
       const { username, password } = req.body;
       
+      console.log('[Admin Login] 尝试登录用户:', username);
+      
       // 查找管理员
       const adminList = await adminUsers.read({ username });
       const admin = adminList[0];
       
       if (!admin) {
+        console.log('[Admin Login] 管理员不存在');
         return res.status(401).json({ success: false, message: '用户名或密码错误' });
       }
+      
+      console.log('[Admin Login] 找到管理员:', admin.username);
       
       // 验证密码
       const isValid = await bcrypt.compare(password, admin.password);
       if (!isValid) {
+        console.log('[Admin Login] 密码验证失败');
         return res.status(401).json({ success: false, message: '用户名或密码错误' });
       }
       
-      // 更新最后登录时间
-      await adminUsers.update({ _id: admin._id }, { lastLoginAt: new Date() });
+      console.log('[Admin Login] 密码验证成功');
+      
+      // 更新最后登录时间（确保admin有_id）
+      if (admin._id) {
+        try {
+          await adminUsers.update({ _id: admin._id }, { lastLoginAt: new Date() });
+        } catch (updateErr) {
+          console.warn('[Admin Login] 更新登录时间失败:', updateErr.message);
+        }
+      }
       
       // 返回用户信息和token
-      const token = this.generateToken(admin);
+      const token = AdminController.generateToken(admin);
+      
+      console.log('[Admin Login] 登录成功');
       
       res.json({ 
         success: true, 
@@ -74,7 +90,8 @@ class AdminController {
       });
     } catch (error) {
       console.error('Admin login error:', error);
-      res.status(500).json({ message: '服务器错误' });
+      console.error('Error stack:', error.stack);
+      res.status(500).json({ message: '服务器错误', error: error.message });
     }
   }
 

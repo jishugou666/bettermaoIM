@@ -119,12 +119,12 @@
           :class="{ 'own-message': isOwnMessage(message) }"
         >
           <div class="message-avatar">
-            <Avatar :username="message.sender?.nickname || message.sender?.username || 'User'" :src="message.sender?.avatar" size="40" />
+            <Avatar :username="message.sender?.nickname || message.sender?.username || 'User'" :src="message.sender?.avatar" :size="40" />
           </div>
           <div class="message-body">
             <div class="message-meta">
               <span class="message-sender">{{ message.sender?.nickname || message.sender?.username || 'User' }}</span>
-              <span class="message-time">{{ formatTime(message.createTime) }}</span>
+              <span class="message-time">{{ formatTime(message) }}</span>
             </div>
             <div class="message-bubble glass-card">
               {{ message.content }}
@@ -341,13 +341,8 @@ const sendMessage = async () => {
   const content = messageInput.value
   messageInput.value = ''
   
-  // 1. 先发送到后端API，获取完整的消息数据
-  const newMessage = await chatStore.sendMessage(chatStore.currentChat.id, content)
-  
-  // 2. 如果API返回成功，再通过socket发送通知（可选）
-  if (newMessage) {
-    socketStore.sendMessage(chatStore.currentChat.id, content)
-  }
+  // 只发送到后端API，后端会负责通过Socket推送给所有成员
+  await chatStore.sendMessage(chatStore.currentChat.id, content)
 }
 
 const createGroup = async () => {
@@ -393,7 +388,9 @@ const getFriendStatus = (chatId) => {
 
 const formatTime = (dateStr) => {
   if (!dateStr) return ''
-  const date = new Date(dateStr)
+  // 兼容不同的时间字段名
+  const timeStr = dateStr.created_at || dateStr.createdAt || dateStr.createTime || dateStr
+  const date = new Date(timeStr)
   if (isNaN(date.getTime())) return ''
   return date.toLocaleTimeString('zh-CN', { 
     hour: '2-digit', 

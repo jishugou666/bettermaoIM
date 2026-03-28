@@ -1,4 +1,6 @@
+// --- 修改开始 ---
 const { sessions, sessionMembers, messages, users } = require('../../db/crud');
+const { sendToSession } = require('../../socket');
 
 class ChatService {
   async getSessions(userId) {
@@ -105,6 +107,11 @@ class ChatService {
         delete sender.password;
         message.sender = sender;
       }
+
+      // --- 修改开始 ---
+      // 通过Socket.IO推送消息给会话中的所有成员
+      sendToSession(sessionId, 'newMessage', message);
+      // --- 修改结束 ---
 
       return message;
     } catch (error) {
