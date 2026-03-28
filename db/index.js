@@ -129,14 +129,34 @@ class DatabaseManager {
   // 查询方法
   async query(collection, query, projection) {
     try {
+      // --- 修改开始 ---
+      // 参数验证
+      if (!collection || typeof collection !== 'string') {
+        throw new Error('Collection name must be a non-empty string');
+      }
+
+      if (!query || typeof query !== 'object') {
+        console.warn('[DatabaseManager.query] 无效的查询条件，使用空对象');
+        query = {};
+      }
+
       const store = this.datastores[collection];
       if (!store) {
-        throw new Error('Collection not found');
+        throw new Error(`Collection not found: ${collection}`);
       }
 
       const docs = await store.find(query, projection);
+      
+      // 确保返回数组
+      if (!Array.isArray(docs)) {
+        console.warn('[DatabaseManager.query] 查询返回非数组类型:', typeof docs);
+        return [];
+      }
+      
       return docs;
+      // --- 修改结束 ---
     } catch (error) {
+      console.error('[DatabaseManager.query] 查询失败:', error);
       throw error;
     }
   }

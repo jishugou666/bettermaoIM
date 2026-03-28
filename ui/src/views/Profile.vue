@@ -208,11 +208,11 @@ const showToast = (msg) => {
   min-height: 100vh;
   width: 100vw;
   overflow-x: hidden;
-  background: linear-gradient(135deg, #e0e7ff 0%, #f3f4f6 100%);
+  background: var(--bg-gradient);
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 2rem 1rem;
+  padding: var(--spacing-8) var(--spacing-6);
   box-sizing: border-box;
 }
 
@@ -221,14 +221,22 @@ const showToast = (msg) => {
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: var(--spacing-6);
 }
 
 .card {
-  background: white;
-  border-radius: 24px;
-  padding: 2rem;
-  box-shadow: var(--shadow);
+  background: var(--card-glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-4xl);
+  padding: var(--spacing-8);
+  box-shadow: var(--shadow-md);
+  transition: all 0.4s var(--ease-bounce);
+}
+
+.card:hover {
+  box-shadow: var(--shadow-hover);
 }
 
 .header-section {
@@ -240,31 +248,36 @@ const showToast = (msg) => {
 
 .back-btn {
   position: absolute;
-  left: 2rem;
-  top: 2rem;
+  left: 0;
+  top: 0;
   background: none;
   border: none;
-  color: var(--text-light);
+  color: var(--text-secondary);
   cursor: pointer;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
+  transition: color var(--duration-fast) var(--ease-in-out);
+}
+
+.back-btn:hover {
+  color: var(--primary-color);
 }
 
 .avatar-wrapper {
   position: relative;
-  margin-bottom: 1rem;
+  margin-bottom: var(--spacing-4);
 }
 
 .avatar-large {
   width: 100px;
   height: 100px;
-  background-color: var(--primary-color);
+  background: linear-gradient(135deg, var(--primary-color), #7C3AED);
   color: white;
-  border-radius: 50%;
+  border-radius: var(--radius-full);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 3rem;
-  font-weight: 600;
+  font-size: var(--font-size-4xl);
+  font-weight: var(--font-weight-semibold);
 }
 
 .edit-avatar-btn {
@@ -272,74 +285,94 @@ const showToast = (msg) => {
   bottom: 0;
   right: 0;
   background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 50%;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-full);
   width: 32px;
   height: 32px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: var(--shadow-sm);
+  transition: all var(--duration-normal) var(--ease-in-out);
+}
+
+.edit-avatar-btn:hover {
+  transform: scale(1.1);
+  box-shadow: var(--shadow-md);
 }
 
 .role-badge {
-  background-color: #e0e7ff;
+  background: linear-gradient(135deg, rgba(79, 70, 229, 0.1), rgba(124, 58, 237, 0.1));
   color: var(--primary-color);
-  padding: 0.25rem 0.75rem;
-  border-radius: 20px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  margin-top: 0.5rem;
+  padding: var(--spacing-1) var(--spacing-4);
+  border-radius: var(--radius-xl);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  margin-top: var(--spacing-2);
 }
 
 .form-section h3 {
-  margin-bottom: 1.5rem;
+  margin-bottom: var(--spacing-6);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
 }
 
 .form-group {
-  margin-bottom: 1.25rem;
+  margin-bottom: var(--spacing-5);
 }
 
 .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1rem;
+  gap: var(--spacing-4);
 }
 
 label {
   display: block;
-  margin-bottom: 0.5rem;
-  font-weight: 500;
-  font-size: 0.9rem;
-  color: #374151;
+  margin-bottom: var(--spacing-2);
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
 }
 
 input, textarea, select {
   width: 100%;
-  padding: 0.75rem;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
+  padding: var(--spacing-3) var(--spacing-4);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
   font-family: inherit;
-  transition: border-color 0.2s;
+  transition: all var(--duration-normal) var(--ease-in-out);
+  background-color: rgba(255, 255, 255, 0.8);
+  color: var(--text-primary);
+  font-size: var(--font-size-md);
 }
 
 input:focus, textarea:focus, select:focus {
   border-color: var(--primary-color);
   outline: none;
+  box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+  background-color: white;
 }
 
 .save-btn {
   width: 100%;
-  background-color: var(--primary-color);
+  background: linear-gradient(135deg, var(--primary-color), #7C3AED);
   color: white;
   border: none;
-  padding: 0.875rem;
-  border-radius: 12px;
-  font-weight: 600;
-  font-size: 1rem;
+  padding: var(--spacing-4);
+  border-radius: var(--radius-xl);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-md);
   cursor: pointer;
-  margin-top: 1rem;
+  margin-top: var(--spacing-4);
+  transition: all var(--duration-normal) var(--ease-in-out);
+}
+
+.save-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
 }
 
 .save-btn:disabled {
@@ -352,44 +385,45 @@ input:focus, textarea:focus, select:focus {
 }
 
 .tags-input-container {
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-3);
   min-height: 60px;
+  background-color: rgba(255, 255, 255, 0.8);
 }
 
 .tags-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
+  gap: var(--spacing-2);
+  margin-bottom: var(--spacing-2);
 }
 
 .tag {
   display: inline-flex;
   align-items: center;
-  gap: 0.25rem;
-  padding: 0.25rem 0.75rem;
-  border-radius: 20px;
+  gap: var(--spacing-1);
+  padding: var(--spacing-1) var(--spacing-3);
+  border-radius: var(--radius-xl);
   color: white;
-  font-size: 0.8rem;
-  font-weight: 500;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
 }
 
 .tag-remove {
   background: none;
   border: none;
   color: white;
-  font-size: 1rem;
+  font-size: var(--font-size-md);
   cursor: pointer;
   line-height: 1;
   padding: 0;
-  margin-left: 0.25rem;
+  margin-left: var(--spacing-1);
 }
 
 .tag-input-wrapper {
   display: flex;
-  gap: 0.5rem;
+  gap: var(--spacing-2);
 }
 
 .tag-input-wrapper input {
@@ -397,40 +431,79 @@ input:focus, textarea:focus, select:focus {
   border: none;
   padding: 0;
   outline: none;
+  background-color: transparent;
 }
 
 .add-tag-btn {
-  background-color: var(--primary-color);
+  background: linear-gradient(135deg, var(--primary-color), #7C3AED);
   color: white;
   border: none;
-  border-radius: 50%;
+  border-radius: var(--radius-full);
   width: 24px;
   height: 24px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1rem;
-  font-weight: bold;
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-bold);
+  transition: all var(--duration-normal) var(--ease-in-out);
+}
+
+.add-tag-btn:hover {
+  transform: scale(1.1);
 }
 
 .toast {
   position: fixed;
-  bottom: 2rem;
+  bottom: var(--spacing-8);
   left: 50%;
   transform: translateX(-50%);
   background-color: #111827;
   color: white;
-  padding: 1rem 2rem;
-  border-radius: 50px;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
+  padding: var(--spacing-4) var(--spacing-8);
+  border-radius: var(--radius-4xl);
+  box-shadow: var(--shadow-2xl);
   z-index: 1000;
 }
 
 .fade-enter-active, .fade-leave-active {
-  transition: opacity 0.3s;
+  transition: opacity var(--duration-normal) var(--ease-in-out);
 }
 .fade-enter-from, .fade-leave-to {
   opacity: 0;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .profile-layout {
+    padding: var(--spacing-6) var(--spacing-4);
+  }
+  
+  .card {
+    padding: var(--spacing-6);
+    border-radius: var(--radius-3xl);
+  }
+  
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .profile-layout {
+    padding: var(--spacing-4) var(--spacing-3);
+  }
+  
+  .card {
+    padding: var(--spacing-5);
+    border-radius: var(--radius-2xl);
+  }
+  
+  .avatar-large {
+    width: 80px;
+    height: 80px;
+    font-size: var(--font-size-3xl);
+  }
 }
 </style>

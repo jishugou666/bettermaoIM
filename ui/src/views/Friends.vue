@@ -266,10 +266,10 @@ const unblockUser = async (userId) => {
 /* --- UI统一修改结束 --- */
 </script>
 
-<style scoped>/* --- UI统一修改开始 --- */
+<style scoped>
 .friends-layout {
   min-height: 100vh;
-  background: linear-gradient(135deg, var(--primary-50) 0%, var(--bg-color) 100%);
+  background: var(--bg-gradient);
   display: flex;
   justify-content: center;
   padding-top: var(--spacing-6);
@@ -279,18 +279,25 @@ const unblockUser = async (userId) => {
 .friends-container {
   width: 100%;
   max-width: 600px;
-  background: var(--card-color);
-  border-radius: var(--radius-2xl);
+  background: var(--card-glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: var(--radius-4xl);
   box-shadow: var(--shadow-md);
   overflow: hidden;
   min-height: 500px;
+  transition: all 0.4s var(--ease-bounce);
+}
+
+.friends-container:hover {
+  box-shadow: var(--shadow-hover);
 }
 
 .friends-header {
   padding: var(--spacing-4);
   display: flex;
   align-items: center;
-  border-bottom: 1px solid var(--divider-color);
+  border-bottom: 1px solid var(--border-light);
   gap: var(--spacing-4);
 }
 
@@ -304,7 +311,7 @@ const unblockUser = async (userId) => {
 
 .friends-tabs {
   display: flex;
-  border-bottom: 1px solid var(--divider-color);
+  border-bottom: 1px solid var(--border-light);
 }
 
 .friends-tabs button {
@@ -352,13 +359,14 @@ const unblockUser = async (userId) => {
   justify-content: space-between;
   align-items: center;
   padding: var(--spacing-3);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-xl);
   transition: all var(--duration-fast) var(--ease-in-out);
   margin-bottom: var(--spacing-2);
 }
 
 .friend-item:hover {
-  background-color: var(--bg-color);
+  background-color: rgba(255, 255, 255, 0.5);
+  transform: translateX(4px);
 }
 
 .friend-main {
@@ -380,7 +388,7 @@ const unblockUser = async (userId) => {
   width: 12px;
   height: 12px;
   background-color: var(--success-color);
-  border: 2px solid var(--card-color);
+  border: 2px solid white;
   border-radius: var(--radius-full);
 }
 
@@ -411,10 +419,10 @@ const unblockUser = async (userId) => {
   justify-content: space-between;
   align-items: center;
   padding: var(--spacing-3);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-xl);
   transition: all var(--duration-fast) var(--ease-in-out);
   margin-bottom: var(--spacing-2);
-  background-color: var(--bg-color);
+  background-color: rgba(255, 255, 255, 0.5);
 }
 
 .request-info {
@@ -448,7 +456,7 @@ const unblockUser = async (userId) => {
   max-height: 300px;
   overflow-y: auto;
   border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-xl);
   padding: var(--spacing-2);
 }
 
@@ -457,13 +465,13 @@ const unblockUser = async (userId) => {
   justify-content: space-between;
   align-items: center;
   padding: var(--spacing-3);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-xl);
   transition: all var(--duration-fast) var(--ease-in-out);
   margin-bottom: var(--spacing-2);
 }
 
 .result-item:hover {
-  background-color: var(--bg-color);
+  background-color: rgba(255, 255, 255, 0.5);
 }
 
 .result-info {
@@ -498,6 +506,7 @@ const unblockUser = async (userId) => {
   .friends-container {
     max-width: 100%;
     margin: 0 var(--spacing-2);
+    border-radius: var(--radius-3xl);
   }
   
   .friends-header {
@@ -532,5 +541,4 @@ const unblockUser = async (userId) => {
     width: 100%;
   }
 }
-/* --- UI统一修改结束 --- */
 </style>

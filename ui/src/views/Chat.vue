@@ -1,10 +1,19 @@
 <template>
   <div class="chat-layout">
-    <div class="chat-sidebar">
+    <div class="chat-sidebar glass-card">
       <div class="sidebar-header">
-        <button class="btn btn-text back-btn" @click="router.push('/')">←</button>
+        <button class="btn btn-text back-btn" @click="router.push('/')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+          </svg>
+        </button>
         <h2>{{ $t('chat.title') }}</h2>
-        <button class="btn btn-text" @click="showCreateGroupModal = true">+</button>
+        <button class="btn btn-icon" @click="showCreateGroupModal = true">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="5" x2="12" y2="19"/>
+            <line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+        </button>
       </div>
       
       <div class="chat-tabs">
@@ -12,101 +21,158 @@
           :class="{ active: activeTab === 'friends' }" 
           @click="activeTab = 'friends'"
         >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
+          </svg>
           {{ $t('chat.friends') }}
         </button>
         <button 
           :class="{ active: activeTab === 'groups' }" 
           @click="activeTab = 'groups'"
         >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+            <path d="M23 21v-2a4 4 0 00-3-3.87"/>
+            <path d="M16 3.13a4 4 0 010 7.75"/>
+          </svg>
           {{ $t('chat.groups') }}
         </button>
       </div>
       
       <div class="chat-list">
-        <div v-if="chatStore.loading" class="loading">{{ $t('common.loading') }}</div>
-        <div v-else-if="filteredChats.length === 0" class="empty">{{ $t('chat.select_conversation') }}</div>
+        <div v-if="chatStore.loading" class="loading-state">
+          <div class="loading-spinner"></div>
+          <span>{{ $t('common.loading') }}</span>
+        </div>
+        <div v-else-if="filteredChats.length === 0" class="empty-state">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+          </svg>
+          <span>{{ $t('chat.select_conversation') }}</span>
+        </div>
         <div 
           v-for="chat in filteredChats" 
           :key="chat.id" 
-          class="chat-item"
+          class="chat-card card-transition"
           :class="{ active: chat.id === chatStore.currentChat?.id }"
           @click="selectChat(chat)"
         >
-          <div class="chat-avatar">
-            <Avatar :username="chat.name" :src="chat.avatar" />
+          <div class="chat-card-avatar">
+            <Avatar :username="chat.name" :src="chat.avatar" :size="48" />
             <span v-if="chat.unreadCount > 0" class="unread-badge">{{ chat.unreadCount }}</span>
           </div>
-          <div class="chat-info">
-            <div class="chat-name">{{ chat.name }}</div>
-            <div class="chat-last-message">{{ chat.lastMessage || $t('chat.select_conversation') }}</div>
+          <div class="chat-card-content">
+            <div class="chat-card-header">
+              <span class="chat-card-name">{{ chat.name }}</span>
+              <span class="chat-card-time">{{ chat.lastMessageTime || '' }}</span>
+            </div>
+            <div class="chat-card-preview">{{ chat.lastMessage || $t('chat.select_conversation') }}</div>
           </div>
-          <div class="chat-time">{{ chat.lastMessageTime || '' }}</div>
         </div>
       </div>
     </div>
     
     <div class="chat-main" v-if="chatStore.currentChat">
-      <div class="chat-header">
+      <div class="chat-header glass-card">
         <div class="chat-header-info">
-          <Avatar :username="chatStore.currentChat.name" :src="chatStore.currentChat.avatar" />
-          <div class="chat-header-details">
+          <div class="header-avatar">
+            <Avatar :username="chatStore.currentChat.name" :src="chatStore.currentChat.avatar" :size="48" />
+          </div>
+          <div class="header-details">
             <h3>{{ chatStore.currentChat.name }}</h3>
-            <span class="chat-status" v-if="chatStore.currentChat.type === 'private'">
+            <span class="header-status" v-if="chatStore.currentChat.type === 'private'">
+              <span class="status-dot online"></span>
               {{ getFriendStatus(chatStore.currentChat.id) }}
+            </span>
+            <span class="header-status" v-else>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M23 21v-2a4 4 0 00-3-3.87"/>
+                <path d="M16 3.13a4 4 0 010 7.75"/>
+              </svg>
+              {{ chatStore.currentChat.memberCount || 0 }} 成员
             </span>
           </div>
         </div>
         <div class="chat-header-actions">
-          <button class="btn btn-text" @click="showGroupSettingsModal = true" v-if="chatStore.currentChat.type === 'group'">
-            ⚙️
+          <button class="btn btn-icon" @click="showGroupSettingsModal = true" v-if="chatStore.currentChat.type === 'group'">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/>
+            </svg>
           </button>
         </div>
       </div>
       
       <div class="chat-messages">
-        <div v-if="chatStore.loading" class="loading">{{ $t('common.loading') }}</div>
-        <div v-else-if="chatStore.messages.length === 0" class="empty">{{ $t('chat.select_conversation_sub') }}</div>
+        <div v-if="chatStore.loading" class="loading-state">
+          <div class="loading-spinner"></div>
+          <span>{{ $t('common.loading') }}</span>
+        </div>
+        <div v-else-if="chatStore.messages.length === 0" class="empty-messages">
+          <div class="empty-icon">
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+              <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+            </svg>
+          </div>
+          <h4>{{ $t('chat.select_conversation') }}</h4>
+          <p>{{ $t('chat.select_conversation_sub') }}</p>
+        </div>
         <div 
           v-for="message in chatStore.messages" 
           :key="message.id" 
-          class="message-item"
+          class="message-card"
           :class="{ 'own-message': message.userId === authStore.user?.id }"
         >
           <div class="message-avatar">
-            <Avatar :username="message.user?.username || 'User'" :src="message.user?.avatar" size="32" />
+            <Avatar :username="message.user?.username || 'User'" :src="message.user?.avatar" size="40" />
           </div>
-          <div class="message-content">
-            <div class="message-header">
+          <div class="message-body">
+            <div class="message-meta">
               <span class="message-sender">{{ message.user?.username || 'User' }}</span>
               <span class="message-time">{{ formatTime(message.createTime) }}</span>
             </div>
-            <div class="message-text">{{ message.content }}</div>
+            <div class="message-bubble glass-card">
+              {{ message.content }}
+            </div>
           </div>
         </div>
       </div>
       
-      <div class="chat-input">
-        <input 
-          type="text" 
-          v-model="messageInput" 
-          :placeholder="$t('chat.type_message')" 
-          class="input"
-          @keyup.enter="sendMessage"
-        />
-        <button class="btn btn-primary" @click="sendMessage" :disabled="!messageInput.trim()">
-          {{ $t('common.send') }}
-        </button>
+      <div class="chat-input-area glass-card">
+        <div class="input-wrapper">
+          <input 
+            type="text" 
+            v-model="messageInput" 
+            :placeholder="$t('chat.type_message')" 
+            class="message-input"
+            @keyup.enter="sendMessage"
+          />
+          <button class="btn btn-primary send-btn" @click="sendMessage" :disabled="!messageInput.trim()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="22" y1="2" x2="11" y2="13"/>
+              <polygon points="22,2 15,22 11,13 2,9"/>
+            </svg>
+          </button>
+        </div>
       </div>
     </div>
     
     <div class="chat-empty" v-else>
-      <div class="empty-content">
+      <div class="empty-content glass-card">
+        <div class="empty-icon-large">
+          <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+            <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+          </svg>
+        </div>
         <h3>{{ $t('chat.select_conversation') }}</h3>
         <p>{{ $t('chat.select_conversation_sub') }}</p>
       </div>
     </div>
     
-    <!-- Create Group Modal -->
     <Modal
       :visible="showCreateGroupModal"
       :title="$t('chat.create_group')"
@@ -127,42 +193,74 @@
           <div 
             v-for="friend in friendStore.friends" 
             :key="friend.id"
-            class="member-item"
+            class="member-card card-transition"
             :class="{ selected: selectedMembers.includes(friend.id) }"
             @click="toggleMember(friend.id)"
           >
-            <Avatar :username="friend.nickname || friend.username" :src="friend.avatar" size="32" />
-            <span>{{ friend.nickname || friend.username }}</span>
+            <Avatar :username="friend.nickname || friend.username" :src="friend.avatar" size="36" />
+            <span class="member-name">{{ friend.nickname || friend.username }}</span>
+            <div class="member-check" v-if="selectedMembers.includes(friend.id)">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                <polyline points="20,6 9,17 4,12"/>
+              </svg>
+            </div>
           </div>
         </div>
       </div>
     </Modal>
     
-    <!-- Group Settings Modal -->
     <Modal
       :visible="showGroupSettingsModal"
       :title="$t('chat.group_settings')"
       @close="showGroupSettingsModal = false"
     >
       <div v-if="chatStore.currentChat" class="group-settings">
-        <div class="setting-item">
-          <span class="setting-label">{{ $t('chat.name') }}</span>
-          <span class="setting-value">{{ chatStore.currentChat.name }}</span>
+        <div class="setting-card glass-card">
+          <div class="setting-icon" style="background: linear-gradient(135deg, #4F46E5, #7C3AED);">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+              <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+            </svg>
+          </div>
+          <div class="setting-info">
+            <span class="setting-label">{{ $t('chat.name') }}</span>
+            <span class="setting-value">{{ chatStore.currentChat.name }}</span>
+          </div>
         </div>
-        <div class="setting-item">
-          <span class="setting-label">{{ $t('chat.description') }}</span>
-          <span class="setting-value">{{ chatStore.currentChat.description || 'N/A' }}</span>
+        <div class="setting-card glass-card">
+          <div class="setting-icon" style="background: linear-gradient(135deg, #10B981, #059669);">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+              <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+              <polyline points="14,2 14,8 20,8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+            </svg>
+          </div>
+          <div class="setting-info">
+            <span class="setting-label">{{ $t('chat.description') }}</span>
+            <span class="setting-value">{{ chatStore.currentChat.description || 'N/A' }}</span>
+          </div>
         </div>
-        <div class="setting-item">
-          <span class="setting-label">{{ $t('chat.members') }}</span>
-          <span class="setting-value">{{ chatStore.currentChat.memberCount || 0 }}</span>
+        <div class="setting-card glass-card">
+          <div class="setting-icon" style="background: linear-gradient(135deg, #F59E0B, #D97706);">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+              <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 00-3-3.87"/>
+              <path d="M16 3.13a4 4 0 010 7.75"/>
+            </svg>
+          </div>
+          <div class="setting-info">
+            <span class="setting-label">{{ $t('chat.members') }}</span>
+            <span class="setting-value">{{ chatStore.currentChat.memberCount || 0 }} 人</span>
+          </div>
         </div>
       </div>
     </Modal>
   </div>
 </template>
 
-<script setup>/* --- UI统一修改开始 --- */
+<script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { useChatStore } from '../stores/chat'
 import { useFriendStore } from '../stores/friend'
@@ -248,7 +346,6 @@ const toggleMember = (userId) => {
 }
 
 const getFriendStatus = (chatId) => {
-  // 这里应该根据好友ID获取在线状态
   return t('common.online')
 }
 
@@ -269,37 +366,44 @@ watch(() => authStore.token, async (newToken) => {
     await friendStore.fetchFriends()
   }
 })
-/* --- UI统一修改结束 --- */
 </script>
 
-<style scoped>/* --- UI统一修改开始 --- */
+<style scoped>
 .chat-layout {
   min-height: 100vh;
-  background-color: var(--bg-color);
+  background: var(--bg-gradient);
   display: flex;
-  margin: 0;
+  gap: var(--spacing-6);
+  padding: var(--spacing-6);
 }
 
 .chat-sidebar {
-  width: 300px;
-  background-color: var(--card-color);
-  border-right: 1px solid var(--border-color);
+  width: 340px;
+  border-radius: var(--radius-3xl);
   display: flex;
   flex-direction: column;
-  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  background: white;
+  border: 1px solid var(--border-light);
+  box-shadow: var(--shadow-md);
 }
 
 .sidebar-header {
-  padding: var(--spacing-4);
-  border-bottom: 1px solid var(--divider-color);
+  padding: var(--spacing-5);
+  border-bottom: 1px solid var(--border-light);
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: var(--spacing-3);
 }
 
 .back-btn {
-  font-size: var(--font-size-lg);
-  padding: var(--spacing-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-xl);
 }
 
 .sidebar-header h2 {
@@ -311,138 +415,196 @@ watch(() => authStore.token, async (newToken) => {
   text-align: center;
 }
 
+.btn-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-xl);
+  background: linear-gradient(135deg, var(--primary-color), #7C3AED);
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-in-out);
+}
+
+.btn-icon:hover {
+  transform: scale(1.05);
+  box-shadow: var(--shadow-md);
+}
+
 .chat-tabs {
   display: flex;
-  border-bottom: 1px solid var(--divider-color);
+  padding: var(--spacing-3);
+  gap: var(--spacing-2);
 }
 
 .chat-tabs button {
   flex: 1;
   padding: var(--spacing-3);
   border: none;
-  background: none;
+  background: transparent;
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
   color: var(--text-secondary);
   cursor: pointer;
   transition: all var(--duration-fast) var(--ease-in-out);
-  border-bottom: 2px solid transparent;
+  border-radius: var(--radius-xl);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-2);
+}
+
+.chat-tabs button:hover {
+  background: rgba(79, 70, 229, 0.1);
 }
 
 .chat-tabs button.active {
-  color: var(--primary-color);
-  border-bottom-color: var(--primary-color);
+  background: linear-gradient(135deg, var(--primary-color), #7C3AED);
+  color: white;
 }
 
 .chat-list {
   flex: 1;
   overflow-y: auto;
-  padding: var(--spacing-2);
+  padding: var(--spacing-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
 }
 
-.chat-item {
+.chat-card {
   display: flex;
   align-items: center;
-  padding: var(--spacing-3);
-  border-radius: var(--radius-md);
+  padding: var(--spacing-4);
+  border-radius: var(--radius-2xl);
   cursor: pointer;
-  transition: all var(--duration-fast) var(--ease-in-out);
-  margin-bottom: var(--spacing-1);
+  background: white;
+  border: 1px solid var(--border-light);
+  gap: var(--spacing-3);
 }
 
-.chat-item:hover {
-  background-color: var(--bg-color);
+.chat-card:hover {
+  background: white;
+  transform: translateX(4px);
+  box-shadow: var(--shadow-md);
 }
 
-.chat-item.active {
-  background-color: var(--primary-50);
+.chat-card.active {
+  background: linear-gradient(135deg, rgba(79, 70, 229, 0.08), rgba(124, 58, 237, 0.08));
+  border-color: var(--primary-color);
 }
 
-.chat-avatar {
+.chat-card-avatar {
   position: relative;
-  margin-right: var(--spacing-3);
+  flex-shrink: 0;
 }
 
 .unread-badge {
   position: absolute;
   top: -4px;
   right: -4px;
-  background-color: var(--error-color);
+  background: linear-gradient(135deg, #EC4899, #DB2777);
   color: white;
   font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-semibold);
+  font-weight: var(--font-weight-bold);
   padding: 2px 6px;
   border-radius: var(--radius-full);
-  min-width: 18px;
+  min-width: 20px;
   text-align: center;
+  box-shadow: var(--shadow-sm);
 }
 
-.chat-info {
+.chat-card-content {
   flex: 1;
   min-width: 0;
 }
 
-.chat-name {
-  font-weight: var(--font-weight-medium);
-  color: var(--text-primary);
+.chat-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: var(--spacing-1);
+}
+
+.chat-card-name {
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.chat-last-message {
+.chat-card-time {
+  font-size: var(--font-size-xs);
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+  margin-left: var(--spacing-2);
+}
+
+.chat-card-preview {
   font-size: var(--font-size-sm);
   color: var(--text-tertiary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.chat-time {
-  font-size: var(--font-size-xs);
-  color: var(--text-tertiary);
-  margin-left: var(--spacing-2);
 }
 
 .chat-main {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background-color: var(--bg-color);
+  gap: var(--spacing-4);
+  min-width: 0;
 }
 
 .chat-header {
-  padding: var(--spacing-4);
-  background-color: var(--card-color);
-  border-bottom: 1px solid var(--border-color);
+  padding: var(--spacing-5);
+  border-radius: var(--radius-3xl);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-shadow: var(--shadow-sm);
+  background: white;
+  border: 1px solid var(--border-light);
+  box-shadow: var(--shadow-md);
 }
 
 .chat-header-info {
   display: flex;
   align-items: center;
-  gap: var(--spacing-3);
+  gap: var(--spacing-4);
 }
 
-.chat-header-details h3 {
+.header-avatar {
+  flex-shrink: 0;
+}
+
+.header-details h3 {
   font-size: var(--font-size-lg);
   font-weight: var(--font-weight-semibold);
   color: var(--text-primary);
   margin: 0 0 var(--spacing-1) 0;
 }
 
-.chat-status {
+.header-status {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
   font-size: var(--font-size-sm);
   color: var(--success-color);
 }
 
-.chat-header-actions {
-  display: flex;
-  gap: var(--spacing-2);
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.status-dot.online {
+  background-color: var(--success-color);
+  box-shadow: 0 0 8px var(--success-color);
 }
 
 .chat-messages {
@@ -454,86 +616,109 @@ watch(() => authStore.token, async (newToken) => {
   gap: var(--spacing-4);
 }
 
-.message-item {
+.message-card {
   display: flex;
   gap: var(--spacing-3);
   align-items: flex-start;
+  max-width: 70%;
 }
 
-.message-item.own-message {
+.message-card.own-message {
   flex-direction: row-reverse;
+  margin-left: auto;
 }
 
 .message-avatar {
-  margin-top: var(--spacing-1);
+  flex-shrink: 0;
 }
 
-.message-content {
-  max-width: 70%;
-  background-color: var(--card-color);
-  padding: var(--spacing-3);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
-}
-
-.message-item.own-message .message-content {
-  background-color: var(--primary-color);
-  color: white;
-}
-
-.message-header {
+.message-body {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: var(--spacing-1);
+}
+
+.message-card.own-message .message-body {
+  align-items: flex-end;
+}
+
+.message-meta {
+  display: flex;
   align-items: center;
-  margin-bottom: var(--spacing-1);
-  font-size: var(--font-size-xs);
+  gap: var(--spacing-2);
+  padding: 0 var(--spacing-2);
 }
 
 .message-sender {
-  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
   color: var(--text-secondary);
 }
 
-.message-item.own-message .message-sender {
-  color: rgba(255, 255, 255, 0.8);
-}
-
 .message-time {
+  font-size: var(--font-size-xs);
   color: var(--text-tertiary);
 }
 
-.message-item.own-message .message-time {
-  color: rgba(255, 255, 255, 0.6);
-}
-
-.message-text {
+.message-bubble {
+  padding: var(--spacing-3) var(--spacing-4);
+  border-radius: var(--radius-2xl);
   font-size: var(--font-size-md);
   line-height: var(--line-height-normal);
+  color: var(--text-primary);
+  background: white;
+  border: 1px solid var(--border-light);
 }
 
-.chat-input {
+.message-card.own-message .message-bubble {
+  background: linear-gradient(135deg, var(--primary-color), #7C3AED);
+  color: white;
+}
+
+.chat-input-area {
   padding: var(--spacing-4);
-  background-color: var(--card-color);
-  border-top: 1px solid var(--border-color);
+  border-radius: var(--radius-3xl);
+  background: white;
+  border: 1px solid var(--border-light);
+  box-shadow: var(--shadow-md);
+}
+
+.input-wrapper {
   display: flex;
   gap: var(--spacing-3);
-  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+  align-items: center;
 }
 
-.chat-input .input {
+.message-input {
   flex: 1;
-  padding: var(--spacing-3) var(--spacing-4);
+  padding: var(--spacing-4);
   border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-2xl);
   font-size: var(--font-size-md);
-  background-color: var(--bg-color);
+  background-color: white;
   color: var(--text-primary);
+  transition: all var(--duration-fast) var(--ease-in-out);
 }
 
-.chat-input .input:focus {
+.message-input:focus {
   outline: none;
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+  box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+}
+
+.send-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-xl);
+  padding: 0;
+}
+
+.send-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .chat-empty {
@@ -541,19 +726,27 @@ watch(() => authStore.token, async (newToken) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: var(--bg-color);
-  color: var(--text-tertiary);
 }
 
 .empty-content {
+  padding: var(--spacing-12);
+  border-radius: var(--radius-3xl);
   text-align: center;
+  background: white;
+  border: 1px solid var(--border-light);
+  box-shadow: var(--shadow-md);
+}
+
+.empty-icon-large {
+  margin-bottom: var(--spacing-6);
+  color: var(--text-tertiary);
 }
 
 .empty-content h3 {
   font-size: var(--font-size-xl);
   font-weight: var(--font-weight-semibold);
   margin-bottom: var(--spacing-2);
-  color: var(--text-secondary);
+  color: var(--text-primary);
 }
 
 .empty-content p {
@@ -562,118 +755,212 @@ watch(() => authStore.token, async (newToken) => {
   margin: 0;
 }
 
-.loading, .empty {
-  text-align: center;
+.loading-state, .empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   padding: var(--spacing-8);
+  color: var(--text-tertiary);
+  gap: var(--spacing-3);
+}
+
+.loading-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--border-color);
+  border-top-color: var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.empty-messages {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  text-align: center;
+  color: var(--text-tertiary);
+}
+
+.empty-icon {
+  margin-bottom: var(--spacing-4);
+  opacity: 0.5;
+}
+
+.empty-messages h4 {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-2);
+}
+
+.empty-messages p {
+  font-size: var(--font-size-sm);
   color: var(--text-tertiary);
 }
 
 .member-selector {
-  max-height: 200px;
+  max-height: 240px;
   overflow-y: auto;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
   padding: var(--spacing-2);
 }
 
-.member-item {
+.member-card {
   display: flex;
   align-items: center;
-  padding: var(--spacing-2);
-  border-radius: var(--radius-md);
+  padding: var(--spacing-3);
+  border-radius: var(--radius-xl);
   cursor: pointer;
-  transition: all var(--duration-fast) var(--ease-in-out);
-  margin-bottom: var(--spacing-1);
-  gap: var(--spacing-2);
+  background: white;
+  border: 1px solid var(--border-light);
+  gap: var(--spacing-3);
 }
 
-.member-item:hover {
-  background-color: var(--bg-color);
+.member-card:hover {
+  background: white;
+  box-shadow: var(--shadow-sm);
 }
 
-.member-item.selected {
-  background-color: var(--primary-50);
-  border: 1px solid var(--primary-color);
+.member-card.selected {
+  background: linear-gradient(135deg, rgba(79, 70, 229, 0.08), rgba(124, 58, 237, 0.08));
+  border-color: var(--primary-color);
+}
+
+.member-name {
+  flex: 1;
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+}
+
+.member-check {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: linear-gradient(135deg, var(--primary-color), #7C3AED);
+  border-radius: 50%;
+  color: white;
 }
 
 .group-settings {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-4);
+  gap: var(--spacing-3);
 }
 
-.setting-item {
+.setting-card {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: var(--spacing-3);
-  border-radius: var(--radius-md);
-  background-color: var(--bg-color);
+  padding: var(--spacing-4);
+  border-radius: var(--radius-2xl);
+  gap: var(--spacing-4);
+  background: white;
+  border: 1px solid var(--border-light);
+}
+
+.setting-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-xl);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.setting-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
 }
 
 .setting-label {
-  font-weight: var(--font-weight-medium);
-  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  color: var(--text-tertiary);
 }
 
 .setting-value {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
   color: var(--text-primary);
 }
 
-/* 响应式设计 */
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
+  .chat-layout {
+    padding: var(--spacing-4);
+    gap: var(--spacing-4);
+  }
+  
   .chat-sidebar {
-    width: 250px;
+    width: 300px;
   }
   
-  .chat-messages {
-    padding: var(--spacing-3);
-  }
-  
-  .message-content {
+  .message-card {
     max-width: 80%;
   }
+}
+
+@media (max-width: 768px) {
+  .chat-layout {
+    padding: var(--spacing-2);
+    gap: var(--spacing-2);
+  }
   
-  .chat-input {
+  .chat-sidebar {
+    width: 260px;
+    border-radius: var(--radius-2xl);
+  }
+  
+  .chat-header,
+  .chat-input-area {
+    border-radius: var(--radius-2xl);
     padding: var(--spacing-3);
   }
   
-  .chat-input .input {
-    padding: var(--spacing-2) var(--spacing-3);
-    font-size: var(--font-size-sm);
+  .message-card {
+    max-width: 85%;
   }
   
-  .btn {
-    padding: var(--spacing-2) var(--spacing-4);
-    font-size: var(--font-size-sm);
+  .chat-card {
+    padding: var(--spacing-3);
   }
 }
 
 @media (max-width: 480px) {
   .chat-sidebar {
-    width: 200px;
+    width: 220px;
   }
   
   .sidebar-header h2 {
     font-size: var(--font-size-md);
   }
   
-  .chat-name {
-    font-size: var(--font-size-sm);
-  }
-  
-  .chat-last-message {
+  .chat-tabs button {
+    padding: var(--spacing-2);
     font-size: var(--font-size-xs);
   }
   
-  .message-content {
-    max-width: 85%;
-    padding: var(--spacing-2);
+  .chat-card-name {
+    font-size: var(--font-size-sm);
   }
   
-  .message-text {
+  .chat-card-preview {
+    font-size: var(--font-size-xs);
+  }
+  
+  .message-bubble {
+    padding: var(--spacing-2) var(--spacing-3);
     font-size: var(--font-size-sm);
   }
 }
-/* --- UI统一修改结束 --- */
 </style>

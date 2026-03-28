@@ -242,11 +242,11 @@ const navigateToMoment = (momentId) => {
   min-height: 100vh;
   width: 100vw;
   overflow-x: hidden;
-  background: linear-gradient(135deg, #e0e7ff 0%, #f3f4f6 100%);
+  background: var(--bg-gradient);
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 2rem 1rem;
+  padding: var(--spacing-8) var(--spacing-6);
   box-sizing: border-box;
 }
 
@@ -255,30 +255,43 @@ const navigateToMoment = (momentId) => {
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: var(--spacing-6);
 }
 
 .card {
-  background: white;
-  border-radius: 20px;
-  padding: 1.5rem;
-  box-shadow: var(--shadow);
+  background: var(--card-glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-4xl);
+  padding: var(--spacing-6);
+  box-shadow: var(--shadow-md);
+  transition: all 0.4s var(--ease-bounce);
+}
+
+.card:hover {
+  box-shadow: var(--shadow-hover);
 }
 
 .header-section {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 1rem;
+  gap: var(--spacing-4);
 }
 
 .back-btn {
   background: none;
   border: none;
-  color: var(--text-light);
+  color: var(--text-secondary);
   cursor: pointer;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   flex-shrink: 0;
+  transition: color var(--duration-fast) var(--ease-in-out);
+}
+
+.back-btn:hover {
+  color: var(--primary-color);
 }
 
 .search-bar {
@@ -288,11 +301,20 @@ const navigateToMoment = (momentId) => {
 
 .search-bar input {
   width: 100%;
-  padding: 0.5rem 1rem;
-  border: 1px solid #e5e7eb;
-  border-radius: 20px;
-  font-size: 0.9rem;
-  background-color: #f9fafb;
+  padding: var(--spacing-3) var(--spacing-4);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  font-size: var(--font-size-sm);
+  background-color: rgba(255, 255, 255, 0.8);
+  color: var(--text-primary);
+  transition: all var(--duration-normal) var(--ease-in-out);
+}
+
+.search-bar input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+  background-color: white;
 }
 
 .search-loader {
@@ -300,48 +322,54 @@ const navigateToMoment = (momentId) => {
   right: 10px;
   top: 50%;
   transform: translateY(-50%);
-  color: var(--text-light);
-  font-size: 0.8rem;
+  color: var(--text-tertiary);
+  font-size: var(--font-size-sm);
 }
 
 .new-post-btn {
-  background-color: var(--primary-color);
+  background: linear-gradient(135deg, var(--primary-color), #7C3AED);
   color: white;
   border: none;
   width: 36px;
   height: 36px;
-  border-radius: 50%;
-  font-weight: 600;
+  border-radius: var(--radius-full);
+  font-weight: var(--font-weight-semibold);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  transition: all var(--duration-normal) var(--ease-in-out);
+}
+
+.new-post-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
 }
 
 .feed-container {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: var(--spacing-6);
 }
 
 .moment-header {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  margin-bottom: 1rem;
+  gap: var(--spacing-4);
+  margin-bottom: var(--spacing-4);
 }
 
 .avatar {
   width: 40px;
   height: 40px;
-  background-color: #e0e7ff;
+  background-color: rgba(79, 70, 229, 0.1);
   color: var(--primary-color);
-  border-radius: 50%;
+  border-radius: var(--radius-full);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 
 .user-info {
@@ -350,26 +378,28 @@ const navigateToMoment = (momentId) => {
 }
 
 .username {
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
 }
 
 .time {
-  font-size: 0.75rem;
-  color: var(--text-light);
+  font-size: var(--font-size-xs);
+  color: var(--text-tertiary);
 }
 
 .moment-content {
-  font-size: 1rem;
-  line-height: 1.5;
-  margin-bottom: 1rem;
+  font-size: var(--font-size-md);
+  line-height: var(--line-height-normal);
+  margin-bottom: var(--spacing-4);
   white-space: pre-wrap;
+  color: var(--text-primary);
 }
 
 .moment-actions {
   display: flex;
-  gap: 1.5rem;
-  border-top: 1px solid #f3f4f6;
-  padding-top: 1rem;
+  gap: var(--spacing-6);
+  border-top: 1px solid var(--border-light);
+  padding-top: var(--spacing-4);
 }
 
 .action-btn {
@@ -377,17 +407,18 @@ const navigateToMoment = (momentId) => {
   border: none;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--spacing-2);
   cursor: pointer;
-  color: var(--text-light);
-  transition: all 0.2s;
-  padding: 0.75rem 1rem;
-  border-radius: 8px;
-  font-size: 1rem;
+  color: var(--text-tertiary);
+  transition: all var(--duration-normal) var(--ease-in-out);
+  padding: var(--spacing-3) var(--spacing-4);
+  border-radius: var(--radius-xl);
+  font-size: var(--font-size-md);
 }
 
 .action-btn:hover {
-  color: var(--text-color);
+  color: var(--text-primary);
+  background-color: rgba(255, 255, 255, 0.5);
 }
 
 .action-btn.active {
@@ -396,53 +427,57 @@ const navigateToMoment = (momentId) => {
 
 /* Comments */
 .comments-section {
-  margin-top: 1rem;
-  padding-top: 1rem;
-  border-top: 1px solid #f3f4f6;
-  background-color: #f9fafb;
-  margin-left: -1.5rem;
-  margin-right: -1.5rem;
-  margin-bottom: -1.5rem;
-  padding: 1rem 1.5rem;
-  border-bottom-left-radius: 20px;
-  border-bottom-right-radius: 20px;
+  margin-top: var(--spacing-4);
+  padding-top: var(--spacing-4);
+  border-top: 1px solid var(--border-light);
+  background-color: rgba(255, 255, 255, 0.3);
+  margin-left: calc(var(--spacing-6) * -1);
+  margin-right: calc(var(--spacing-6) * -1);
+  margin-bottom: calc(var(--spacing-6) * -1);
+  padding: var(--spacing-4) var(--spacing-6);
+  border-bottom-left-radius: var(--radius-4xl);
+  border-bottom-right-radius: var(--radius-4xl);
 }
 
 .comments-list {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
+  gap: var(--spacing-2);
+  margin-bottom: var(--spacing-4);
 }
 
 .comment-item {
-  font-size: 0.9rem;
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
 }
 
 .comment-user {
-  font-weight: 600;
-  margin-right: 0.5rem;
+  font-weight: var(--font-weight-semibold);
+  margin-right: var(--spacing-2);
 }
 
 .comment-input-wrapper {
   display: flex;
-  gap: 0.5rem;
+  gap: var(--spacing-2);
 }
 
 .comment-input-wrapper input {
   flex: 1;
-  padding: 0.5rem 1rem;
-  border: 1px solid #e5e7eb;
-  border-radius: 20px;
-  font-size: 0.9rem;
+  padding: var(--spacing-3) var(--spacing-4);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  font-size: var(--font-size-sm);
+  background-color: rgba(255, 255, 255, 0.8);
+  color: var(--text-primary);
 }
 
 .comment-input-wrapper button {
   background: none;
   border: none;
   color: var(--primary-color);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   cursor: pointer;
+  transition: color var(--duration-fast) var(--ease-in-out);
 }
 
 .comment-input-wrapper button:disabled {
@@ -457,6 +492,7 @@ const navigateToMoment = (momentId) => {
   right: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -464,44 +500,73 @@ const navigateToMoment = (momentId) => {
 }
 
 .modal {
-  background: white;
-  padding: 2rem;
-  border-radius: 20px;
+  background: var(--card-glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border-light);
+  padding: var(--spacing-8);
+  border-radius: var(--radius-4xl);
   width: 90%;
   max-width: 500px;
+  box-shadow: var(--shadow-2xl);
 }
 
 textarea {
   width: 100%;
-  padding: 1rem;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  margin: 1.5rem 0;
+  padding: var(--spacing-4);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  margin: var(--spacing-6) 0;
   font-family: inherit;
   resize: vertical;
+  background-color: rgba(255, 255, 255, 0.8);
+  color: var(--text-primary);
+  font-size: var(--font-size-md);
+}
+
+textarea:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+  background-color: white;
 }
 
 .modal-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 1rem;
+  gap: var(--spacing-4);
 }
 
 .cancel-btn {
   background: none;
   border: none;
   cursor: pointer;
-  color: var(--text-light);
+  color: var(--text-tertiary);
+  font-weight: var(--font-weight-medium);
+  padding: var(--spacing-3) var(--spacing-4);
+  border-radius: var(--radius-xl);
+  transition: all var(--duration-fast) var(--ease-in-out);
+}
+
+.cancel-btn:hover {
+  color: var(--text-primary);
+  background-color: rgba(255, 255, 255, 0.5);
 }
 
 .post-btn {
-  background-color: var(--primary-color);
+  background: linear-gradient(135deg, var(--primary-color), #7C3AED);
   color: white;
   border: none;
-  padding: 0.5rem 1.5rem;
-  border-radius: 8px;
-  font-weight: 600;
+  padding: var(--spacing-3) var(--spacing-6);
+  border-radius: var(--radius-xl);
+  font-weight: var(--font-weight-semibold);
   cursor: pointer;
+  transition: all var(--duration-normal) var(--ease-in-out);
+}
+
+.post-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
 }
 
 .post-btn:disabled {
@@ -511,12 +576,12 @@ textarea {
 
 .loader-wrapper, .empty-state {
   text-align: center;
-  padding: 2rem;
-  color: var(--text-light);
+  padding: var(--spacing-8);
+  color: var(--text-tertiary);
 }
 
 .loader {
-  border: 3px solid #f3f3f3;
+  border: 3px solid rgba(79, 70, 229, 0.2);
   border-radius: 50%;
   border-top: 3px solid var(--primary-color);
   width: 30px;
@@ -533,17 +598,17 @@ textarea {
 .moment-images {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-  gap: 0.5rem;
-  margin-top: 0.5rem;
+  gap: var(--spacing-2);
+  margin-top: var(--spacing-2);
 }
 
 .moment-img {
   width: 100%;
   height: 150px;
   object-fit: cover;
-  border-radius: 8px;
+  border-radius: var(--radius-xl);
   cursor: pointer;
-  transition: transform 0.2s;
+  transition: transform var(--duration-normal) var(--ease-in-out);
 }
 
 .moment-img:hover {
@@ -551,24 +616,25 @@ textarea {
 }
 
 .upload-area {
-  margin-bottom: 1rem;
+  margin-bottom: var(--spacing-4);
 }
 
 .upload-btn {
-  background: #f3f4f6;
-  border: 1px dashed #d1d5db;
-  color: #6b7280;
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px dashed var(--border-color);
+  color: var(--text-secondary);
+  padding: var(--spacing-3) var(--spacing-4);
+  border-radius: var(--radius-xl);
   cursor: pointer;
-  font-size: 0.9rem;
+  font-size: var(--font-size-sm);
   width: 100%;
-  transition: all 0.2s;
+  transition: all var(--duration-normal) var(--ease-in-out);
 }
 
 .upload-btn:hover {
-  background: #e5e7eb;
-  border-color: #9ca3af;
+  background: rgba(255, 255, 255, 0.8);
+  border-color: var(--primary-color);
+  color: var(--primary-color);
 }
 
 .image-preview {
@@ -579,28 +645,74 @@ textarea {
 .image-preview img {
   max-width: 100%;
   max-height: 200px;
-  border-radius: 8px;
+  border-radius: var(--radius-xl);
 }
 
 .remove-btn {
   position: absolute;
   top: -8px;
   right: -8px;
-  background: #ef4444;
+  background: var(--error-color);
   color: white;
   border: none;
   width: 24px;
   height: 24px;
-  border-radius: 50%;
+  border-radius: var(--radius-full);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.2rem;
+  font-size: var(--font-size-lg);
   line-height: 1;
 }
 
 .hidden {
   display: none;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .moments-layout {
+    padding: var(--spacing-6) var(--spacing-4);
+  }
+  
+  .card {
+    padding: var(--spacing-5);
+    border-radius: var(--radius-3xl);
+  }
+  
+  .header-section {
+    flex-wrap: wrap;
+  }
+  
+  .search-bar {
+    order: 3;
+    width: 100%;
+  }
+  
+  .modal {
+    padding: var(--spacing-6);
+    border-radius: var(--radius-3xl);
+  }
+}
+
+@media (max-width: 480px) {
+  .moments-layout {
+    padding: var(--spacing-4) var(--spacing-3);
+  }
+  
+  .card {
+    padding: var(--spacing-4);
+    border-radius: var(--radius-2xl);
+  }
+  
+  .moment-actions {
+    gap: var(--spacing-3);
+  }
+  
+  .action-btn {
+    padding: var(--spacing-2) var(--spacing-3);
+    font-size: var(--font-size-sm);
+  }
 }
 </style>

@@ -18,10 +18,26 @@ class CRUD {
 
   async read(conditions = {}, fields = '*') {
     try {
+      // --- 修改开始 ---
+      // 参数验证
+      if (!conditions || typeof conditions !== 'object') {
+        console.warn('[CRUD.read] 无效的查询条件，使用空对象');
+        conditions = {};
+      }
+
       // 使用 nedb 的 find 操作
       const docs = await db.query(this.table, conditions, fields === '*' ? {} : fields);
+      
+      // 确保返回数组
+      if (!Array.isArray(docs)) {
+        console.warn('[CRUD.read] 数据库返回非数组类型:', typeof docs);
+        return [];
+      }
+      
       return docs;
+      // --- 修改结束 ---
     } catch (error) {
+      console.error(`[CRUD.read] 查询失败 - 表: ${this.table}, 条件:`, conditions, '错误:', error);
       throw new Error(`Read failed: ${error.message}`);
     }
   }

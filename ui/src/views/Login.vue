@@ -1,8 +1,25 @@
 <template>
   <div class="login-layout">
-    <div class="login-container card">
+    <div class="login-container glass-card card-transition">
+      <!-- Logo区域 -->
+      <div class="login-logo">
+        <div class="logo-icon">
+          <svg width="48" height="48" viewBox="0 0 32 32" fill="none">
+            <rect width="32" height="32" rx="8" fill="url(#gradient)"/>
+            <path d="M16 8L22 12V20L16 24L10 20V12L16 8Z" fill="white"/>
+            <defs>
+              <linearGradient id="gradient" x1="0" y1="0" x2="32" y2="32">
+                <stop stop-color="#4F46E5"/>
+                <stop offset="1" stop-color="#7C3AED"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <h1>BetterMao IM</h1>
+      </div>
+
       <div class="login-header">
-        <h1>{{ $t('auth.login_title') }}</h1>
+        <h2>{{ $t('auth.login_title') }}</h2>
         <p>{{ $t('auth.login_subtitle') }}</p>
       </div>
       
@@ -32,7 +49,8 @@
         </div>
         
         <button type="submit" class="btn btn-primary w-full" :disabled="loading">
-          {{ loading ? $t('common.loading') : $t('auth.login_btn') }}
+          <span v-if="loading" class="loader"></span>
+          <span v-else>{{ $t('auth.login_btn') }}</span>
         </button>
         
         <div class="login-footer">
@@ -76,10 +94,10 @@ const handleLogin = async () => {
 /* --- UI统一修改结束 --- */
 </script>
 
-<style scoped>/* --- UI统一修改开始 --- */
+<style scoped>
 .login-layout {
   min-height: 100vh;
-  background: linear-gradient(135deg, var(--primary-50) 0%, var(--bg-color) 100%);
+  background: var(--bg-gradient);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -89,20 +107,58 @@ const handleLogin = async () => {
 
 .login-container {
   width: 100%;
-  max-width: 400px;
-  padding: var(--spacing-8);
+  max-width: 420px;
+  padding: var(--spacing-10);
+  border-radius: var(--radius-4xl);
   display: flex;
   flex-direction: column;
   gap: var(--spacing-6);
 }
 
-.login-header {
-  text-align: center;
-  margin-bottom: var(--spacing-4);
+.login-container:hover {
+  transform: translateY(-8px);
+  box-shadow: var(--shadow-hover);
 }
 
-.login-header h1 {
+/* Logo区域 */
+.login-logo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-3);
+  margin-bottom: var(--spacing-2);
+}
+
+.logo-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.login-logo h1 {
+  font-family: 'Outfit', sans-serif;
   font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  background: linear-gradient(135deg, var(--primary-color), #7C3AED);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 0;
+}
+
+.login-header {
+  text-align: center;
+  margin-bottom: var(--spacing-2);
+}
+
+.login-header h2 {
+  font-size: var(--font-size-xl);
   font-weight: var(--font-weight-bold);
   color: var(--text-primary);
   margin-bottom: var(--spacing-2);
@@ -135,38 +191,42 @@ const handleLogin = async () => {
 .input {
   padding: var(--spacing-3) var(--spacing-4);
   border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-xl);
   font-size: var(--font-size-md);
   transition: all var(--duration-normal) var(--ease-in-out);
-  background-color: var(--card-color);
+  background-color: rgba(255, 255, 255, 0.8);
   color: var(--text-primary);
 }
 
 .input:focus {
   outline: none;
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+  box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+  background-color: white;
 }
 
 .btn {
   padding: var(--spacing-3) var(--spacing-6);
   border: none;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-xl);
   font-size: var(--font-size-md);
-  font-weight: var(--font-weight-medium);
+  font-weight: var(--font-weight-semibold);
   cursor: pointer;
   transition: all var(--duration-normal) var(--ease-in-out);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-2);
 }
 
 .btn-primary {
-  background-color: var(--primary-color);
+  background: linear-gradient(135deg, var(--primary-color), #7C3AED);
   color: white;
 }
 
 .btn-primary:hover:not(:disabled) {
-  background-color: var(--primary-hover);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
 }
 
 .btn:disabled {
@@ -194,13 +254,29 @@ const handleLogin = async () => {
 .login-footer a {
   color: var(--primary-color);
   text-decoration: none;
-  font-weight: var(--font-weight-medium);
+  font-weight: var(--font-weight-semibold);
   transition: color var(--duration-fast) var(--ease-in-out);
 }
 
 .login-footer a:hover {
   color: var(--primary-hover);
   text-decoration: underline;
+}
+
+.loader {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #ffffff;
+  border-bottom-color: transparent;
+  border-radius: 50%;
+  display: inline-block;
+  box-sizing: border-box;
+  animation: rotation 1s linear infinite;
+}
+
+@keyframes rotation {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 /* 响应式设计 */
@@ -210,11 +286,16 @@ const handleLogin = async () => {
   }
   
   .login-container {
-    padding: var(--spacing-6);
+    padding: var(--spacing-8);
+    border-radius: var(--radius-3xl);
   }
   
-  .login-header h1 {
+  .login-logo h1 {
     font-size: var(--font-size-xl);
+  }
+  
+  .login-header h2 {
+    font-size: var(--font-size-lg);
   }
   
   .input {
@@ -227,5 +308,4 @@ const handleLogin = async () => {
     font-size: var(--font-size-sm);
   }
 }
-/* --- UI统一修改结束 --- */
 </style>

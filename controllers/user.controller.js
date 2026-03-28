@@ -65,34 +65,93 @@ class UserController {
 
   async searchUsers(req, res) {
     try {
+      // --- 修改开始 ---
       const { keyword } = req.query;
-      if (!keyword) {
-        return res.status(400).json({ error: '请输入搜索关键词' });
-      }
+      const currentUserId = req.user?.userId;
       
-      // 获取所有用户
-      const allUsers = await users.read({});
+      // 参数验证
+      if (!keyword || typeof keyword !== 'string') {
+        return res.status(400).json({ error: '请输入有效的搜索关键词' });
+      }
+
+      // 关键词长度限制
+      const trimmedKeyword = keyword.trim();
+      if (trimmedKeyword.length === 0) {
+        return res.status(400).json({ error: '搜索关键词不能为空' });
+      }
+
+      if (trimmedKeyword.length > 50) {
+        return res.status(400).json({ error: '搜索关键词过长' });
+      }
+
+      console.log(`[搜索用户] 用户ID: ${currentUserId}, 关键词: ${trimmedKeyword}`);
+      
+      // 获取所有用户，添加错误处理
+      let allUsers = [];
+      try {
+        allUsers = await users.read({});
+      } catch (dbError) {
+        console.error('[搜索用户] 数据库查询失败:', dbError);
+        return res.status(500).json({ error: '数据库查询失败' });
+      }
+
+      // 确保allUsers是数组
+      if (!Array.isArray(allUsers)) {
+        console.error('[搜索用户] 数据库返回非数组类型:', typeof allUsers);
+        allUsers = [];
+      }
+
+      console.log(`[搜索用户] 查询到 ${allUsers.length} 个用户`);
       
       // 在内存中进行模糊搜索
-      const keywordLower = keyword.toLowerCase();
+      const keywordLower = trimmedKeyword.toLowerCase();
       const matchedUsers = allUsers.filter(user => {
+        // 排除当前用户
+        if (user._id === currentUserId) {
+          return false;
+        }
+
+        // 使用可选链和空值合并操作符进行安全访问
+        const username = user?.username?.toLowerCase() || '';
+        const email = user?.email?.toLowerCase() || '';
+        const nickname = user?.nickname?.toLowerCase() || '';
+
         return (
-          (user.username && user.username.toLowerCase().includes(keywordLower)) ||
-          (user.email && user.email.toLowerCase().includes(keywordLower)) ||
-          (user.nickname && user.nickname.toLowerCase().includes(keywordLower))
+          username.includes(keywordLower) ||
+          email.includes(keywordLower) ||
+          nickname.includes(keywordLower)
         );
       });
+
+      console.log(`[搜索用户] 匹配到 ${matchedUsers.length} 个用户`);
       
-      // 移除密码字段
-      const usersWithoutPassword = matchedUsers.map(user => {
-        const { password, ...safeUser } = user;
-        return safeUser;
+      // 移除敏感字段并限制返回数量
+      const maxResults = 50;
+      const usersWithoutPassword = matchedUsers
+        .slice(0, maxResults)
+        .map(user => {
+          // 使用对象解构移除敏感字段
+          const { password, ...safeUser } = user;
+          return {
+            id: safeUser._id,
+            username: safeUser.username || '',
+            nickname: safeUser.nickname || '',
+            email: safeUser.email || '',
+            avatar: safeUser.avatar || '',
+            signature: safeUser.signature || '',
+            points: safeUser.points || 0
+          };
+        });
+      
+      res.status(200).json({ 
+        users: usersWithoutPassword,
+        total: matchedUsers.length,
+        limited: matchedUsers.length > maxResults
       });
-      
-      res.status(200).json({ users: usersWithoutPassword });
+      // --- 修改结束 ---
     } catch (error) {
-      console.error('搜索用户失败:', error);
-      res.status(500).json({ error: '搜索用户失败' });
+      console.error('[搜索用户] 未预期的错误:', error);
+      res.status(500).json({ error: '搜索用户失败，请稍后重试' });
     }
   }
 

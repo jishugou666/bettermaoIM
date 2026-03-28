@@ -1,9 +1,25 @@
 <template>
   <div class="auth-layout">
-    <div class="auth-card">
+    <div class="auth-card glass-card card-transition">
+      <!-- Logo区域 -->
+      <div class="auth-logo">
+        <div class="logo-icon">
+          <svg width="48" height="48" viewBox="0 0 32 32" fill="none">
+            <rect width="32" height="32" rx="8" fill="url(#gradient)"/>
+            <path d="M16 8L22 12V20L16 24L10 20V12L16 8Z" fill="white"/>
+            <defs>
+              <linearGradient id="gradient" x1="0" y1="0" x2="32" y2="32">
+                <stop stop-color="#4F46E5"/>
+                <stop offset="1" stop-color="#7C3AED"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <h1>BetterMao IM</h1>
+      </div>
+
       <div class="auth-header">
-        <div class="logo">🚀</div>
-        <h1>{{ $t('auth.register_title') }}</h1>
+        <h2>{{ $t('auth.register_title') }}</h2>
         <p>{{ $t('auth.register_subtitle') }}</p>
       </div>
 
@@ -139,7 +155,7 @@ const handleRegister = async () => {
 }
 </script>
 
-<style scoped>/* --- UI统一修改开始 --- */
+<style scoped>
 .lang-switch-wrapper {
   margin-top: var(--spacing-4);
   display: flex;
@@ -151,24 +167,55 @@ const handleRegister = async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, var(--primary-50) 0%, var(--bg-color) 100%);
+  background: var(--bg-gradient);
   padding: var(--spacing-6);
   margin: 0;
 }
 
 .auth-card {
-  background-color: var(--card-color);
+  background-color: var(--card-glass);
   width: 100%;
   max-width: 420px;
-  padding: var(--spacing-8);
-  border-radius: var(--radius-2xl);
-  box-shadow: var(--shadow-lg);
-  transition: all var(--duration-normal) var(--ease-in-out);
+  padding: var(--spacing-10);
+  border-radius: var(--radius-4xl);
+  transition: all 0.4s var(--ease-bounce);
 }
 
 .auth-card:hover {
-  box-shadow: var(--shadow-xl);
-  transform: translateY(-2px);
+  transform: translateY(-8px);
+  box-shadow: var(--shadow-hover);
+}
+
+/* Logo区域 */
+.auth-logo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-3);
+  margin-bottom: var(--spacing-2);
+}
+
+.logo-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.auth-logo h1 {
+  font-family: 'Outfit', sans-serif;
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  background: linear-gradient(135deg, var(--primary-color), #7C3AED);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 0;
 }
 
 .auth-header {
@@ -176,19 +223,8 @@ const handleRegister = async () => {
   margin-bottom: var(--spacing-6);
 }
 
-.logo {
-  font-size: 3rem;
-  margin-bottom: var(--spacing-4);
-  animation: bounce 2s infinite;
-}
-
-@keyframes bounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
-}
-
-h1 {
-  font-size: var(--font-size-2xl);
+.auth-header h2 {
+  font-size: var(--font-size-xl);
   font-weight: var(--font-weight-bold);
   color: var(--text-primary);
   margin-bottom: var(--spacing-2);
@@ -222,17 +258,18 @@ input {
   width: 100%;
   padding: var(--spacing-3) var(--spacing-4);
   border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-xl);
   font-size: var(--font-size-md);
   transition: all var(--duration-normal) var(--ease-in-out);
-  background-color: var(--card-color);
+  background-color: rgba(255, 255, 255, 0.8);
   color: var(--text-primary);
 }
 
 input:focus {
   outline: none;
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+  box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+  background-color: white;
 }
 
 input.error {
@@ -263,7 +300,7 @@ input.error {
   border: 1px solid #fee2e2;
   color: var(--error-color);
   padding: var(--spacing-3);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-xl);
   font-size: var(--font-size-sm);
   display: flex;
   align-items: center;
@@ -271,11 +308,11 @@ input.error {
 }
 
 .submit-btn {
-  background-color: var(--primary-color);
+  background: linear-gradient(135deg, var(--primary-color), #7C3AED);
   color: white;
   padding: var(--spacing-3) var(--spacing-6);
   border: none;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-xl);
   font-weight: var(--font-weight-semibold);
   font-size: var(--font-size-md);
   cursor: pointer;
@@ -287,9 +324,8 @@ input.error {
 }
 
 .submit-btn:hover:not(:disabled) {
-  background-color: var(--primary-hover);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
 }
 
 .submit-btn:disabled {
@@ -341,11 +377,16 @@ input.error {
   }
   
   .auth-card {
-    padding: var(--spacing-6);
+    padding: var(--spacing-8);
+    border-radius: var(--radius-3xl);
   }
   
-  .auth-header h1 {
+  .auth-logo h1 {
     font-size: var(--font-size-xl);
+  }
+  
+  .auth-header h2 {
+    font-size: var(--font-size-lg);
   }
   
   input {
@@ -358,5 +399,4 @@ input.error {
     font-size: var(--font-size-sm);
   }
 }
-/* --- UI统一修改结束 --- */
 </style>
