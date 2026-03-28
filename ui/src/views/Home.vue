@@ -271,6 +271,25 @@ const handleLogout = async () => {
   margin-bottom: var(--spacing-6);
 }
 
+.user-avatar {
+  flex-shrink: 0;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+.user-avatar :deep(.avatar) {
+  width: 100% !important;
+  height: 100% !important;
+  border-radius: 50% !important;
+}
+
+.user-avatar :deep(.avatar-text) {
+  font-size: 24px !important;
+  font-weight: bold !important;
+}
+
 .user-info h3 {
   margin-bottom: var(--spacing-1);
 }

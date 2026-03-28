@@ -1,94 +1,155 @@
 const { chats, chatMembers, messages, users } = require('../db/crud');
 
 class ChatController {
+  // --- 修改开始 ---
   async createChat(req, res) {
     try {
       const { userId } = req.user;
       const { type, name, avatar, memberIds } = req.body;
       
+      console.log('[createChat] 开始创建聊天:', { userId, type, name, memberIds });
+      
+      // 参数验证
       if (!type || !['private', 'group'].includes(type)) {
+        console.error('[createChat] 无效的聊天类型:', type);
         return res.status(400).json({ error: 'Invalid chat type' });
       }
       
       if (type === 'group' && !name) {
+        console.error('[createChat] 群聊缺少名称');
         return res.status(400).json({ error: 'Group name is required' });
       }
       
+      // 验证 memberIds
+      if (!memberIds || !Array.isArray(memberIds) || memberIds.length === 0) {
+        console.error('[createChat] 无效的成员列表:', memberIds);
+        return res.status(400).json({ error: 'At least one member is required' });
+      }
+      
       // 创建聊天会话
-      const chat = await chats.create({ 
+      const chatData = { 
         type, 
         name: type === 'private' ? '' : name, 
         avatar: type === 'private' ? '' : avatar,
         createTime: new Date().toISOString()
-      });
+      };
+      console.log('[createChat] 创建聊天数据:', chatData);
       
-      // 添加成员
-      const members = type === 'private' ? [userId, ...memberIds] : [userId, ...memberIds];
-      for (const memberId of members) {
-        await chatMembers.create({ 
-          chatId: chat.lastID, 
-          userId: memberId,
-          joinTime: new Date().toISOString()
-        });
+      const chat = await chats.create(chatData);
+      console.log('[createChat] 聊天创建结果:', chat);
+      
+      // 获取聊天ID - NeDB返回的是完整文档对象
+      const chatId = chat.lastID || chat._id;
+      if (!chatId) {
+        console.error('[createChat] 无法获取聊天ID');
+        throw new Error('Failed to get chat ID');
       }
       
-      res.status(200).json({ chatId: chat.lastID });
+      // 添加成员
+      const members = [userId, ...memberIds];
+      console.log('[createChat] 添加成员:', members);
+      
+      for (const memberId of members) {
+        const memberData = { 
+          chatId: chatId, 
+          userId: memberId,
+          joinTime: new Date().toISOString()
+        };
+        console.log('[createChat] 添加成员数据:', memberData);
+        await chatMembers.create(memberData);
+      }
+      
+      console.log('[createChat] 聊天创建成功, chatId:', chatId);
+      res.status(200).json({ chatId: chatId });
     } catch (error) {
-      res.status(500).json({ error: 'Internal server error' });
+      console.error('[createChat] 创建聊天失败:', error);
+      console.error('[createChat] 错误堆栈:', error.stack);
+      res.status(500).json({ error: 'Internal server error', message: error.message });
     }
   }
+  // --- 修改结束 ---
 
   async getChats(req, res) {
     try {
       const { userId } = req.user;
+      console.log('[getChats] 获取用户聊天列表, userId:', userId);
       
       // 获取用户参与的聊天会话
       const chatMemberList = await chatMembers.read({ userId });
+      console.log('[getChats] 用户参与的聊天成员记录:', chatMemberList);
+      
       const chatIds = chatMemberList.map(member => member.chatId);
+      console.log('[getChats] 聊天ID列表:', chatIds);
       
       if (chatIds.length === 0) {
+        console.log('[getChats] 用户没有聊天记录');
         return res.status(200).json({ chats: [] });
       }
       
-      // 获取聊天会话信息
-      const chatList = await chats.read({ _id: { $in: chatIds } });
+      // 获取聊天会话信息 - NeDB不支持$in，需要逐个查询
+      const chatList = [];
+      for (const chatId of chatIds) {
+        const chatDocs = await chats.read({ _id: chatId });
+        if (chatDocs && chatDocs.length > 0) {
+          chatList.push(chatDocs[0]);
+        }
+      }
+      console.log('[getChats] 聊天列表:', chatList);
       
       // 获取每个聊天的最后一条消息
       const chatsWithLastMessage = await Promise.all(
         chatList.map(async (chat) => {
-          const messagesList = await messages.read({ chatId: chat._id }, { sort: { createTime: -1 }, limit: 1 });
-          const lastMessage = messagesList[0];
-          
-          // 如果是私聊，获取对方用户信息
-          let chatInfo = { ...chat };
-          if (chat.type === 'private') {
-            const membersList = await chatMembers.read({ chatId: chat._id });
-            const otherMemberId = membersList.find(member => member.userId !== userId)?.userId;
-            if (otherMemberId) {
-              const userList = await users.read({ _id: otherMemberId });
-              const otherUser = userList[0];
-              if (otherUser) {
-                delete otherUser.password;
-                chatInfo = {
-                  ...chat,
-                  name: otherUser.nickname,
-                  avatar: otherUser.avatar,
-                  otherUser
-                };
+          try {
+            const messagesList = await messages.read({ chatId: chat._id });
+            const lastMessage = messagesList && messagesList.length > 0 
+              ? messagesList.sort((a, b) => new Date(b.createTime) - new Date(a.createTime))[0]
+              : null;
+            
+            // 如果是私聊，获取对方用户信息
+            let chatInfo = { ...chat, id: chat._id };
+            if (chat.type === 'private') {
+              const membersList = await chatMembers.read({ chatId: chat._id });
+              const otherMemberId = membersList.find(member => member.userId !== userId)?.userId;
+              if (otherMemberId) {
+                const userList = await users.read({ _id: otherMemberId });
+                const otherUser = userList[0];
+                if (otherUser) {
+                  delete otherUser.password;
+                  chatInfo = {
+                    ...chat,
+                    id: chat._id,
+                    name: otherUser.nickname || otherUser.username,
+                    avatar: otherUser.avatar,
+                    otherUser: {
+                      id: otherUser._id,
+                      ...otherUser
+                    }
+                  };
+                }
               }
             }
+            
+            return {
+              ...chatInfo,
+              lastMessage
+            };
+          } catch (error) {
+            console.error('[getChats] 处理聊天失败:', chat._id, error);
+            return {
+              ...chat,
+              id: chat._id,
+              lastMessage: null
+            };
           }
-          
-          return {
-            ...chatInfo,
-            lastMessage
-          };
         })
       );
       
+      console.log('[getChats] 返回聊天列表数量:', chatsWithLastMessage.length);
       res.status(200).json({ chats: chatsWithLastMessage });
     } catch (error) {
-      res.status(500).json({ error: 'Internal server error' });
+      console.error('[getChats] 获取聊天列表失败:', error);
+      console.error('[getChats] 错误堆栈:', error.stack);
+      res.status(500).json({ error: 'Internal server error', message: error.message });
     }
   }
 
@@ -173,6 +234,42 @@ class ChatController {
       res.status(500).json({ error: 'Internal server error' });
     }
   }
+
+  // --- 修改开始 ---
+  // 获取所有已注册用户（开放性IM功能）
+  async getAllUsers(req, res) {
+    try {
+      const { userId } = req.user;
+      
+      // 获取所有用户
+      const allUsers = await users.read({});
+      
+      // 确保返回数组
+      const usersList = Array.isArray(allUsers) ? allUsers : [];
+      
+      // 过滤掉当前用户，并移除敏感字段
+      const otherUsers = usersList
+        .filter(user => user._id !== userId)
+        .map(user => {
+          const { password, ...safeUser } = user;
+          return {
+            id: safeUser._id,
+            username: safeUser.username || '',
+            nickname: safeUser.nickname || safeUser.username || '',
+            email: safeUser.email || '',
+            avatar: safeUser.avatar || '',
+            signature: safeUser.signature || '',
+            points: safeUser.points || 0
+          };
+        });
+      
+      res.status(200).json({ users: otherUsers });
+    } catch (error) {
+      console.error('[getAllUsers] Error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+  // --- 修改结束 ---
 }
 
 module.exports = new ChatController();

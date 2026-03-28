@@ -1,11 +1,14 @@
 import { defineStore } from 'pinia'
-import { createChat, getChats, getMessages, sendMessage } from '../api/chat'
+import { createChat, getChats, getMessages, sendMessage, getAllUsers } from '../api/chat'
 
 export const useChatStore = defineStore('chat', {
   state: () => ({
     chats: [],
     currentChat: null,
     messages: [],
+    // --- 修改开始 ---
+    allUsers: [], // 所有已注册用户
+    // --- 修改结束 ---
     loading: false,
     error: null
   }),
@@ -74,6 +77,23 @@ export const useChatStore = defineStore('chat', {
     },
     clearError() {
       this.error = null;
+    },
+    // --- 修改开始 ---
+    // 获取所有已注册用户（开放性IM功能）
+    async fetchAllUsers() {
+      this.loading = true;
+      this.error = null;
+      try {
+        const response = await getAllUsers();
+        this.allUsers = response.users || [];
+        return this.allUsers;
+      } catch (err) {
+        this.error = err.message || 'Failed to fetch all users';
+        return [];
+      } finally {
+        this.loading = false;
+      }
     }
+    // --- 修改结束 ---
   }
 })

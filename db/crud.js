@@ -16,7 +16,7 @@ class CRUD {
     }
   }
 
-  async read(conditions = {}, fields = '*') {
+  async read(conditions = {}, options = {}) {
     try {
       // --- 修改开始 ---
       // 参数验证
@@ -25,8 +25,29 @@ class CRUD {
         conditions = {};
       }
 
-      // 使用 nedb 的 find 操作
-      const docs = await db.query(this.table, conditions, fields === '*' ? {} : fields);
+      // 支持选项参数：sort, limit, skip, projection
+      const { sort, limit, skip, projection } = options;
+      
+      // 使用 nedb-promises 的链式查询
+      let cursor = db.datastores[this.table].find(conditions, projection);
+      
+      // 应用排序
+      if (sort) {
+        cursor = cursor.sort(sort);
+      }
+      
+      // 应用跳过
+      if (skip) {
+        cursor = cursor.skip(skip);
+      }
+      
+      // 应用限制
+      if (limit) {
+        cursor = cursor.limit(limit);
+      }
+      
+      // 执行查询
+      const docs = await cursor.exec();
       
       // 确保返回数组
       if (!Array.isArray(docs)) {

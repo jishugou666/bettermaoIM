@@ -114,6 +114,7 @@
   --radius-2xl: 1.5rem;
   --radius-3xl: 2rem;
   --radius-4xl: 2.5rem;
+  --radius-full: 9999px;
 
   /* 阴影 */
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
@@ -161,12 +162,14 @@ body {
 }
 
 /* 玻璃态卡片 */
+/* --- 修改开始 --- */
 .glass-card {
   background: var(--card-glass);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   border: 1px solid var(--border-light);
 }
+/* --- 修改结束 --- */
 
 /* 卡片过渡动画 */
 .card-transition {

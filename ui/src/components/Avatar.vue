@@ -33,12 +33,7 @@ const props = defineProps({
 
 const getInitials = (username) => {
   if (!username) return '?'
-  const parts = username.split(' ')
-  if (parts.length >= 2) {
-    return (parts[0][0] + parts[1][0]).toUpperCase()
-  } else {
-    return username.substring(0, 2).toUpperCase()
-  }
+  return username.charAt(0).toUpperCase()
 }
 
 const avatarStyle = computed(() => {
@@ -77,16 +72,17 @@ const getRandomColor = (username) => {
 /* --- UI统一修改结束 --- */
 </script>
 
-<style scoped>/* --- UI统一修改开始 --- */
+<style scoped>
 .avatar {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: var(--radius-full);
+  border-radius: 50%;
   overflow: hidden;
-  font-weight: var(--font-weight-semibold);
+  font-weight: var(--font-weight-bold);
   transition: all var(--duration-normal) var(--ease-in-out);
   box-shadow: var(--shadow-sm);
+  flex-shrink: 0;
 }
 
 .avatar:hover {
@@ -106,9 +102,14 @@ const getRandomColor = (username) => {
 }
 
 .avatar-text {
-  font-size: 0.75em;
+  font-size: 40%;
+  font-weight: bold;
   line-height: 1;
   text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
 }
-/* --- UI统一修改结束 --- */
 </style>

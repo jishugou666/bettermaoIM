@@ -82,4 +82,26 @@ const sendMessage = async (chatId, content, type = 'text') => {
   return await response.json();
 };
 
-export { createChat, getChats, getMessages, sendMessage };
+// --- 修改开始 ---
+// 获取所有已注册用户（开放性IM功能）
+const getAllUsers = async () => {
+  const token = localStorage.getItem('token');
+  
+  const response = await fetch(`/api/chats/users`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    }
+  });
+  
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.error || 'Failed to get all users');
+  }
+  
+  return await response.json();
+};
+// --- 修改结束 ---
+
+export { createChat, getChats, getMessages, sendMessage, getAllUsers };

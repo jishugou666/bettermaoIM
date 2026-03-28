@@ -3,74 +3,65 @@
     <div class="chat-sidebar glass-card">
       <div class="sidebar-header">
         <button class="btn btn-text back-btn" @click="router.push('/')">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M19 12H5M12 19l-7-7 7-7"/>
           </svg>
+          <span>返回</span>
         </button>
         <h2>{{ $t('chat.title') }}</h2>
-        <button class="btn btn-icon" @click="showCreateGroupModal = true">
+        <button class="btn btn-primary create-group-btn" @click="showCreateGroupModal = true">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="12" y1="5" x2="12" y2="19"/>
-            <line x1="5" y1="12" x2="19" y2="12"/>
-          </svg>
-        </button>
-      </div>
-      
-      <div class="chat-tabs">
-        <button 
-          :class="{ active: activeTab === 'friends' }" 
-          @click="activeTab = 'friends'"
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
-            <circle cx="12" cy="7" r="4"/>
-          </svg>
-          {{ $t('chat.friends') }}
-        </button>
-        <button 
-          :class="{ active: activeTab === 'groups' }" 
-          @click="activeTab = 'groups'"
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
             <circle cx="9" cy="7" r="4"/>
             <path d="M23 21v-2a4 4 0 00-3-3.87"/>
             <path d="M16 3.13a4 4 0 010 7.75"/>
           </svg>
-          {{ $t('chat.groups') }}
+          <span>创建群聊</span>
         </button>
       </div>
+      
+      <!-- --- 修改开始 --- -->
+      <!-- 移除好友/群组Tab，改为搜索框 -->
+      <div class="search-box">
+        <input 
+          type="text" 
+          v-model="searchQuery" 
+          placeholder="搜索用户..." 
+          class="search-input"
+        />
+      </div>
+      <!-- --- 修改结束 --- -->
       
       <div class="chat-list">
         <div v-if="chatStore.loading" class="loading-state">
           <div class="loading-spinner"></div>
           <span>{{ $t('common.loading') }}</span>
         </div>
-        <div v-else-if="filteredChats.length === 0" class="empty-state">
+        <!-- --- 修改开始 --- -->
+        <div v-else-if="filteredUsers.length === 0" class="empty-state">
           <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
           </svg>
-          <span>{{ $t('chat.select_conversation') }}</span>
+          <span>暂无用户</span>
         </div>
         <div 
-          v-for="chat in filteredChats" 
-          :key="chat.id" 
+          v-for="user in filteredUsers" 
+          :key="user.id" 
           class="chat-card card-transition"
-          :class="{ active: chat.id === chatStore.currentChat?.id }"
-          @click="selectChat(chat)"
+          :class="{ active: currentChatUserId === user.id }"
+          @click="startPrivateChat(user)"
         >
           <div class="chat-card-avatar">
-            <Avatar :username="chat.name" :src="chat.avatar" :size="48" />
-            <span v-if="chat.unreadCount > 0" class="unread-badge">{{ chat.unreadCount }}</span>
+            <Avatar :username="user.nickname || user.username" :src="user.avatar" :size="48" />
           </div>
           <div class="chat-card-content">
             <div class="chat-card-header">
-              <span class="chat-card-name">{{ chat.name }}</span>
-              <span class="chat-card-time">{{ chat.lastMessageTime || '' }}</span>
+              <span class="chat-card-name">{{ user.nickname || user.username }}</span>
             </div>
-            <div class="chat-card-preview">{{ chat.lastMessage || $t('chat.select_conversation') }}</div>
+            <div class="chat-card-preview">{{ user.signature || '这个人很懒，什么都没写' }}</div>
           </div>
         </div>
+        <!-- --- 修改结束 --- -->
       </div>
     </div>
     
@@ -125,14 +116,14 @@
           v-for="message in chatStore.messages" 
           :key="message.id" 
           class="message-card"
-          :class="{ 'own-message': message.userId === authStore.user?.id }"
+          :class="{ 'own-message': isOwnMessage(message) }"
         >
           <div class="message-avatar">
-            <Avatar :username="message.user?.username || 'User'" :src="message.user?.avatar" size="40" />
+            <Avatar :username="message.sender?.nickname || message.sender?.username || 'User'" :src="message.sender?.avatar" size="40" />
           </div>
           <div class="message-body">
             <div class="message-meta">
-              <span class="message-sender">{{ message.user?.username || 'User' }}</span>
+              <span class="message-sender">{{ message.sender?.nickname || message.sender?.username || 'User' }}</span>
               <span class="message-time">{{ formatTime(message.createTime) }}</span>
             </div>
             <div class="message-bubble glass-card">
@@ -190,21 +181,23 @@
       <div class="form-group">
         <label class="form-label">{{ $t('chat.add_members') }}</label>
         <div class="member-selector">
+          <!-- --- 修改开始 --- -->
           <div 
-            v-for="friend in friendStore.friends" 
-            :key="friend.id"
+            v-for="user in chatStore.allUsers" 
+            :key="user.id"
             class="member-card card-transition"
-            :class="{ selected: selectedMembers.includes(friend.id) }"
-            @click="toggleMember(friend.id)"
+            :class="{ selected: selectedMembers.includes(user.id) }"
+            @click="toggleMember(user.id)"
           >
-            <Avatar :username="friend.nickname || friend.username" :src="friend.avatar" size="36" />
-            <span class="member-name">{{ friend.nickname || friend.username }}</span>
-            <div class="member-check" v-if="selectedMembers.includes(friend.id)">
+            <Avatar :username="user.nickname || user.username" :src="user.avatar" size="36" />
+            <span class="member-name">{{ user.nickname || user.username }}</span>
+            <div class="member-check" v-if="selectedMembers.includes(user.id)">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
                 <polyline points="20,6 9,17 4,12"/>
               </svg>
             </div>
           </div>
+          <!-- --- 修改结束 --- -->
         </div>
       </div>
     </Modal>
@@ -278,7 +271,10 @@ const friendStore = useFriendStore()
 const authStore = useAuthStore()
 const socketStore = useSocketStore()
 
-const activeTab = ref('friends')
+// --- 修改开始 ---
+const searchQuery = ref('')
+const currentChatUserId = ref(null)
+// --- 修改结束 ---
 const messageInput = ref('')
 const showCreateGroupModal = ref(false)
 const showGroupSettingsModal = ref(false)
@@ -286,13 +282,18 @@ const groupName = ref('')
 const groupDescription = ref('')
 const selectedMembers = ref([])
 
-const filteredChats = computed(() => {
-  if (activeTab.value === 'friends') {
-    return chatStore.chats.filter(chat => chat.type === 'private')
-  } else {
-    return chatStore.chats.filter(chat => chat.type === 'group')
+// --- 修改开始 ---
+const filteredUsers = computed(() => {
+  if (!searchQuery.value.trim()) {
+    return chatStore.allUsers || []
   }
+  const query = searchQuery.value.toLowerCase()
+  return (chatStore.allUsers || []).filter(user => 
+    (user.nickname || user.username || '').toLowerCase().includes(query) ||
+    (user.email || '').toLowerCase().includes(query)
+  )
 })
+// --- 修改结束 ---
 
 const selectChat = async (chat) => {
   chatStore.setCurrentChat(chat)
@@ -300,12 +301,53 @@ const selectChat = async (chat) => {
   socketStore.joinChat(chat.id)
 }
 
+// --- 修改开始 ---
+// 发起私聊
+const startPrivateChat = async (user) => {
+  try {
+    currentChatUserId.value = user.id
+    
+    // 检查是否已存在与该用户的私聊
+    const existingChat = chatStore.chats.find(chat => 
+      chat.type === 'private' && chat.otherUser?.id === user.id
+    )
+    
+    if (existingChat) {
+      // 如果已存在，直接打开
+      await selectChat(existingChat)
+    } else {
+      // 如果不存在，创建新的私聊
+      const chatId = await chatStore.createChat('private', '', '', [user.id])
+      if (chatId) {
+        // 重新获取聊天列表
+        await chatStore.fetchChats()
+        // 找到刚创建的聊天并打开
+        const newChat = chatStore.chats.find(chat => chat._id === chatId || chat.id === chatId)
+        if (newChat) {
+          await selectChat(newChat)
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Failed to start private chat:', error)
+    alert('发起聊天失败：' + (error.message || '未知错误'))
+  }
+}
+// --- 修改结束 ---
+
 const sendMessage = async () => {
   if (!messageInput.value.trim() || !chatStore.currentChat) return
   
-  await chatStore.sendMessage(chatStore.currentChat.id, messageInput.value)
-  socketStore.sendMessage(chatStore.currentChat.id, messageInput.value)
+  const content = messageInput.value
   messageInput.value = ''
+  
+  // 1. 先发送到后端API，获取完整的消息数据
+  const newMessage = await chatStore.sendMessage(chatStore.currentChat.id, content)
+  
+  // 2. 如果API返回成功，再通过socket发送通知（可选）
+  if (newMessage) {
+    socketStore.sendMessage(chatStore.currentChat.id, content)
+  }
 }
 
 const createGroup = async () => {
@@ -350,11 +392,29 @@ const getFriendStatus = (chatId) => {
 }
 
 const formatTime = (dateStr) => {
-  return new Date(dateStr).toLocaleTimeString()
+  if (!dateStr) return ''
+  const date = new Date(dateStr)
+  if (isNaN(date.getTime())) return ''
+  return date.toLocaleTimeString('zh-CN', { 
+    hour: '2-digit', 
+    minute: '2-digit' 
+  })
+}
+
+const isOwnMessage = (message) => {
+  if (!message || !authStore.user) return false
+  
+  const messageUserId = message.userId || message.sender?.id
+  const currentUserId = authStore.user._id || authStore.user.id
+  
+  return String(messageUserId) === String(currentUserId)
 }
 
 onMounted(async () => {
   if (authStore.token) {
+    // --- 修改开始 ---
+    await chatStore.fetchAllUsers() // 获取所有用户
+    // --- 修改结束 ---
     await chatStore.fetchChats()
     await friendStore.fetchFriends()
   }
@@ -362,6 +422,9 @@ onMounted(async () => {
 
 watch(() => authStore.token, async (newToken) => {
   if (newToken) {
+    // --- 修改开始 ---
+    await chatStore.fetchAllUsers() // 获取所有用户
+    // --- 修改结束 ---
     await chatStore.fetchChats()
     await friendStore.fetchFriends()
   }
@@ -400,10 +463,18 @@ watch(() => authStore.token, async (newToken) => {
 .back-btn {
   display: flex;
   align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
+  gap: var(--spacing-2);
+  padding: var(--spacing-2) var(--spacing-4);
   border-radius: var(--radius-xl);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-secondary);
+  transition: all var(--duration-fast) var(--ease-in-out);
+}
+
+.back-btn:hover {
+  background: rgba(79, 70, 229, 0.1);
+  color: var(--primary-color);
 }
 
 .sidebar-header h2 {
@@ -415,24 +486,39 @@ watch(() => authStore.token, async (newToken) => {
   text-align: center;
 }
 
-.btn-icon {
+.create-group-btn {
   display: flex;
   align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
+  gap: var(--spacing-2);
+  padding: var(--spacing-2) var(--spacing-4);
   border-radius: var(--radius-xl);
-  background: linear-gradient(135deg, var(--primary-color), #7C3AED);
-  color: white;
-  border: none;
-  cursor: pointer;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+/* --- 修改开始 --- */
+.search-box {
+  padding: var(--spacing-3);
+  border-bottom: 1px solid var(--border-light);
+}
+
+.search-input {
+  width: 100%;
+  padding: var(--spacing-3);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  font-size: var(--font-size-sm);
+  background-color: white;
+  color: var(--text-primary);
   transition: all var(--duration-fast) var(--ease-in-out);
 }
 
-.btn-icon:hover {
-  transform: scale(1.05);
-  box-shadow: var(--shadow-md);
+.search-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
 }
+/* --- 修改结束 --- */
 
 .chat-tabs {
   display: flex;
@@ -620,7 +706,7 @@ watch(() => authStore.token, async (newToken) => {
   display: flex;
   gap: var(--spacing-3);
   align-items: flex-start;
-  max-width: 70%;
+  max-width: 85%;
 }
 
 .message-card.own-message {
@@ -636,6 +722,7 @@ watch(() => authStore.token, async (newToken) => {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-1);
+  flex: 1;
 }
 
 .message-card.own-message .message-body {
@@ -651,8 +738,12 @@ watch(() => authStore.token, async (newToken) => {
 
 .message-sender {
   font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
+  font-weight: var(--font-weight-semibold);
   color: var(--text-secondary);
+}
+
+.message-card.own-message .message-sender {
+  color: var(--primary-color);
 }
 
 .message-time {
@@ -661,18 +752,23 @@ watch(() => authStore.token, async (newToken) => {
 }
 
 .message-bubble {
-  padding: var(--spacing-3) var(--spacing-4);
+  padding: var(--spacing-4) var(--spacing-5);
   border-radius: var(--radius-2xl);
+  border-top-left-radius: var(--radius-sm);
   font-size: var(--font-size-md);
   line-height: var(--line-height-normal);
   color: var(--text-primary);
   background: white;
-  border: 1px solid var(--border-light);
+  border: none;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 }
 
 .message-card.own-message .message-bubble {
   background: linear-gradient(135deg, var(--primary-color), #7C3AED);
   color: white;
+  box-shadow: 0 8px 30px rgba(79, 70, 229, 0.3);
+  border-radius: var(--radius-2xl);
+  border-top-right-radius: var(--radius-sm);
 }
 
 .chat-input-area {

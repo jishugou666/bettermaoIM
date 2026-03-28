@@ -118,7 +118,7 @@ const newComment = ref('')
 const moment = ref(null)
 const commentsList = ref(null)
 
-const momentId = computed(() => parseInt(route.params.id))
+const momentId = computed(() => route.params.id)
 
 const getFullUrl = (path) => {
   if (!path) return ''

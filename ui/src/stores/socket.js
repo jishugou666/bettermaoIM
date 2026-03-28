@@ -3,6 +3,7 @@ import { io } from 'socket.io-client'
 import { useChatStore } from './chat'
 import { useFriendStore } from './friend'
 import { useMomentStore } from './moment'
+import { useAuthStore } from './auth'
 
 export const useSocketStore = defineStore('socket', {
   state: () => ({
@@ -38,7 +39,12 @@ export const useSocketStore = defineStore('socket', {
       // 新消息
       this.socket.on('newMessage', (message) => {
         const chatStore = useChatStore();
-        chatStore.addMessage(message);
+        const authStore = useAuthStore();
+        
+        // 避免重复添加自己发送的消息
+        if (authStore.user && String(message.userId || message.sender?.id) !== String(authStore.user?.id)) {
+          chatStore.addMessage(message);
+        }
       });
 
       // 好友请求

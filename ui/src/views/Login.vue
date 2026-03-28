@@ -23,6 +23,12 @@
         <p>{{ $t('auth.login_subtitle') }}</p>
       </div>
       
+      <!-- --- 修改开始：添加错误提示 --- -->
+      <div v-if="errorMessage" class="error-message">
+        {{ errorMessage }}
+      </div>
+      <!-- --- 修改结束 --- -->
+      
       <form @submit.prevent="handleLogin" class="login-form">
         <div class="form-group">
           <label class="form-label" for="identifier">{{ $t('auth.email') }}</label>
@@ -77,16 +83,22 @@ const form = ref({
 })
 
 const loading = ref(false)
+const errorMessage = ref('')
 
 const handleLogin = async () => {
   loading.value = true
+  errorMessage.value = ''
   try {
     const success = await authStore.login(form.value.identifier, form.value.password)
     if (success) {
       router.push('/')
+    } else {
+      // 显示auth store中的错误信息
+      errorMessage.value = authStore.error || t('auth.login_failed')
     }
   } catch (error) {
     console.error('Login failed:', error)
+    errorMessage.value = error.message || t('auth.login_failed')
   } finally {
     loading.value = false
   }
@@ -169,6 +181,25 @@ const handleLogin = async () => {
   color: var(--text-secondary);
   margin: 0;
 }
+
+/* --- 修改开始：错误提示样式 --- */
+.error-message {
+  padding: var(--spacing-3) var(--spacing-4);
+  background-color: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: var(--radius-lg);
+  color: #dc2626;
+  font-size: var(--font-size-sm);
+  text-align: center;
+  animation: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+/* --- 修改结束 --- */
 
 .login-form {
   display: flex;

@@ -20,6 +20,41 @@ const getPoints = async () => {
   return await response.json();
 };
 
+// --- 修改开始 ---
+// 检查今日是否已签到
+const checkSignInStatus = async () => {
+  const token = localStorage.getItem('token');
+  
+  try {
+    const response = await fetch(`/api/points`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    
+    if (!response.ok) {
+      return false;
+    }
+    
+    const data = await response.json();
+    const today = new Date().toISOString().split('T')[0];
+    
+    // 检查是否有今天的签到记录
+    const hasSignedToday = data.points?.some(record => {
+      const recordDate = new Date(record.createTime).toISOString().split('T')[0];
+      return record.type === 'sign' && recordDate === today;
+    });
+    
+    return hasSignedToday || false;
+  } catch (error) {
+    console.error('Failed to check sign-in status:', error);
+    return false;
+  }
+};
+// --- 修改结束 ---
+
 // 每日签到
 const signIn = async () => {
   const token = localStorage.getItem('token');
@@ -40,4 +75,4 @@ const signIn = async () => {
   return await response.json();
 };
 
-export { getPoints, signIn };
+export { getPoints, signIn, checkSignInStatus };

@@ -79,7 +79,9 @@ import { useCreditStore } from '../stores/credit'
 import { useRouter } from 'vue-router'
 import Avatar from '../components/Avatar.vue'
 import { useI18n } from 'vue-i18n'
-import { signIn } from '../api/points'
+// --- 修改开始 ---
+import { signIn, checkSignInStatus, getPoints } from '../api/points'
+// --- 修改结束 ---
 
 const { t } = useI18n()
 const userStore = useUserStore()
@@ -107,14 +109,12 @@ const handleCheckIn = async () => {
 
 const fetchPointsHistory = async () => {
   try {
-    // 这里应该调用 API 获取积分历史
-    // 暂时使用模拟数据
-    pointsHistory.value = [
-      { description: '每日签到', amount: 10, createTime: new Date().toISOString() },
-      { description: '发布动态', amount: 5, createTime: new Date(Date.now() - 86400000).toISOString() },
-      { description: '点赞动态', amount: 1, createTime: new Date(Date.now() - 172800000).toISOString() }
-    ]
-    totalEarned.value = pointsHistory.value.reduce((sum, item) => sum + item.amount, 0)
+    // --- 修改开始 ---
+    // 获取真实的积分历史记录
+    const response = await getPoints()
+    pointsHistory.value = response.points || []
+    totalEarned.value = pointsHistory.value.reduce((sum, item) => sum + (item.amount || 0), 0)
+    // --- 修改结束 ---
   } catch (error) {
     console.error('Failed to fetch points history:', error)
     pointsHistory.value = []
@@ -131,8 +131,10 @@ onMounted(async () => {
     await userStore.fetchPointsRank()
     await fetchPointsHistory()
     currentUserId.value = userStore.currentUser?.id
-    // 暂时假设已经签到
-    checkedIn.value = false
+    // --- 修改开始 ---
+    // 检查今日是否已签到
+    checkedIn.value = await checkSignInStatus()
+    // --- 修改结束 ---
   } catch (error) {
     console.error('Failed to initialize points page:', error)
   }

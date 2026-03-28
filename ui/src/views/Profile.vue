@@ -244,23 +244,33 @@ const showToast = (msg) => {
   flex-direction: column;
   align-items: center;
   position: relative;
+  padding-top: var(--spacing-8);
 }
 
+/* --- 修改开始 --- */
 .back-btn {
   position: absolute;
-  left: 0;
-  top: 0;
-  background: none;
-  border: none;
+  left: var(--spacing-6);
+  top: var(--spacing-6);
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid var(--border-color);
   color: var(--text-secondary);
   cursor: pointer;
   font-weight: var(--font-weight-medium);
-  transition: color var(--duration-fast) var(--ease-in-out);
+  padding: var(--spacing-2) var(--spacing-4);
+  border-radius: var(--radius-xl);
+  transition: all var(--duration-fast) var(--ease-in-out);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
 }
 
 .back-btn:hover {
   color: var(--primary-color);
+  background: white;
+  box-shadow: var(--shadow-sm);
 }
+/* --- 修改结束 --- */
 
 .avatar-wrapper {
   position: relative;
@@ -272,12 +282,19 @@ const showToast = (msg) => {
   height: 100px;
   background: linear-gradient(135deg, var(--primary-color), #7C3AED);
   color: white;
-  border-radius: var(--radius-full);
+  /* --- 修改开始 --- */
+  border-radius: 50%;
+  /* --- 修改结束 --- */
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: var(--font-size-4xl);
   font-weight: var(--font-weight-semibold);
+  /* --- 修改开始 --- */
+  overflow: hidden;
+  background-position: center;
+  background-repeat: no-repeat;
+  /* --- 修改结束 --- */
 }
 
 .edit-avatar-btn {

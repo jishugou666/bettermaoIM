@@ -1,45 +1,24 @@
 import { defineStore } from 'pinia'
-import { sendFriendRequest, handleFriendRequest, getFriends, getFriendRequests, deleteFriend, searchUsers as searchUsersApi } from '../api/friend'
+// --- 修改开始 ---
+// 开放性IM改造：简化好友Store，主要用于黑名单管理
+import { getFriends, searchUsers as searchUsersApi } from '../api/friend'
+// --- 修改结束 ---
 
 export const useFriendStore = defineStore('friend', {
   state: () => ({
-    friends: [],
-    friendRequests: [],
-    requests: [],
-    blockedUsers: [],
+    // --- 修改开始 ---
+    friends: [], // 现主要用于黑名单
+    blockedUsers: [], // 黑名单列表
     searchResults: [],
+    // 移除：friendRequests, requests（好友请求功能已移除）
+    // --- 修改结束 ---
     loading: false,
     error: null
   }),
   actions: {
-    async sendRequest(toUserId) {
-      this.loading = true;
-      this.error = null;
-      try {
-        await sendFriendRequest(toUserId);
-        return true;
-      } catch (err) {
-        this.error = err.message || 'Failed to send friend request';
-        return false;
-      } finally {
-        this.loading = false;
-      }
-    },
-    async handleRequest(requestId, status) {
-      this.loading = true;
-      this.error = null;
-      try {
-        await handleFriendRequest(requestId, status);
-        // 从列表中移除该请求
-        this.friendRequests = this.friendRequests.filter(req => req._id !== requestId);
-        return true;
-      } catch (err) {
-        this.error = err.message || 'Failed to handle friend request';
-        return false;
-      } finally {
-        this.loading = false;
-      }
-    },
+    // --- 修改开始 ---
+    // 移除好友请求相关方法：sendRequest, handleRequest, fetchFriendRequests, removeFriend
+    // --- 修改结束 ---
     async fetchFriends() {
       this.loading = true;
       this.error = null;
@@ -54,35 +33,9 @@ export const useFriendStore = defineStore('friend', {
         this.loading = false;
       }
     },
-    async fetchFriendRequests() {
-      this.loading = true;
-      this.error = null;
-      try {
-        const response = await getFriendRequests();
-        this.friendRequests = response.requests;
-        return response.requests;
-      } catch (err) {
-        this.error = err.message || 'Failed to fetch friend requests';
-        return [];
-      } finally {
-        this.loading = false;
-      }
-    },
-    async removeFriend(friendId) {
-      this.loading = true;
-      this.error = null;
-      try {
-        await deleteFriend(friendId);
-        // 从列表中移除该好友
-        this.friends = this.friends.filter(friend => friend.friendId !== friendId);
-        return true;
-      } catch (err) {
-        this.error = err.message || 'Failed to delete friend';
-        return false;
-      } finally {
-        this.loading = false;
-      }
-    },
+    // --- 修改开始 ---
+    // 移除 fetchFriendRequests 和 removeFriend 方法
+    // --- 修改结束 ---
     async searchUsers(keyword) {
       this.loading = true;
       this.error = null;
