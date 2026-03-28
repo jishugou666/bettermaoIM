@@ -177,6 +177,7 @@
     "gender": "性别",
     "location": "位置",
     "tags": "标签",
+    "add_tag": "添加标签",
     "save_changes": "保存更改",
     "saving": "保存中...",
     "change_avatar": "更换头像",

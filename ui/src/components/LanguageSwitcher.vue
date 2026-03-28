@@ -36,15 +36,24 @@ watch(locale, (newVal) => {
 <style scoped>
 .language-switcher select {
   padding: 0.5rem;
-  border-radius: 8px;
+  border-radius: var(--border-radius-sm);
   border: 1px solid #e5e7eb;
-  background-color: white;
+  background-color: var(--white);
   font-size: 0.9rem;
   cursor: pointer;
   outline: none;
+  transition: all var(--transition-speed) var(--transition-ease);
+  font-family: inherit;
 }
 
 .language-switcher select:hover {
   border-color: var(--primary-color);
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+}
+
+.language-switcher select:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+  outline: none;
 }
 </style>

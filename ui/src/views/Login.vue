@@ -1,296 +1,231 @@
 <template>
-  <div class="auth-layout">
-    <div class="auth-card">
-      <div class="auth-header">
-        <div class="logo">🐱</div>
+  <div class="login-layout">
+    <div class="login-container card">
+      <div class="login-header">
         <h1>{{ $t('auth.login_title') }}</h1>
         <p>{{ $t('auth.login_subtitle') }}</p>
       </div>
-
-      <form @submit.prevent="handleLogin" class="auth-form">
+      
+      <form @submit.prevent="handleLogin" class="login-form">
         <div class="form-group">
-          <label>用户名或电子邮件</label>
-          <div class="input-wrapper">
-            <input 
-              v-model="identifier" 
-              type="text" 
-              placeholder="请输入用户名或电子邮件" 
-              required 
-              :class="{ 'error': errors.identifier }"
-              @input="clearError('identifier')"
-              @focus="clearError('identifier')"
-            />
-          </div>
-          <div v-if="errors.identifier" class="error-message">{{ errors.identifier }}</div>
+          <label class="form-label" for="identifier">{{ $t('auth.email') }}</label>
+          <input 
+            type="text" 
+            id="identifier" 
+            v-model="form.identifier" 
+            :placeholder="$t('auth.email_placeholder')" 
+            class="input"
+            required
+          />
         </div>
-
+        
         <div class="form-group">
-          <label>{{ $t('auth.password') }}</label>
-          <div class="input-wrapper">
-            <input 
-              v-model="password" 
-              type="password" 
-              :placeholder="$t('auth.password_placeholder')" 
-              required 
-              :class="{ 'error': errors.password }"
-              @input="clearError('password')"
-              @focus="clearError('password')"
-            />
-          </div>
-          <div v-if="errors.password" class="error-message">{{ errors.password }}</div>
+          <label class="form-label" for="password">{{ $t('auth.password') }}</label>
+          <input 
+            type="password" 
+            id="password" 
+            v-model="form.password" 
+            :placeholder="$t('auth.password_placeholder')" 
+            class="input"
+            required
+          />
         </div>
-
-        <div v-if="authStore.error" class="error-alert">
-          <span class="icon">⚠️</span>
-          {{ authStore.error }}
-        </div>
-
-        <button type="submit" :disabled="authStore.loading" class="submit-btn">
-          <span v-if="authStore.loading" class="loader"></span>
-          <span v-else>{{ $t('auth.login_btn') }}</span>
+        
+        <button type="submit" class="btn btn-primary w-full" :disabled="loading">
+          {{ loading ? $t('common.loading') : $t('auth.login_btn') }}
         </button>
-      </form>
-
-      <div class="auth-footer">
-        <p>{{ $t('auth.no_account') }} <router-link to="/register">{{ $t('auth.register') }}</router-link></p>
-        <div class="lang-switch-wrapper">
-          <LanguageSwitcher />
+        
+        <div class="login-footer">
+          <p>{{ $t('auth.no_account') }} <router-link to="/register">{{ $t('auth.register') }}</router-link></p>
         </div>
-      </div>
+      </form>
     </div>
   </div>
 </template>
 
-<script setup>
-import { ref, reactive } from 'vue'
+<script setup>/* --- UI统一修改开始 --- */
+import { ref } from 'vue'
 import { useAuthStore } from '../stores/auth'
 import { useRouter } from 'vue-router'
-import LanguageSwitcher from '../components/LanguageSwitcher.vue'
+import { useI18n } from 'vue-i18n'
 
-const identifier = ref('')
-const password = ref('')
+const { t } = useI18n()
 const authStore = useAuthStore()
 const router = useRouter()
-const errors = reactive({
+
+const form = ref({
   identifier: '',
   password: ''
 })
 
-const clearError = (field) => {
-  errors[field] = ''
-}
-
-const validateForm = () => {
-  let isValid = true
-  
-  if (!identifier.value) {
-    errors.identifier = '请输入用户名或电子邮件'
-    isValid = false
-  }
-  
-  if (!password.value) {
-    errors.password = '请输入密码'
-    isValid = false
-  }
-  
-  return isValid
-}
+const loading = ref(false)
 
 const handleLogin = async () => {
-  if (!validateForm()) {
-    // 添加抖动效果
-    const errorInputs = document.querySelectorAll('.error')
-    errorInputs.forEach(input => {
-      input.classList.add('shake')
-      setTimeout(() => {
-        input.classList.remove('shake')
-      }, 500)
-    })
-    return
-  }
-  
-  const success = await authStore.login(identifier.value, password.value)
-  if (success) {
-    router.push('/')
+  loading.value = true
+  try {
+    const success = await authStore.login(form.value.identifier, form.value.password)
+    if (success) {
+      router.push('/')
+    }
+  } catch (error) {
+    console.error('Login failed:', error)
+  } finally {
+    loading.value = false
   }
 }
+/* --- UI统一修改结束 --- */
 </script>
 
-<style scoped>
-/* ... existing styles ... */
-.lang-switch-wrapper {
-  margin-top: 1rem;
-  display: flex;
-  justify-content: center;
-}
-.auth-layout {
+<style scoped>/* --- UI统一修改开始 --- */
+.login-layout {
   min-height: 100vh;
+  background: linear-gradient(135deg, var(--primary-50) 0%, var(--bg-color) 100%);
   display: flex;
-  align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #e0e7ff 0%, #f3f4f6 100%);
-  padding: 1rem;
+  align-items: center;
+  padding: var(--spacing-6);
+  margin: 0;
 }
 
-.auth-card {
-  background: var(--glass-bg);
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
-  border: 1px solid var(--glass-border);
+.login-container {
   width: 100%;
-  max-width: 420px;
-  padding: 2.5rem;
-  border-radius: 24px;
-  box-shadow: var(--glass-shadow);
-}
-
-.auth-header {
-  text-align: center;
-  margin-bottom: 2rem;
-}
-
-.logo {
-  font-size: 3rem;
-  margin-bottom: 1rem;
-  animation: float 3s ease-in-out infinite;
-}
-
-@keyframes float {
-  0% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
-  100% { transform: translateY(0px); }
-}
-
-h1 {
-  font-size: 1.875rem;
-  font-weight: 700;
-  color: #111827;
-  margin-bottom: 0.5rem;
-}
-
-p {
-  color: #6b7280;
-  font-size: 0.95rem;
-}
-
-.auth-form {
+  max-width: 400px;
+  padding: var(--spacing-8);
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: var(--spacing-6);
+}
+
+.login-header {
+  text-align: center;
+  margin-bottom: var(--spacing-4);
+}
+
+.login-header h1 {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-2);
+}
+
+.login-header p {
+  font-size: var(--font-size-md);
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
 }
 
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--spacing-2);
 }
 
-label {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #374151;
+.form-label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
 }
 
-input {
-  width: 100%;
-  padding: 0.75rem 1rem;
-  border: 2px solid #e5e7eb;
-  border-radius: 12px;
-  font-size: 1rem;
-  transition: all 0.2s;
-  background-color: #f9fafb;
+.input {
+  padding: var(--spacing-3) var(--spacing-4);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-md);
+  transition: all var(--duration-normal) var(--ease-in-out);
+  background-color: var(--card-color);
+  color: var(--text-primary);
 }
 
-input:focus {
+.input:focus {
+  outline: none;
   border-color: var(--primary-color);
-  background-color: white;
   box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
 }
 
-input.error {
-  border-color: var(--error);
-  animation: shake 0.5s ease-in-out;
+.btn {
+  padding: var(--spacing-3) var(--spacing-6);
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all var(--duration-normal) var(--ease-in-out);
 }
 
-@keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
-  20%, 40%, 60%, 80% { transform: translateX(5px); }
-}
-
-.error-message {
-  color: var(--error);
-  font-size: 0.75rem;
-  margin-top: 0.25rem;
-  animation: fadeIn 0.3s ease-in-out;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-5px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.error-alert {
-  background-color: #fef2f2;
-  border: 1px solid #fee2e2;
-  color: var(--error);
-  padding: 0.75rem;
-  border-radius: 12px;
-  font-size: 0.875rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.submit-btn {
+.btn-primary {
   background-color: var(--primary-color);
   color: white;
-  padding: 0.875rem;
-  border: none;
-  border-radius: 12px;
-  font-weight: 600;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  justify-content: center;
-  align-items: center;
 }
 
-.submit-btn:hover:not(:disabled) {
+.btn-primary:hover:not(:disabled) {
   background-color: var(--primary-hover);
   transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
 }
 
-.submit-btn:disabled {
-  opacity: 0.7;
+.btn:disabled {
+  opacity: 0.6;
   cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
-.auth-footer {
-  margin-top: 2rem;
+.w-full {
+  width: 100%;
+}
+
+.login-footer {
   text-align: center;
-  font-size: 0.9rem;
-  color: #6b7280;
+  margin-top: var(--spacing-4);
 }
 
-.auth-footer a {
-  font-weight: 600;
+.login-footer p {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  margin: 0;
 }
 
-.loader {
-  width: 20px;
-  height: 20px;
-  border: 2px solid #ffffff;
-  border-bottom-color: transparent;
-  border-radius: 50%;
-  display: inline-block;
-  box-sizing: border-box;
-  animation: rotation 1s linear infinite;
+.login-footer a {
+  color: var(--primary-color);
+  text-decoration: none;
+  font-weight: var(--font-weight-medium);
+  transition: color var(--duration-fast) var(--ease-in-out);
 }
 
-@keyframes rotation {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+.login-footer a:hover {
+  color: var(--primary-hover);
+  text-decoration: underline;
 }
+
+/* 响应式设计 */
+@media (max-width: 640px) {
+  .login-layout {
+    padding: var(--spacing-4);
+  }
+  
+  .login-container {
+    padding: var(--spacing-6);
+  }
+  
+  .login-header h1 {
+    font-size: var(--font-size-xl);
+  }
+  
+  .input {
+    padding: var(--spacing-2) var(--spacing-3);
+    font-size: var(--font-size-sm);
+  }
+  
+  .btn {
+    padding: var(--spacing-2) var(--spacing-4);
+    font-size: var(--font-size-sm);
+  }
+}
+/* --- UI统一修改结束 --- */
 </style>

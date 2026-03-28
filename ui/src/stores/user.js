@@ -1,76 +1,77 @@
 import { defineStore } from 'pinia'
-import axios from 'axios'
-import uploadApi from '../api/upload'
-import { useAuthStore } from './auth'
-import { useCreditStore } from './credit'
+import { getCurrentUser, updateUser, searchUsers, getPointsRank } from '../api/user'
 
 export const useUserStore = defineStore('user', {
   state: () => ({
-    profile: null,
-    loading: false
+    currentUser: null,
+    points: 0,
+    pointsRank: [],
+    loading: false,
+    error: null
   }),
-
   actions: {
+    async fetchCurrentUser() {
+      this.loading = true;
+      this.error = null;
+      try {
+        const response = await getCurrentUser();
+        this.currentUser = response.user;
+        this.points = response.user.points || 0;
+        return response.user;
+      } catch (err) {
+        this.error = err.message || 'Failed to fetch user info';
+        return null;
+      } finally {
+        this.loading = false;
+      }
+    },
+    async updateUserInfo(userData) {
+      this.loading = true;
+      this.error = null;
+      try {
+        const response = await updateUser(userData);
+        this.currentUser = response.user;
+        return response.user;
+      } catch (err) {
+        this.error = err.message || 'Failed to update user info';
+        return null;
+      } finally {
+        this.loading = false;
+      }
+    },
+    async searchUsersByKeyword(keyword) {
+      this.loading = true;
+      this.error = null;
+      try {
+        const response = await searchUsers(keyword);
+        return response.users;
+      } catch (err) {
+        this.error = err.message || 'Failed to search users';
+        return [];
+      } finally {
+        this.loading = false;
+      }
+    },
+    async fetchPointsRank() {
+      this.loading = true;
+      this.error = null;
+      try {
+        const response = await getPointsRank();
+        this.pointsRank = response.users;
+        return response.users;
+      } catch (err) {
+        this.error = err.message || 'Failed to fetch points rank';
+        return [];
+      } finally {
+        this.loading = false;
+      }
+    },
     async fetchProfile() {
-      this.loading = true;
-      try {
-        const response = await axios.get('/api/user/profile', {
-          headers: { Authorization: `Bearer ${useAuthStore().token}` }
-        });
-        this.profile = response.data;
-        
-        // Also update auth user to keep in sync
-        const authStore = useAuthStore();
-        authStore.user = { ...authStore.user, ...response.data };
-      } catch (err) {
-        console.error('Failed to fetch profile', err);
-      } finally {
-        this.loading = false;
-      }
+      // 调用 fetchCurrentUser 方法获取用户信息
+      return await this.fetchCurrentUser();
     },
-
-    async updateProfile(data) {
-      this.loading = true;
-      try {
-        const response = await axios.put('/api/user/profile', data, {
-          headers: { Authorization: `Bearer ${useAuthStore().token}` }
-        });
-        this.profile = response.data;
-        
-        // Update auth user
-        const authStore = useAuthStore();
-        authStore.user = { ...authStore.user, ...response.data };
-
-        // Check tasks
-        await useCreditStore().fetchTasks();
-        await useCreditStore().fetchBalance();
-
-        return true;
-      } catch (err) {
-        console.error('Failed to update profile', err);
-        return false;
-      } finally {
-        this.loading = false;
-      }
-    },
-
-    async uploadAvatar(file) {
-      this.loading = true;
-      try {
-        const formData = new FormData();
-        formData.append('file', file);
-        
-        const response = await uploadApi.uploadAvatar(formData);
-        const avatarUrl = response.data.url;
-        
-        // After upload, update profile
-        return await this.updateProfile({ avatar: avatarUrl });
-      } catch (err) {
-        console.error('Failed to upload avatar', err);
-        return false;
-      } finally {
-        this.loading = false;
-      }
+    clearError() {
+      this.error = null;
     }
   }
 })

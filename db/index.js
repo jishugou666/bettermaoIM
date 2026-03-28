@@ -15,26 +15,64 @@ class DatabaseManager {
         filename: path.join(__dirname, 'users.db'),
         autoload: true
       });
-      this.datastores.sessions = Datastore.create({
-        filename: path.join(__dirname, 'sessions.db'),
+      this.datastores.friends = Datastore.create({
+        filename: path.join(__dirname, 'friends.db'),
         autoload: true
       });
-      this.datastores.sessionMembers = Datastore.create({
-        filename: path.join(__dirname, 'session_members.db'),
+      this.datastores.friendRequests = Datastore.create({
+        filename: path.join(__dirname, 'friendRequests.db'),
+        autoload: true
+      });
+      this.datastores.chats = Datastore.create({
+        filename: path.join(__dirname, 'chats.db'),
+        autoload: true
+      });
+      this.datastores.chatMembers = Datastore.create({
+        filename: path.join(__dirname, 'chatMembers.db'),
         autoload: true
       });
       this.datastores.messages = Datastore.create({
         filename: path.join(__dirname, 'messages.db'),
         autoload: true
       });
-      this.datastores.friends = Datastore.create({
-        filename: path.join(__dirname, 'friends.db'),
+      this.datastores.points = Datastore.create({
+        filename: path.join(__dirname, 'points.db'),
         autoload: true
       });
-      this.datastores.friendRequests = Datastore.create({
-        filename: path.join(__dirname, 'friend_requests.db'),
+      this.datastores.moments = Datastore.create({
+        filename: path.join(__dirname, 'moments.db'),
         autoload: true
       });
+      this.datastores.momentLikes = Datastore.create({
+        filename: path.join(__dirname, 'momentLikes.db'),
+        autoload: true
+      });
+      this.datastores.momentComments = Datastore.create({
+        filename: path.join(__dirname, 'momentComments.db'),
+        autoload: true
+      });
+
+      // 创建索引
+      this.datastores.users.ensureIndex({ fieldName: '_id', unique: true });
+      this.datastores.users.ensureIndex({ fieldName: 'username', unique: true });
+      this.datastores.users.ensureIndex({ fieldName: 'email', unique: true });
+      this.datastores.friends.ensureIndex({ fieldName: '_id', unique: true });
+      this.datastores.friends.ensureIndex({ fieldName: ['userId', 'friendId'], unique: true });
+      this.datastores.friendRequests.ensureIndex({ fieldName: '_id', unique: true });
+      this.datastores.friendRequests.ensureIndex({ fieldName: ['fromUserId', 'toUserId'], unique: true });
+      this.datastores.chats.ensureIndex({ fieldName: '_id', unique: true });
+      this.datastores.chatMembers.ensureIndex({ fieldName: '_id', unique: true });
+      this.datastores.chatMembers.ensureIndex({ fieldName: ['chatId', 'userId'], unique: true });
+      this.datastores.messages.ensureIndex({ fieldName: '_id', unique: true });
+      this.datastores.messages.ensureIndex({ fieldName: 'chatId' });
+      this.datastores.points.ensureIndex({ fieldName: '_id', unique: true });
+      this.datastores.points.ensureIndex({ fieldName: 'userId' });
+      this.datastores.moments.ensureIndex({ fieldName: '_id', unique: true });
+      this.datastores.moments.ensureIndex({ fieldName: 'userId' });
+      this.datastores.momentLikes.ensureIndex({ fieldName: '_id', unique: true });
+      this.datastores.momentLikes.ensureIndex({ fieldName: ['momentId', 'userId'], unique: true });
+      this.datastores.momentComments.ensureIndex({ fieldName: '_id', unique: true });
+      this.datastores.momentComments.ensureIndex({ fieldName: 'momentId' });
 
       console.log('Database connected successfully');
     } catch (error) {

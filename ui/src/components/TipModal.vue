@@ -34,9 +34,9 @@
         </div>
 
         <div class="modal-footer">
-          <button class="cancel-btn" @click="$emit('close')">{{ $t('common.cancel') }}</button>
+          <button class="btn btn-secondary" @click="$emit('close')">{{ $t('common.cancel') }}</button>
           <button 
-            class="confirm-btn" 
+            class="btn btn-primary" 
             :disabled="!isValidAmount || loading"
             @click="handleTip"
           >
@@ -105,17 +105,17 @@ const handleTip = async () => {
   height: 100%;
   background-color: rgba(0, 0, 0, 0.5);
   display: flex;
-  transition: opacity 0.3s ease;
+  transition: opacity var(--transition-speed) var(--transition-ease);
   align-items: center;
   justify-content: center;
 }
 
 .modal-container {
   width: 300px;
-  background-color: #fff;
-  border-radius: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.33);
-  transition: all 0.3s ease;
+  background-color: var(--white);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow);
+  transition: all var(--transition-speed) var(--transition-ease);
   padding: 1.5rem;
 }
 
@@ -129,6 +129,7 @@ const handleTip = async () => {
 .modal-header h3 {
   margin: 0;
   font-size: 1.25rem;
+  color: var(--text-color);
 }
 
 .close-btn {
@@ -136,15 +137,20 @@ const handleTip = async () => {
   border: none;
   font-size: 1.5rem;
   cursor: pointer;
-  color: #9ca3af;
+  color: var(--text-light);
   padding: 0;
   line-height: 1;
+  transition: color var(--transition-speed) var(--transition-ease);
+}
+
+.close-btn:hover {
+  color: var(--text-color);
 }
 
 .balance-info {
   text-align: center;
   margin-bottom: 1rem;
-  color: #4b5563;
+  color: var(--text-light);
   font-size: 0.9rem;
 }
 
@@ -163,10 +169,10 @@ const handleTip = async () => {
 .amount-btn {
   padding: 0.5rem;
   border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  background: white;
+  border-radius: var(--border-radius-sm);
+  background: var(--white);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all var(--transition-speed) var(--transition-ease);
   font-weight: 500;
 }
 
@@ -180,42 +186,20 @@ const handleTip = async () => {
   width: 100%;
   padding: 0.5rem;
   border: 1px solid #e5e7eb;
-  border-radius: 8px;
+  border-radius: var(--border-radius-sm);
   text-align: center;
+  transition: all var(--transition-speed) var(--transition-ease);
 }
 
 .custom-amount input:focus {
   border-color: var(--primary-color);
   outline: none;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
 }
 
 .modal-footer {
   display: flex;
   gap: 1rem;
-}
-
-.modal-footer button {
-  flex: 1;
-  padding: 0.75rem;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  border: none;
-}
-
-.cancel-btn {
-  background-color: #f3f4f6;
-  color: #4b5563;
-}
-
-.confirm-btn {
-  background-color: var(--primary-color);
-  color: white;
-}
-
-.confirm-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
 }
 
 /* Transitions */

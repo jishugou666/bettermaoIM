@@ -1,16 +1,16 @@
 <script setup>
 import { onMounted, watch } from 'vue'
 import { useAuthStore } from './stores/auth'
-import { useChatStore } from './stores/chat'
+import { useSocketStore } from './stores/socket'
 
 const authStore = useAuthStore()
-const chatStore = useChatStore()
+const socketStore = useSocketStore()
 
 onMounted(async () => {
   if (authStore.token) {
     // 先获取用户信息，再初始化socket
     await authStore.fetchUser()
-    chatStore.initializeSocket()
+    socketStore.initSocket(authStore.token)
   }
 })
 
@@ -18,10 +18,10 @@ watch(() => authStore.token, async (newToken) => {
   if (newToken) {
     // 当token变化时，重新获取用户信息
     await authStore.fetchUser()
-    chatStore.initializeSocket()
+    socketStore.initSocket(newToken)
   } else {
-    // chatStore.disconnectSocket() // Implement this if needed
-    if (chatStore.socket) chatStore.socket.disconnect()
+    // 断开socket连接
+    socketStore.disconnectSocket()
   }
 })
 </script>
@@ -36,11 +36,11 @@ watch(() => authStore.token, async (newToken) => {
   </router-view>
 </template>
 
-<style>
+<style>/* --- UI统一修改开始 --- */
 /* 页面过渡动画 */
 .page-transition-enter-active,
 .page-transition-leave-active {
-  transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+  transition: all var(--duration-normal) var(--ease-in-out);
 }
 
 .page-transition-enter-from {
@@ -55,28 +55,28 @@ watch(() => authStore.token, async (newToken) => {
 
 /* 卡片样式 */
 .card {
-  background-color: var(--white);
-  border-radius: var(--border-radius);
-  box-shadow: var(--shadow);
-  padding: 16px;
-  margin-bottom: 16px;
-  transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+  background-color: var(--card-color);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
+  padding: var(--spacing-6);
+  margin-bottom: var(--spacing-6);
+  transition: all var(--duration-normal) var(--ease-in-out);
 }
 
 .card:hover {
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-lg);
   transform: translateY(-2px);
 }
 
 /* 按钮样式 */
 .btn {
-  padding: 10px 20px;
+  padding: var(--spacing-3) var(--spacing-6);
   border: none;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: 600;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-medium);
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+  transition: all var(--duration-normal) var(--ease-in-out);
 }
 
 .btn-primary {
@@ -87,17 +87,18 @@ watch(() => authStore.token, async (newToken) => {
 .btn-primary:hover {
   background-color: var(--primary-hover);
   transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
 }
 
 /* 输入框样式 */
 .input {
-  padding: 10px 16px;
-  border: 1px solid var(--text-light);
-  border-radius: 8px;
-  font-size: 16px;
-  transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
-  background-color: var(--white);
-  color: var(--text-color);
+  padding: var(--spacing-3) var(--spacing-4);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-md);
+  transition: all var(--duration-normal) var(--ease-in-out);
+  background-color: var(--card-color);
+  color: var(--text-primary);
 }
 
 .input:focus {
@@ -105,4 +106,5 @@ watch(() => authStore.token, async (newToken) => {
   border-color: var(--primary-color);
   box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
 }
+/* --- UI统一修改结束 --- */
 </style>

@@ -1,121 +1,144 @@
 import { defineStore } from 'pinia'
-import axios from 'axios'
-import { useAuthStore } from './auth'
+import { createMoment, getMoments, likeMoment, unlikeMoment, commentMoment, deleteComment } from '../api/moments'
 
 export const useMomentStore = defineStore('moment', {
   state: () => ({
+    moments: [],
     feed: [],
-    comments: {}, // Map momentId -> Array<Comment>
-    loading: false
+    loading: false,
+    error: null
   }),
-
   actions: {
-    async fetchFeed() {
+    async createMoment(content, images) {
       this.loading = true;
+      this.error = null;
       try {
-        const response = await axios.get('/api/moment/feed', {
-          headers: { Authorization: `Bearer ${useAuthStore().token}` }
-        });
-        this.feed = response.data;
+        const response = await createMoment(content, images);
+        // 添加到本地动态列表
+        this.moments.unshift(response.moment);
+        return response.moment;
       } catch (err) {
-        console.error('Failed to fetch feed', err);
+        this.error = err.message || 'Failed to create moment';
+        return null;
       } finally {
         this.loading = false;
       }
     },
-
-    async createMoment(content, images = []) {
+    async fetchMoments() {
+      this.loading = true;
+      this.error = null;
       try {
-        const response = await axios.post('/api/moment', { content, images }, {
-          headers: { Authorization: `Bearer ${useAuthStore().token}` }
-        });
-        // Prepend to feed
-        this.feed.unshift({
-          ...response.data,
-          images: response.data.images ? JSON.parse(response.data.images) : [], // Ensure parsed for frontend
-          user: useAuthStore().user,
-          _count: { likes: 0, comments: 0 },
-          likes: [],
-          isLiked: false
-        });
-        return true;
+        const response = await getMoments();
+        this.moments = response.moments;
+        return response.moments;
       } catch (err) {
-        console.error('Failed to create moment', err);
-        return false;
+        this.error = err.message || 'Failed to fetch moments';
+        return [];
+      } finally {
+        this.loading = false;
       }
     },
-
-    async toggleLike(momentId) {
+    async likeMoment(momentId) {
+      this.loading = true;
+      this.error = null;
       try {
-        const response = await axios.post(`/api/moment/${momentId}/like`, {}, {
-          headers: { Authorization: `Bearer ${useAuthStore().token}` }
-        });
-        
-        const moment = this.feed.find(m => m.id === momentId);
+        await likeMoment(momentId);
+        // 更新本地动态的点赞状态
+        const moment = this.moments.find(m => m._id === momentId);
         if (moment) {
-          moment.isLiked = response.data.isLiked;
-          if (moment.isLiked) {
-            moment._count.likes++;
-          } else {
-            // 确保点赞数不会小于0
-            if (moment._count.likes > 0) {
-              moment._count.likes--;
-            }
-          }
-        }
-      } catch (err) {
-        console.error('Like failed', err);
-      }
-    },
-
-    async fetchComments(momentId) {
-      try {
-        const response = await axios.get(`/api/moment/${momentId}/comments`, {
-          headers: { Authorization: `Bearer ${useAuthStore().token}` }
-        });
-        this.comments[momentId] = response.data;
-      } catch (err) {
-        console.error('Failed to fetch comments', err);
-      }
-    },
-
-    async createComment(momentId, content) {
-      try {
-        const response = await axios.post(`/api/moment/${momentId}/comments`, { content }, {
-          headers: { Authorization: `Bearer ${useAuthStore().token}` }
-        });
-        
-        if (!this.comments[momentId]) {
-          this.comments[momentId] = [];
-        }
-        this.comments[momentId].push(response.data);
-        
-        // Update count in feed
-        const moment = this.feed.find(m => m.id === momentId);
-        if (moment) {
-          moment._count.comments++;
+          moment.likes += 1;
+          moment.liked = true;
         }
         return true;
       } catch (err) {
-        console.error('Failed to comment', err);
+        this.error = err.message || 'Failed to like moment';
         return false;
+      } finally {
+        this.loading = false;
       }
     },
-
-    async fetchMomentDetail(momentId) {
+    async unlikeMoment(momentId) {
+      this.loading = true;
+      this.error = null;
       try {
-        const response = await axios.get(`/api/moment/${momentId}`, {
-          headers: { Authorization: `Bearer ${useAuthStore().token}` }
-        });
-        return {
-          ...response.data,
-          images: response.data.images ? JSON.parse(response.data.images) : [],
-          isLiked: response.data.likes && response.data.likes.length > 0
-        };
+        await unlikeMoment(momentId);
+        // 更新本地动态的点赞状态
+        const moment = this.moments.find(m => m._id === momentId);
+        if (moment) {
+          moment.likes -= 1;
+          moment.liked = false;
+        }
+        return true;
       } catch (err) {
-        console.error('Failed to fetch moment detail', err);
+        this.error = err.message || 'Failed to unlike moment';
+        return false;
+      } finally {
+        this.loading = false;
+      }
+    },
+    async commentMoment(momentId, content) {
+      this.loading = true;
+      this.error = null;
+      try {
+        const response = await commentMoment(momentId, content);
+        // 更新本地动态的评论数
+        const moment = this.moments.find(m => m._id === momentId);
+        if (moment) {
+          moment.comments += 1;
+        }
+        return response.comment;
+      } catch (err) {
+        this.error = err.message || 'Failed to comment moment';
         return null;
+      } finally {
+        this.loading = false;
       }
+    },
+    async deleteComment(momentId, commentId) {
+      this.loading = true;
+      this.error = null;
+      try {
+        await deleteComment(momentId, commentId);
+        // 更新本地动态的评论数
+        const moment = this.moments.find(m => m._id === momentId);
+        if (moment) {
+          moment.comments -= 1;
+        }
+        return true;
+      } catch (err) {
+        this.error = err.message || 'Failed to delete comment';
+        return false;
+      } finally {
+        this.loading = false;
+      }
+    },
+    async fetchFeed() {
+      this.loading = true;
+      this.error = null;
+      try {
+        const response = await getMoments();
+        this.feed = response.moments;
+        return response.moments;
+      } catch (err) {
+        this.error = err.message || 'Failed to fetch moments';
+        return [];
+      } finally {
+        this.loading = false;
+      }
+    },
+    toggleLike(momentId) {
+      const moment = this.feed.find(m => m.id === momentId);
+      if (moment) {
+        if (moment.isLiked) {
+          return this.unlikeMoment(momentId);
+        } else {
+          return this.likeMoment(momentId);
+        }
+      }
+      return false;
+    },
+    clearError() {
+      this.error = null;
     }
   }
 })

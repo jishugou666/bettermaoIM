@@ -10,6 +10,12 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/home',
+      name: 'home-page',
+      component: () => import('../views/Home.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/chat',
       name: 'chat',
       component: () => import('../views/Chat.vue'),
@@ -22,9 +28,21 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/search',
+      name: 'search',
+      component: () => import('../views/Search.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/credits',
       name: 'credits',
       component: () => import('../views/Credits.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/points',
+      name: 'points',
+      component: () => import('../views/Points.vue'),
       meta: { requiresAuth: true }
     },
     {

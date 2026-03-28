@@ -79,18 +79,26 @@ class CRUD {
 
 // 导出CRUD实例
 const users = new CRUD('users');
-const sessions = new CRUD('sessions');
-const sessionMembers = new CRUD('sessionMembers');
-const messages = new CRUD('messages');
 const friends = new CRUD('friends');
 const friendRequests = new CRUD('friendRequests');
+const chats = new CRUD('chats');
+const chatMembers = new CRUD('chatMembers');
+const messages = new CRUD('messages');
+const points = new CRUD('points');
+const moments = new CRUD('moments');
+const momentLikes = new CRUD('momentLikes');
+const momentComments = new CRUD('momentComments');
 
 module.exports = {
   users,
-  sessions,
-  sessionMembers,
-  messages,
   friends,
   friendRequests,
+  chats,
+  chatMembers,
+  messages,
+  points,
+  moments,
+  momentLikes,
+  momentComments,
   CRUD
 };

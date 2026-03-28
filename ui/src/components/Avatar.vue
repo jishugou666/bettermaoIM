@@ -1,76 +1,114 @@
 <template>
-  <div 
-    class="avatar-component" 
-    :style="style"
-    :title="username"
-  >
-    {{ !src ? (username?.charAt(0).toUpperCase() || '?') : '' }}
+  <div class="avatar" :style="avatarStyle">
+    <img v-if="src" :src="src" :alt="username" class="avatar-img" />
+    <span v-else class="avatar-text">{{ getInitials(username) }}</span>
   </div>
 </template>
 
-<script setup>
+<script setup>/* --- UI统一修改开始 --- */
 import { computed } from 'vue'
 
 const props = defineProps({
-  src: {
-    type: String,
-    default: null
-  },
   username: {
     type: String,
-    default: 'User'
+    required: true
+  },
+  src: {
+    type: String,
+    default: ''
   },
   size: {
-    type: Number,
+    type: [String, Number],
     default: 40
   },
-  color: {
+  backgroundColor: {
     type: String,
-    default: '#e0e7ff'
+    default: ''
   },
   textColor: {
     type: String,
-    default: '#4f46e5' // var(--primary-color)
+    default: ''
   }
 })
 
-const fullUrl = computed(() => {
-  if (!props.src) return null
-  if (props.src.startsWith('http')) return props.src
-  return `${import.meta.env.VITE_API_BASE || 'http://localhost:3000'}${props.src}`
+const getInitials = (username) => {
+  if (!username) return '?'
+  const parts = username.split(' ')
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[1][0]).toUpperCase()
+  } else {
+    return username.substring(0, 2).toUpperCase()
+  }
+}
+
+const avatarStyle = computed(() => {
+  const size = typeof props.size === 'number' ? `${props.size}px` : props.size
+  const bgColor = props.backgroundColor || getRandomColor(props.username)
+  const textColor = props.textColor || '#ffffff'
+  
+  return {
+    width: size,
+    height: size,
+    backgroundColor: bgColor,
+    color: textColor
+  }
 })
 
-const style = computed(() => {
-  const base = {
-    width: `${props.size}px`,
-    height: `${props.size}px`,
-    borderRadius: '50%',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontWeight: '600',
-    fontSize: `${props.size * 0.4}px`,
-    backgroundColor: props.color,
-    color: props.textColor,
-    flexShrink: 0
+const getRandomColor = (username) => {
+  const colors = [
+    '#6366f1', // primary
+    '#10b981', // success
+    '#f59e0b', // warning
+    '#ef4444', // error
+    '#3b82f6', // info
+    '#8b5cf6', // purple
+    '#ec4899', // pink
+    '#14b8a6'  // teal
+  ]
+  
+  let hash = 0
+  for (let i = 0; i < username.length; i++) {
+    hash = username.charCodeAt(i) + ((hash << 5) - hash)
   }
   
-  if (fullUrl.value) {
-    return {
-      ...base,
-      backgroundImage: `url(${fullUrl.value})`,
-      backgroundSize: 'cover',
-      backgroundPosition: 'center',
-      color: 'transparent' // Hide text
-    }
-  }
-  
-  return base
-})
+  const index = Math.abs(hash) % colors.length
+  return colors[index]
+}
+/* --- UI统一修改结束 --- */
 </script>
 
-<style scoped>
-.avatar-component {
-  user-select: none;
+<style scoped>/* --- UI统一修改开始 --- */
+.avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  font-weight: var(--font-weight-semibold);
+  transition: all var(--duration-normal) var(--ease-in-out);
+  box-shadow: var(--shadow-sm);
 }
+
+.avatar:hover {
+  transform: scale(1.05);
+  box-shadow: var(--shadow-md);
+}
+
+.avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: all var(--duration-normal) var(--ease-in-out);
+}
+
+.avatar-img:hover {
+  transform: scale(1.1);
+}
+
+.avatar-text {
+  font-size: 0.75em;
+  line-height: 1;
+  text-align: center;
+}
+/* --- UI统一修改结束 --- */
 </style>

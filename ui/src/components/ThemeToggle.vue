@@ -52,7 +52,10 @@ onMounted(() => {
   cursor: pointer;
   padding: 0.5rem;
   border-radius: 50%;
-  transition: background-color 0.2s;
+  transition: background-color var(--transition-speed) var(--transition-ease);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .theme-toggle:hover {
