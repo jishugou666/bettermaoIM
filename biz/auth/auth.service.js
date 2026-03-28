@@ -3,12 +3,18 @@ const jwt = require('jsonwebtoken');
 const { users } = require('../../db/crud');
 
 class AuthService {
-  async register(username, password, nickname) {
+  async register(username, email, password, nickname) {
     try {
       // 检查用户名是否已存在
-      const existingUser = await users.read({ username });
-      if (existingUser.length > 0) {
+      const existingUserByUsername = await users.read({ username });
+      if (existingUserByUsername.length > 0) {
         throw new Error('Username already exists');
+      }
+
+      // 检查邮箱是否已存在
+      const existingUserByEmail = await users.read({ email });
+      if (existingUserByEmail.length > 0) {
+        throw new Error('Email already exists');
       }
 
       // 密码加密
@@ -17,13 +23,15 @@ class AuthService {
       // 创建用户
       const result = await users.create({
         username,
+        email,
         password: hashedPassword,
         nickname,
         status: 'online'
       });
 
       // 获取创建的用户信息
-      const user = await users.getById(result.lastID);
+      const userList = await users.read({ username });
+      const user = userList[0];
       if (!user) {
         throw new Error('Failed to create user');
       }
@@ -32,32 +40,37 @@ class AuthService {
       delete user.password;
       return user;
     } catch (error) {
-      throw new Error(`Registration failed: ${error.message}`);
+      throw error;
     }
   }
 
-  async login(username, password) {
+  async login(identifier, password) {
     try {
-      // 查找用户
-      const userList = await users.read({ username });
+      // 查找用户 - 支持使用用户名或邮箱登录
+      const userListByUsername = await users.read({ username: identifier });
+      const userListByEmail = await users.read({ email: identifier });
+      
+      // 合并结果
+      const userList = [...userListByUsername, ...userListByEmail];
       const user = userList[0];
       
+      // 检查用户是否存在
       if (!user) {
-        throw new Error('Invalid username or password');
+        throw new Error('User not found');
       }
 
       // 验证密码
       const isPasswordValid = await bcrypt.compare(password, user.password);
       if (!isPasswordValid) {
-        throw new Error('Invalid username or password');
+        throw new Error('Invalid password');
       }
 
       // 更新用户状态为在线
-      await users.update({ id: user.id }, { status: 'online' });
+      await users.update({ _id: user._id }, { status: 'online' });
 
       // 生成JWT token
       const token = jwt.sign(
-        { userId: user.id, username: user.username },
+        { userId: user._id, username: user.username },
         process.env.JWT_SECRET || 'your-secret-key',
         { expiresIn: '24h' }
       );
@@ -66,14 +79,14 @@ class AuthService {
       delete user.password;
       return { user, token };
     } catch (error) {
-      throw new Error(`Login failed: ${error.message}`);
+      throw error;
     }
   }
 
   async logout(userId) {
     try {
       // 更新用户状态为离线
-      await users.update({ id: userId }, { status: 'offline' });
+      await users.update({ _id: userId }, { status: 'offline' });
     } catch (error) {
       throw new Error(`Logout failed: ${error.message}`);
     }
@@ -81,7 +94,8 @@ class AuthService {
 
   async getProfile(userId) {
     try {
-      const user = await users.getById(userId);
+      const userList = await users.read({ _id: userId });
+      const user = userList[0];
       if (!user) {
         throw new Error('User not found');
       }

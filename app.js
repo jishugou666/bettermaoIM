@@ -1,3 +1,11 @@
+// 兼容 NeDB 在 Node.js 高版本中的 util.isDate 问题
+const util = require('util');
+if (!util.isDate) {
+  util.isDate = function(obj) {
+    return Object.prototype.toString.call(obj) === '[object Date]';
+  };
+}
+
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');

@@ -9,11 +9,11 @@ export const useAuthStore = defineStore('auth', {
     error: null
   }),
   actions: {
-    async login(username, password) {
+    async login(identifier, password) {
       this.loading = true;
       this.error = null;
       try {
-        const response = await login({ username, password });
+        const response = await login({ identifier, password });
         this.token = response.token;
         this.user = response.user;
         localStorage.setItem('token', this.token);
@@ -26,11 +26,11 @@ export const useAuthStore = defineStore('auth', {
         this.loading = false;
       }
     },
-    async register(username, password, nickname) {
+    async register(username, email, password, nickname) {
       this.loading = true;
       this.error = null;
       try {
-        const response = await registerApi({ username, password, nickname });
+        const response = await registerApi({ username, email, password, nickname });
         this.token = response.token;
         this.user = response.user;
         localStorage.setItem('token', this.token);

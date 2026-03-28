@@ -12,13 +12,16 @@
           <label>用户名或电子邮件</label>
           <div class="input-wrapper">
             <input 
-              v-model="email" 
+              v-model="identifier" 
               type="text" 
               placeholder="请输入用户名或电子邮件" 
               required 
-              :class="{ 'error': authStore.error }"
+              :class="{ 'error': errors.identifier }"
+              @input="clearError('identifier')"
+              @focus="clearError('identifier')"
             />
           </div>
+          <div v-if="errors.identifier" class="error-message">{{ errors.identifier }}</div>
         </div>
 
         <div class="form-group">
@@ -29,9 +32,12 @@
               type="password" 
               :placeholder="$t('auth.password_placeholder')" 
               required 
-              :class="{ 'error': authStore.error }"
+              :class="{ 'error': errors.password }"
+              @input="clearError('password')"
+              @focus="clearError('password')"
             />
           </div>
+          <div v-if="errors.password" class="error-message">{{ errors.password }}</div>
         </div>
 
         <div v-if="authStore.error" class="error-alert">
@@ -56,22 +62,54 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, reactive } from 'vue'
 import { useAuthStore } from '../stores/auth'
 import { useRouter } from 'vue-router'
 import LanguageSwitcher from '../components/LanguageSwitcher.vue'
 
-const email = ref('')
+const identifier = ref('')
 const password = ref('')
 const authStore = useAuthStore()
 const router = useRouter()
+const errors = reactive({
+  identifier: '',
+  password: ''
+})
+
+const clearError = (field) => {
+  errors[field] = ''
+}
+
+const validateForm = () => {
+  let isValid = true
+  
+  if (!identifier.value) {
+    errors.identifier = '请输入用户名或电子邮件'
+    isValid = false
+  }
+  
+  if (!password.value) {
+    errors.password = '请输入密码'
+    isValid = false
+  }
+  
+  return isValid
+}
 
 const handleLogin = async () => {
-  if (!email.value || !password.value) {
-    authStore.error = '请输入用户名或电子邮件和密码'
+  if (!validateForm()) {
+    // 添加抖动效果
+    const errorInputs = document.querySelectorAll('.error')
+    errorInputs.forEach(input => {
+      input.classList.add('shake')
+      setTimeout(() => {
+        input.classList.remove('shake')
+      }, 500)
+    })
     return
   }
-  const success = await authStore.login(email.value, password.value)
+  
+  const success = await authStore.login(identifier.value, password.value)
   if (success) {
     router.push('/')
   }
@@ -171,6 +209,25 @@ input:focus {
 
 input.error {
   border-color: var(--error);
+  animation: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+  20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+
+.error-message {
+  color: var(--error);
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .error-alert {

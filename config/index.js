@@ -1,6 +1,42 @@
 const config = require('config-lite');
 const Joi = require('joi');
 
+// 检查config是否为函数
+if (typeof config !== 'function') {
+  console.error('config-lite 加载失败，使用默认配置');
+  module.exports = {
+    server: {
+      port: process.env.PORT || 3000,
+      host: '0.0.0.0',
+      env: process.env.NODE_ENV || 'development'
+    },
+    database: {
+      path: './db/bettermao.db',
+      backupPath: './db/backups'
+    },
+    jwt: {
+      secret: process.env.JWT_SECRET || 'your-secret-key-change-in-production',
+      expiresIn: '24h'
+    },
+    cors: {
+      origin: process.env.FRONTEND_URL || 'http://localhost:5173'
+    },
+    logger: {
+      level: 'info',
+      file: './logs/app.log'
+    },
+    rateLimit: {
+      windowMs: 15 * 60 * 1000,
+      max: 100
+    },
+    upload: {
+      maxSize: 10 * 1024 * 1024,
+      directory: './uploads'
+    }
+  };
+  return;
+}
+
 // 配置验证模式
 const configSchema = Joi.object({
   server: Joi.object({

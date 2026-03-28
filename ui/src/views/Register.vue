@@ -15,7 +15,11 @@
             type="text" 
             :placeholder="$t('auth.username_placeholder')" 
             required 
+            :class="{ 'error': errors.username }"
+            @input="clearError('username')"
+            @focus="clearError('username')"
           />
+          <div v-if="errors.username" class="error-message">{{ errors.username }}</div>
         </div>
 
         <div class="form-group">
@@ -25,7 +29,11 @@
             type="email" 
             :placeholder="$t('auth.email_placeholder')" 
             required 
+            :class="{ 'error': errors.email }"
+            @input="clearError('email')"
+            @focus="clearError('email')"
           />
+          <div v-if="errors.email" class="error-message">{{ errors.email }}</div>
         </div>
 
         <div class="form-group">
@@ -35,7 +43,25 @@
             type="password" 
             :placeholder="$t('auth.password_placeholder')" 
             required 
+            :class="{ 'error': errors.password }"
+            @input="clearError('password')"
+            @focus="clearError('password')"
           />
+          <div v-if="errors.password" class="error-message">{{ errors.password }}</div>
+        </div>
+
+        <div class="form-group">
+          <label>{{ $t('auth.nickname') }}</label>
+          <input 
+            v-model="nickname" 
+            type="text" 
+            placeholder="请输入昵称" 
+            required 
+            :class="{ 'error': errors.nickname }"
+            @input="clearError('nickname')"
+            @focus="clearError('nickname')"
+          />
+          <div v-if="errors.nickname" class="error-message">{{ errors.nickname }}</div>
         </div>
 
         <div v-if="authStore.error" class="error-alert">
@@ -60,7 +86,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, reactive } from 'vue'
 import { useAuthStore } from '../stores/auth'
 import { useRouter } from 'vue-router'
 import LanguageSwitcher from '../components/LanguageSwitcher.vue'
@@ -68,11 +94,66 @@ import LanguageSwitcher from '../components/LanguageSwitcher.vue'
 const username = ref('')
 const email = ref('')
 const password = ref('')
+const nickname = ref('')
 const authStore = useAuthStore()
 const router = useRouter()
+const errors = reactive({
+  username: '',
+  email: '',
+  password: '',
+  nickname: ''
+})
+
+const clearError = (field) => {
+  errors[field] = ''
+}
+
+const validateForm = () => {
+  let isValid = true
+  
+  if (!username.value) {
+    errors.username = '请输入用户名'
+    isValid = false
+  }
+  
+  if (!email.value) {
+    errors.email = '请输入邮箱'
+    isValid = false
+  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value)) {
+    errors.email = '请输入有效的邮箱地址'
+    isValid = false
+  }
+  
+  if (!password.value) {
+    errors.password = '请输入密码'
+    isValid = false
+  } else if (password.value.length < 6) {
+    errors.password = '密码长度至少为6位'
+    isValid = false
+  }
+  
+  if (!nickname.value) {
+    errors.nickname = '请输入昵称'
+    isValid = false
+  }
+  
+  return isValid
+}
 
 const handleRegister = async () => {
-  const success = await authStore.register(username.value, email.value, password.value)
+  if (!validateForm()) {
+    // 添加抖动效果
+    const errorInputs = document.querySelectorAll('.error')
+    errorInputs.forEach(input => {
+      input.classList.add('shake')
+      setTimeout(() => {
+        input.classList.remove('shake')
+      }, 500)
+    })
+    return
+  }
+  
+  const success = await authStore.register(username.value, email.value, password.value, nickname.value)
   if (success) {
     router.push('/')
   }
@@ -168,6 +249,29 @@ input:focus {
   border-color: var(--primary-color);
   background-color: white;
   box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+}
+
+input.error {
+  border-color: var(--error);
+  animation: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+  20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+
+.error-message {
+  color: var(--error);
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .error-alert {

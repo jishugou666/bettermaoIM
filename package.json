@@ -16,7 +16,9 @@
     "build-backend": "mkdir dist 2>nul || mkdir dist && xcopy uploads dist/uploads /E /I /Y 2>nul || echo No uploads directory to copy",
     "start:prod": "set NODE_ENV=production && node app.js",
     "audit": "npm audit",
-    "audit:fix": "npm audit fix"
+    "audit:fix": "npm audit fix",
+    "clean": "rm -rf node_modules package-lock.json",
+    "reinstall": "npm run clean && npm install"
   },
   "repository": {
     "type": "git",
@@ -32,7 +34,7 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "multer": "^2.1.0",
-    "sqlite3": "^5.1.7",
+    "nedb-promises": "^6.2.1",
     "winston": "^3.17.0",
     "express-rate-limit": "^7.5.0",
     "helmet": "^8.0.0",
@@ -50,5 +52,14 @@
     "husky": "^9.1.6",
     "commitlint": "^19.5.0",
     "@commitlint/config-conventional": "^19.5.0"
+  },
+  "resolutions": {
+    "rimraf": "^5.0.5",
+    "glob": "^10.4.5",
+    "inflight": "^1.0.6",
+    "npmlog": "^7.0.1",
+    "gauge": "^5.0.1",
+    "are-we-there-yet": "^4.0.1",
+    "@npmcli/move-file": "^3.0.0"
   }
 }

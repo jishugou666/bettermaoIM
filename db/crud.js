@@ -7,46 +7,53 @@ class CRUD {
   }
 
   async create(data) {
-    const columns = Object.keys(data);
-    const values = Object.values(data);
-    const placeholders = columns.map((_, index) => `?`).join(', ');
-    
-    const sql = `INSERT INTO ${this.table} (${columns.join(', ')}) VALUES (${placeholders})`;
-    return await db.execute(sql, values);
+    try {
+      // 使用 nedb 的 insert 操作
+      const result = await db.execute(this.table, 'insert', null, data);
+      return result;
+    } catch (error) {
+      throw new Error(`Create failed: ${error.message}`);
+    }
   }
 
   async read(conditions = {}, fields = '*') {
-    const whereClause = Object.keys(conditions).length > 0 
-      ? 'WHERE ' + Object.keys(conditions).map(key => `${key} = ?`).join(' AND ')
-      : '';
-    
-    const sql = `SELECT ${fields} FROM ${this.table} ${whereClause}`;
-    const params = Object.values(conditions);
-    
-    return await db.query(sql, params);
+    try {
+      // 使用 nedb 的 find 操作
+      const docs = await db.query(this.table, conditions, fields === '*' ? {} : fields);
+      return docs;
+    } catch (error) {
+      throw new Error(`Read failed: ${error.message}`);
+    }
   }
 
   async update(conditions, data) {
-    const setClause = Object.keys(data).map(key => `${key} = ?`).join(', ');
-    const whereClause = Object.keys(conditions).map(key => `${key} = ?`).join(' AND ');
-    
-    const sql = `UPDATE ${this.table} SET ${setClause} WHERE ${whereClause}`;
-    const params = [...Object.values(data), ...Object.values(conditions)];
-    
-    return await db.execute(sql, params);
+    try {
+      // 使用 nedb 的 update 操作
+      const result = await db.execute(this.table, 'update', conditions, { $set: data });
+      return result;
+    } catch (error) {
+      throw new Error(`Update failed: ${error.message}`);
+    }
   }
 
   async delete(conditions) {
-    const whereClause = Object.keys(conditions).map(key => `${key} = ?`).join(' AND ');
-    const sql = `DELETE FROM ${this.table} WHERE ${whereClause}`;
-    const params = Object.values(conditions);
-    
-    return await db.execute(sql, params);
+    try {
+      // 使用 nedb 的 remove 操作
+      const result = await db.execute(this.table, 'remove', conditions, null);
+      return result;
+    } catch (error) {
+      throw new Error(`Delete failed: ${error.message}`);
+    }
   }
 
   async getById(id) {
-    const sql = `SELECT * FROM ${this.table} WHERE id = ?`;
-    return await db.get(sql, [id]);
+    try {
+      // 使用 nedb 的 findOne 操作
+      const doc = await db.get(this.table, { _id: id }, {});
+      return doc;
+    } catch (error) {
+      throw new Error(`Get by id failed: ${error.message}`);
+    }
   }
 
   async lock(resourceId) {
@@ -73,13 +80,17 @@ class CRUD {
 // 导出CRUD实例
 const users = new CRUD('users');
 const sessions = new CRUD('sessions');
-const sessionMembers = new CRUD('session_members');
+const sessionMembers = new CRUD('sessionMembers');
 const messages = new CRUD('messages');
+const friends = new CRUD('friends');
+const friendRequests = new CRUD('friendRequests');
 
 module.exports = {
   users,
   sessions,
   sessionMembers,
   messages,
+  friends,
+  friendRequests,
   CRUD
 };
