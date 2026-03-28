@@ -93,6 +93,14 @@ class DatabaseManager {
       this.datastores.communityComments.ensureIndex({ fieldName: 'postId' });
       this.datastores.communityLikes.ensureIndex({ fieldName: '_id', unique: true });
       this.datastores.communityLikes.ensureIndex({ fieldName: ['postId', 'userId'], unique: true });
+      
+      // 管理员集合
+      this.datastores.adminUsers = Datastore.create({
+        filename: path.join(__dirname, 'adminUsers.db'),
+        autoload: true
+      });
+      this.datastores.adminUsers.ensureIndex({ fieldName: '_id', unique: true });
+      this.datastores.adminUsers.ensureIndex({ fieldName: 'username', unique: true });
 
       console.log('Database connected successfully');
     } catch (error) {

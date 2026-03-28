@@ -1,39 +1,75 @@
-const { users, friends, friendRequests, chats, chatMembers, messages, points, moments, momentLikes, momentComments, communityPosts, communityComments, communityLikes } = require('../db/crud');
+const { users, friends, friendRequests, chats, chatMembers, messages, points, moments, momentLikes, momentComments, communityPosts, communityComments, communityLikes, adminUsers } = require('../db/crud');
 const db = require('../db');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+
+const JWT_SECRET = process.env.JWT_SECRET || 'bettermao-admin-secret-key-2024';
+
+// 角色定义
+const ROLES = {
+  SUPER_ADMIN: 'super_admin',
+  ADMIN: 'admin',
+  MODERATOR: 'moderator'
+};
+
+// 角色权限映射
+const ROLE_PERMISSIONS = {
+  [ROLES.SUPER_ADMIN]: ['*'],
+  [ROLES.ADMIN]: ['database:read', 'users:read', 'users:write', 'chats:read', 'chats:write', 'groups:read', 'groups:write', 'moments:read', 'moments:write', 'posts:read', 'posts:write'],
+  [ROLES.MODERATOR]: ['users:read', 'chats:read', 'moments:read', 'moments:write', 'posts:read', 'posts:write']
+};
 
 class AdminController {
-  // 管理员登录 - 使用用户系统验证
+  // 检查权限
+  hasPermission(role, permission) {
+    const permissions = ROLE_PERMISSIONS[role];
+    if (!permissions) return false;
+    if (permissions.includes('*')) return true;
+    return permissions.includes(permission);
+  }
+
+  // 生成JWT Token
+  generateToken(admin) {
+    return jwt.sign(
+      { id: admin._id, username: admin.username, role: admin.role },
+      JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+  }
+
+  // 管理员登录
   async login(req, res) {
     try {
       const { username, password } = req.body;
       
-      // 查找用户
-      const userList = await users.read({ username });
-      const user = userList[0];
+      // 查找管理员
+      const adminList = await adminUsers.read({ username });
+      const admin = adminList[0];
       
-      if (!user) {
+      if (!admin) {
         return res.status(401).json({ success: false, message: '用户名或密码错误' });
       }
       
       // 验证密码
-      if (user.password !== password) {
+      const isValid = await bcrypt.compare(password, admin.password);
+      if (!isValid) {
         return res.status(401).json({ success: false, message: '用户名或密码错误' });
       }
       
-      // 验证是否为管理员
-      if (user.role !== 'admin') {
-        return res.status(403).json({ success: false, message: '无管理员权限' });
-      }
+      // 更新最后登录时间
+      await adminUsers.update({ _id: admin._id }, { lastLoginAt: new Date() });
       
       // 返回用户信息和token
+      const token = this.generateToken(admin);
+      
       res.json({ 
         success: true, 
-        token: user._id,
+        token,
         user: {
-          id: user._id,
-          username: user.username,
-          nickname: user.nickname,
-          role: user.role
+          id: admin._id,
+          username: admin.username,
+          nickname: admin.nickname,
+          role: admin.role
         }
       });
     } catch (error) {
@@ -50,18 +86,100 @@ class AdminController {
         return res.status(401).json({ message: '未授权' });
       }
       
-      // 查找用户
-      const userList = await users.read({ _id: token });
-      const user = userList[0];
+      // 验证token
+      const decoded = jwt.verify(token, JWT_SECRET);
       
-      if (!user || user.role !== 'admin') {
-        return res.status(403).json({ message: '无管理员权限' });
+      // 查找管理员
+      const adminList = await adminUsers.read({ _id: decoded.id });
+      const admin = adminList[0];
+      
+      if (!admin) {
+        return res.status(401).json({ message: '未授权' });
       }
       
-      req.adminUser = user;
+      req.adminUser = admin;
       next();
     } catch (error) {
       res.status(401).json({ message: '未授权' });
+    }
+  }
+
+  // 获取当前管理员信息
+  async getProfile(req, res) {
+    try {
+      const { password, ...safeAdmin } = req.adminUser;
+      res.json(safeAdmin);
+    } catch (error) {
+      res.status(500).json({ message: '获取信息失败' });
+    }
+  }
+
+  // 创建管理员（仅站长）
+  async createAdmin(req, res) {
+    try {
+      if (req.adminUser.role !== ROLES.SUPER_ADMIN) {
+        return res.status(403).json({ message: '无权限' });
+      }
+      
+      const { username, password, nickname, role } = req.body;
+      
+      // 检查用户名是否已存在
+      const existing = await adminUsers.read({ username });
+      if (existing.length > 0) {
+        return res.status(400).json({ message: '用户名已存在' });
+      }
+      
+      // 哈希密码
+      const hashedPassword = await bcrypt.hash(password, 10);
+      
+      const newAdmin = await adminUsers.create({
+        username,
+        password: hashedPassword,
+        nickname: nickname || username,
+        role: role || ROLES.MODERATOR,
+        createdAt: new Date(),
+        createdBy: req.adminUser._id
+      });
+      
+      const { password: _, ...safeAdmin } = newAdmin;
+      res.json({ success: true, admin: safeAdmin });
+    } catch (error) {
+      res.status(500).json({ message: '创建失败' });
+    }
+  }
+
+  // 获取管理员列表
+  async getAdmins(req, res) {
+    try {
+      const admins = await adminUsers.read({});
+      const safeAdmins = admins.map(admin => {
+        const { password, ...safeAdmin } = admin;
+        return safeAdmin;
+      });
+      res.json(safeAdmins);
+    } catch (error) {
+      res.status(500).json({ message: '获取失败' });
+    }
+  }
+
+  // 删除管理员（仅站长）
+  async deleteAdmin(req, res) {
+    try {
+      if (req.adminUser.role !== ROLES.SUPER_ADMIN) {
+        return res.status(403).json({ message: '无权限' });
+      }
+      
+      const { adminId } = req.params;
+      
+      // 不能删除自己
+      if (adminId === req.adminUser._id) {
+        return res.status(400).json({ message: '不能删除自己' });
+      }
+      
+      await adminUsers.delete({ _id: adminId });
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: '删除失败' });
     }
   }
 
@@ -114,10 +232,9 @@ class AdminController {
         return res.status(404).json({ message: '表不存在' });
       }
       
-      // 读取所有数据，不进行任何过滤
       const data = await table.read({});
       
-      // 对于用户表，移除密码字段但保留其他所有字段
+      // 对于用户表，移除密码字段
       if (tableName === 'users') {
         const safeData = data.map(user => {
           const { password, ...safeUser } = user;
@@ -190,9 +307,13 @@ class AdminController {
     }
   }
 
-  // 清空数据库（危险操作）
+  // 清空数据库（危险操作，仅站长）
   async clearDatabase(req, res) {
     try {
+      if (req.adminUser.role !== ROLES.SUPER_ADMIN) {
+        return res.status(403).json({ message: '无权限' });
+      }
+      
       await users.delete({});
       await friends.delete({});
       await friendRequests.delete({});
@@ -216,7 +337,7 @@ class AdminController {
   // 获取用户列表
   async getUsers(req, res) {
     try {
-      const { search } = req.query;
+      const { search, page = 1, limit = 20 } = req.query;
       let query = {};
       
       if (search) {
@@ -230,7 +351,6 @@ class AdminController {
       }
       
       const usersList = await users.read(query);
-      // 移除密码字段
       const safeUsers = usersList.map(user => {
         const { password, ...safeUser } = user;
         return safeUser;
@@ -265,6 +385,170 @@ class AdminController {
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ message: '删除用户失败' });
+    }
+  }
+
+  // 更新用户
+  async updateUser(req, res) {
+    try {
+      const { userId } = req.params;
+      const { nickname, email, role, isBanned } = req.body;
+      
+      const updateData = {};
+      if (nickname !== undefined) updateData.nickname = nickname;
+      if (email !== undefined) updateData.email = email;
+      if (role !== undefined) updateData.role = role;
+      if (isBanned !== undefined) updateData.isBanned = isBanned;
+      
+      await users.update({ _id: userId }, updateData);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: '更新用户失败' });
+    }
+  }
+
+  // 获取私聊列表
+  async getPrivateChats(req, res) {
+    try {
+      // 获取所有私聊（非群组）
+      const allChats = await chats.read({ isGroup: { $ne: true } });
+      
+      // 获取私聊详情，包含成员信息
+      const chatsWithMembers = await Promise.all(
+        allChats.map(async (chat) => {
+          const members = await chatMembers.read({ chatId: chat._id });
+          const memberUsers = await Promise.all(
+            members.map(async (member) => {
+              const userList = await users.read({ _id: member.userId });
+              return userList[0] ? { _id: userList[0]._id, username: userList[0].username, nickname: userList[0].nickname } : null;
+            })
+          );
+          return {
+            ...chat,
+            members: memberUsers.filter(u => u !== null)
+          };
+        })
+      );
+      
+      res.json(chatsWithMembers);
+    } catch (error) {
+      res.status(500).json({ message: '获取私聊失败' });
+    }
+  }
+
+  // 获取群组列表
+  async getGroups(req, res) {
+    try {
+      const groups = await chats.read({ isGroup: true });
+      
+      const groupsWithDetails = await Promise.all(
+        groups.map(async (group) => {
+          const members = await chatMembers.read({ chatId: group._id });
+          const memberCount = members.length;
+          return { ...group, memberCount };
+        })
+      );
+      
+      res.json(groupsWithDetails);
+    } catch (error) {
+      res.status(500).json({ message: '获取群组失败' });
+    }
+  }
+
+  // 删除群组
+  async deleteGroup(req, res) {
+    try {
+      const { groupId } = req.params;
+      
+      await chats.delete({ _id: groupId });
+      await chatMembers.delete({ chatId: groupId });
+      await messages.delete({ chatId: groupId });
+      
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: '删除群组失败' });
+    }
+  }
+
+  // 获取朋友圈列表
+  async getMoments(req, res) {
+    try {
+      const allMoments = await moments.read({}, { sort: { createdAt: -1 } });
+      
+      const momentsWithUser = await Promise.all(
+        allMoments.map(async (moment) => {
+          const userList = await users.read({ _id: moment.userId });
+          const user = userList[0];
+          const likes = await momentLikes.read({ momentId: moment._id });
+          const comments = await momentComments.read({ momentId: moment._id });
+          return {
+            ...moment,
+            user: user ? { username: user.username, nickname: user.nickname } : null,
+            likeCount: likes.length,
+            commentCount: comments.length
+          };
+        })
+      );
+      
+      res.json(momentsWithUser);
+    } catch (error) {
+      res.status(500).json({ message: '获取朋友圈失败' });
+    }
+  }
+
+  // 删除朋友圈
+  async deleteMoment(req, res) {
+    try {
+      const { momentId } = req.params;
+      
+      await moments.delete({ _id: momentId });
+      await momentLikes.delete({ momentId });
+      await momentComments.delete({ momentId });
+      
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: '删除朋友圈失败' });
+    }
+  }
+
+  // 获取帖子列表
+  async getPosts(req, res) {
+    try {
+      const allPosts = await communityPosts.read({}, { sort: { createdAt: -1 } });
+      
+      const postsWithUser = await Promise.all(
+        allPosts.map(async (post) => {
+          const userList = await users.read({ _id: post.userId });
+          const user = userList[0];
+          const likes = await communityLikes.read({ postId: post._id });
+          const comments = await communityComments.read({ postId: post._id });
+          return {
+            ...post,
+            user: user ? { username: user.username, nickname: user.nickname } : null,
+            likeCount: likes.length,
+            commentCount: comments.length
+          };
+        })
+      );
+      
+      res.json(postsWithUser);
+    } catch (error) {
+      res.status(500).json({ message: '获取帖子失败' });
+    }
+  }
+
+  // 删除帖子
+  async deletePost(req, res) {
+    try {
+      const { postId } = req.params;
+      
+      await communityPosts.delete({ _id: postId });
+      await communityLikes.delete({ postId });
+      await communityComments.delete({ postId });
+      
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: '删除帖子失败' });
     }
   }
 }

@@ -9,6 +9,7 @@
   "scripts": {
     "start": "node app.js",
     "dev": "nodemon app.js",
+    "init-admin": "node init-admin.js",
     "lint": "eslint .",
     "test": "jest",
     "build": "npm run build-frontend && npm run build-backend",

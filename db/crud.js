@@ -129,6 +129,7 @@ const momentComments = new CRUD('momentComments');
 const communityPosts = new CRUD('communityPosts');
 const communityComments = new CRUD('communityComments');
 const communityLikes = new CRUD('communityLikes');
+const adminUsers = new CRUD('adminUsers');
 
 module.exports = {
   users,
@@ -144,5 +145,6 @@ module.exports = {
   communityPosts,
   communityComments,
   communityLikes,
+  adminUsers,
   CRUD
 };
