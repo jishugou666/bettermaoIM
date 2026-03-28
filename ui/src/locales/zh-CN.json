@@ -116,7 +116,11 @@
     "members_count": "{count} 成员",
     "unsupported_type": "[不支持的消息类型]",
     "no_actions": "无可用操作",
-    "editing": "编辑中..."
+    "editing": "编辑中...",
+    "group_name_required": "请输入群聊名称",
+    "members_required": "请选择至少一个成员",
+    "group_created": "群聊创建成功",
+    "group_create_failed": "群聊创建失败"
   },
   "friends": {
     "title": "好友",
@@ -198,5 +202,14 @@
     "title": "消息通知",
     "no_notifications": "暂无消息通知",
     "mark_all_read": "标记所有已读"
+  },
+  "status": {
+    "system_online": "系统在线",
+    "system_offline": "系统离线",
+    "online": "在线",
+    "offline": "离线"
+  },
+  "home": {
+    "user_id": "用户ID"
   }
 }

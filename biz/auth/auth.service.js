@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 const { users } = require('../../db/crud');
 
 class AuthService {
-  async register(username, email, password, nickname) {
+  async register(username, email, password) {
     try {
       // 检查用户名是否已存在
       const existingUserByUsername = await users.read({ username });
@@ -20,13 +20,14 @@ class AuthService {
       // 密码加密
       const hashedPassword = await bcrypt.hash(password, 10);
 
-      // 创建用户
+      // 创建用户 - 用户名和昵称统一，默认角色为user
       const result = await users.create({
         username,
         email,
         password: hashedPassword,
-        nickname,
-        status: 'online'
+        nickname: username, // 昵称和用户名统一
+        status: 'online',
+        role: 'user' // 默认角色为user
       });
 
       // 获取创建的用户信息

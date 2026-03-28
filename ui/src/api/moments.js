@@ -122,4 +122,44 @@ const deleteComment = async (momentId, commentId) => {
   return await response.json();
 };
 
-export { createMoment, getMoments, likeMoment, unlikeMoment, commentMoment, deleteComment };
+// 获取动态详情
+const getMomentById = async (momentId) => {
+  const token = localStorage.getItem('token');
+  
+  const response = await fetch(`/api/moments/${momentId}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    }
+  });
+  
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.error || 'Failed to get moment');
+  }
+  
+  return await response.json();
+};
+
+// 获取评论列表
+const getComments = async (momentId) => {
+  const token = localStorage.getItem('token');
+  
+  const response = await fetch(`/api/moments/${momentId}/comments`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    }
+  });
+  
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.error || 'Failed to get comments');
+  }
+  
+  return await response.json();
+};
+
+export { createMoment, getMoments, likeMoment, unlikeMoment, commentMoment, deleteComment, getMomentById, getComments };

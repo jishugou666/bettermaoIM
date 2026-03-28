@@ -9,6 +9,9 @@ router.get('/', authMiddleware, userController.getCurrentUser);
 // 更新用户信息
 router.put('/', authMiddleware, userController.updateUser);
 
+// 上传头像
+router.post('/avatar', authMiddleware, userController.upload.single('avatar'), userController.uploadAvatar);
+
 // 搜索用户
 router.get('/search', authMiddleware, userController.searchUsers);
 

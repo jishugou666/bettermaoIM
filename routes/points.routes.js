@@ -9,4 +9,7 @@ router.get('/', authMiddleware, pointsController.getPoints);
 // 每日签到
 router.post('/sign', authMiddleware, pointsController.sign);
 
+// 获取积分排行榜
+router.get('/rank', authMiddleware, pointsController.getRank);
+
 module.exports = router;

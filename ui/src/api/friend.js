@@ -102,4 +102,24 @@ const deleteFriend = async (friendId) => {
   return await response.json();
 };
 
-export { sendFriendRequest, handleFriendRequest, getFriends, getFriendRequests, deleteFriend };
+// 搜索用户
+const searchUsers = async (keyword) => {
+  const token = localStorage.getItem('token');
+  
+  const response = await fetch(`/api/users/search?keyword=${encodeURIComponent(keyword)}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    }
+  });
+  
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.error || 'Failed to search users');
+  }
+  
+  return await response.json();
+};
+
+export { sendFriendRequest, handleFriendRequest, getFriends, getFriendRequests, deleteFriend, searchUsers };

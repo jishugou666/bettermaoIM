@@ -27,16 +27,47 @@ watch(() => authStore.token, async (newToken) => {
 </script>
 
 <template>
-  <router-view v-slot="{ Component }">
-    <transition name="page-transition" mode="out-in">
-      <keep-alive>
-        <component :is="Component" />
-      </keep-alive>
-    </transition>
-  </router-view>
+  <div class="app-container">
+    <div class="main-content">
+      <router-view v-slot="{ Component }">
+        <transition name="page-transition" mode="out-in">
+          <keep-alive>
+            <component :is="Component" />
+          </keep-alive>
+        </transition>
+      </router-view>
+    </div>
+  </div>
 </template>
 
 <style>/* --- UI统一修改开始 --- */
+/* 全局样式 */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  background-color: var(--bg-color);
+  color: var(--text-primary);
+  line-height: 1.6;
+}
+
+/* 应用容器 */
+.app-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 主内容区域 */
+.main-content {
+  flex: 1;
+  padding: var(--spacing-4);
+}
+
 /* 页面过渡动画 */
 .page-transition-enter-active,
 .page-transition-leave-active {
@@ -90,6 +121,20 @@ watch(() => authStore.token, async (newToken) => {
   box-shadow: var(--shadow-md);
 }
 
+.btn-text {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: var(--font-size-md);
+  padding: var(--spacing-2) var(--spacing-4);
+  transition: color var(--duration-fast) var(--ease-in-out);
+}
+
+.btn-text:hover {
+  color: var(--primary-color);
+}
+
 /* 输入框样式 */
 .input {
   padding: var(--spacing-3) var(--spacing-4);
@@ -105,6 +150,13 @@ watch(() => authStore.token, async (newToken) => {
   outline: none;
   border-color: var(--primary-color);
   box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .main-content {
+    padding: var(--spacing-2);
+  }
 }
 /* --- UI统一修改结束 --- */
 </style>

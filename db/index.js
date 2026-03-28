@@ -51,6 +51,19 @@ class DatabaseManager {
         filename: path.join(__dirname, 'momentComments.db'),
         autoload: true
       });
+      // 社区功能集合
+      this.datastores.communityPosts = Datastore.create({
+        filename: path.join(__dirname, 'communityPosts.db'),
+        autoload: true
+      });
+      this.datastores.communityComments = Datastore.create({
+        filename: path.join(__dirname, 'communityComments.db'),
+        autoload: true
+      });
+      this.datastores.communityLikes = Datastore.create({
+        filename: path.join(__dirname, 'communityLikes.db'),
+        autoload: true
+      });
 
       // 创建索引
       this.datastores.users.ensureIndex({ fieldName: '_id', unique: true });
@@ -73,6 +86,13 @@ class DatabaseManager {
       this.datastores.momentLikes.ensureIndex({ fieldName: ['momentId', 'userId'], unique: true });
       this.datastores.momentComments.ensureIndex({ fieldName: '_id', unique: true });
       this.datastores.momentComments.ensureIndex({ fieldName: 'momentId' });
+      // 社区功能索引
+      this.datastores.communityPosts.ensureIndex({ fieldName: '_id', unique: true });
+      this.datastores.communityPosts.ensureIndex({ fieldName: 'userId' });
+      this.datastores.communityComments.ensureIndex({ fieldName: '_id', unique: true });
+      this.datastores.communityComments.ensureIndex({ fieldName: 'postId' });
+      this.datastores.communityLikes.ensureIndex({ fieldName: '_id', unique: true });
+      this.datastores.communityLikes.ensureIndex({ fieldName: ['postId', 'userId'], unique: true });
 
       console.log('Database connected successfully');
     } catch (error) {

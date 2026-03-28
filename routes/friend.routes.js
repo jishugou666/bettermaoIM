@@ -18,4 +18,10 @@ router.get('/requests', authMiddleware, friendController.getFriendRequests);
 // 删除好友
 router.delete('/:id', authMiddleware, friendController.deleteFriend);
 
+// 更新好友信息
+router.put('/:friendId', authMiddleware, friendController.updateFriendInfo);
+
+// 获取好友分组
+router.get('/groups', authMiddleware, friendController.getFriendGroups);
+
 module.exports = router;

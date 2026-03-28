@@ -88,6 +88,10 @@ const points = new CRUD('points');
 const moments = new CRUD('moments');
 const momentLikes = new CRUD('momentLikes');
 const momentComments = new CRUD('momentComments');
+// 社区功能CRUD实例
+const communityPosts = new CRUD('communityPosts');
+const communityComments = new CRUD('communityComments');
+const communityLikes = new CRUD('communityLikes');
 
 module.exports = {
   users,
@@ -100,5 +104,8 @@ module.exports = {
   moments,
   momentLikes,
   momentComments,
+  communityPosts,
+  communityComments,
+  communityLikes,
   CRUD
 };

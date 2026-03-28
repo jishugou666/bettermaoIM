@@ -50,20 +50,6 @@
           <div v-if="errors.password" class="error-message">{{ errors.password }}</div>
         </div>
 
-        <div class="form-group">
-          <label>{{ $t('auth.nickname') }}</label>
-          <input 
-            v-model="nickname" 
-            type="text" 
-            placeholder="请输入昵称" 
-            required 
-            :class="{ 'error': errors.nickname }"
-            @input="clearError('nickname')"
-            @focus="clearError('nickname')"
-          />
-          <div v-if="errors.nickname" class="error-message">{{ errors.nickname }}</div>
-        </div>
-
         <div v-if="authStore.error" class="error-alert">
           <span class="icon">⚠️</span>
           {{ authStore.error }}
@@ -94,14 +80,12 @@ import LanguageSwitcher from '../components/LanguageSwitcher.vue'
 const username = ref('')
 const email = ref('')
 const password = ref('')
-const nickname = ref('')
 const authStore = useAuthStore()
 const router = useRouter()
 const errors = reactive({
   username: '',
   email: '',
-  password: '',
-  nickname: ''
+  password: ''
 })
 
 const clearError = (field) => {
@@ -132,11 +116,6 @@ const validateForm = () => {
     isValid = false
   }
   
-  if (!nickname.value) {
-    errors.nickname = '请输入昵称'
-    isValid = false
-  }
-  
   return isValid
 }
 
@@ -153,50 +132,53 @@ const handleRegister = async () => {
     return
   }
   
-  const success = await authStore.register(username.value, email.value, password.value, nickname.value)
+  const success = await authStore.register(username.value, email.value, password.value)
   if (success) {
     router.push('/')
   }
 }
 </script>
 
-<style scoped>
-/* Reusing styles from Login.vue for consistency */
-/* In a real project, these should be shared components or mixins */
+<style scoped>/* --- UI统一修改开始 --- */
 .lang-switch-wrapper {
-  margin-top: 1rem;
+  margin-top: var(--spacing-4);
   display: flex;
   justify-content: center;
 }
+
 .auth-layout {
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #e0e7ff 0%, #f3f4f6 100%);
-  padding: 1rem;
+  background: linear-gradient(135deg, var(--primary-50) 0%, var(--bg-color) 100%);
+  padding: var(--spacing-6);
+  margin: 0;
 }
 
 .auth-card {
-  background: var(--glass-bg);
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
-  border: 1px solid var(--glass-border);
+  background-color: var(--card-color);
   width: 100%;
   max-width: 420px;
-  padding: 2.5rem;
-  border-radius: 24px;
-  box-shadow: var(--glass-shadow);
+  padding: var(--spacing-8);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-lg);
+  transition: all var(--duration-normal) var(--ease-in-out);
+}
+
+.auth-card:hover {
+  box-shadow: var(--shadow-xl);
+  transform: translateY(-2px);
 }
 
 .auth-header {
   text-align: center;
-  margin-bottom: 2rem;
+  margin-bottom: var(--spacing-6);
 }
 
 .logo {
   font-size: 3rem;
-  margin-bottom: 1rem;
+  margin-bottom: var(--spacing-4);
   animation: bounce 2s infinite;
 }
 
@@ -206,53 +188,55 @@ const handleRegister = async () => {
 }
 
 h1 {
-  font-size: 1.875rem;
-  font-weight: 700;
-  color: #111827;
-  margin-bottom: 0.5rem;
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-2);
 }
 
 p {
-  color: #6b7280;
-  font-size: 0.95rem;
+  color: var(--text-secondary);
+  font-size: var(--font-size-md);
+  margin: 0;
 }
 
 .auth-form {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: var(--spacing-4);
 }
 
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--spacing-2);
 }
 
 label {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #374151;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
 }
 
 input {
   width: 100%;
-  padding: 0.75rem 1rem;
-  border: 2px solid #e5e7eb;
-  border-radius: 12px;
-  font-size: 1rem;
-  transition: all 0.2s;
-  background-color: #f9fafb;
+  padding: var(--spacing-3) var(--spacing-4);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-md);
+  transition: all var(--duration-normal) var(--ease-in-out);
+  background-color: var(--card-color);
+  color: var(--text-primary);
 }
 
 input:focus {
+  outline: none;
   border-color: var(--primary-color);
-  background-color: white;
   box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
 }
 
 input.error {
-  border-color: var(--error);
+  border-color: var(--error-color);
   animation: shake 0.5s ease-in-out;
 }
 
@@ -263,9 +247,9 @@ input.error {
 }
 
 .error-message {
-  color: var(--error);
-  font-size: 0.75rem;
-  margin-top: 0.25rem;
+  color: var(--error-color);
+  font-size: var(--font-size-xs);
+  margin-top: var(--spacing-1);
   animation: fadeIn 0.3s ease-in-out;
 }
 
@@ -277,49 +261,61 @@ input.error {
 .error-alert {
   background-color: #fef2f2;
   border: 1px solid #fee2e2;
-  color: var(--error);
-  padding: 0.75rem;
-  border-radius: 12px;
-  font-size: 0.875rem;
+  color: var(--error-color);
+  padding: var(--spacing-3);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--spacing-2);
 }
 
 .submit-btn {
   background-color: var(--primary-color);
   color: white;
-  padding: 0.875rem;
+  padding: var(--spacing-3) var(--spacing-6);
   border: none;
-  border-radius: 12px;
-  font-weight: 600;
-  font-size: 1rem;
+  border-radius: var(--radius-md);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-md);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all var(--duration-normal) var(--ease-in-out);
   display: flex;
   justify-content: center;
   align-items: center;
+  gap: var(--spacing-2);
 }
 
 .submit-btn:hover:not(:disabled) {
   background-color: var(--primary-hover);
   transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
 }
 
 .submit-btn:disabled {
-  opacity: 0.7;
+  opacity: 0.6;
   cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 .auth-footer {
-  margin-top: 2rem;
+  margin-top: var(--spacing-6);
   text-align: center;
-  font-size: 0.9rem;
-  color: #6b7280;
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
 }
 
 .auth-footer a {
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
+  color: var(--primary-color);
+  text-decoration: none;
+  transition: color var(--duration-fast) var(--ease-in-out);
+}
+
+.auth-footer a:hover {
+  color: var(--primary-hover);
+  text-decoration: underline;
 }
 
 .loader {
@@ -337,4 +333,30 @@ input.error {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
+
+/* 响应式设计 */
+@media (max-width: 640px) {
+  .auth-layout {
+    padding: var(--spacing-4);
+  }
+  
+  .auth-card {
+    padding: var(--spacing-6);
+  }
+  
+  .auth-header h1 {
+    font-size: var(--font-size-xl);
+  }
+  
+  input {
+    padding: var(--spacing-2) var(--spacing-3);
+    font-size: var(--font-size-sm);
+  }
+  
+  .submit-btn {
+    padding: var(--spacing-2) var(--spacing-4);
+    font-size: var(--font-size-sm);
+  }
+}
+/* --- UI统一修改结束 --- */
 </style>

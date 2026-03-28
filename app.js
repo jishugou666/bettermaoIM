@@ -49,6 +49,8 @@ app.use(limiter);
 
 // 静态文件服务
 app.use(express.static(path.join(__dirname, 'ui', 'dist')));
+// 上传文件服务
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // 路由
 const authRoutes = require('./biz/auth/auth.routes');
@@ -57,6 +59,8 @@ const friendRoutes = require('./routes/friend.routes');
 const chatRoutes = require('./routes/chat.routes');
 const pointsRoutes = require('./routes/points.routes');
 const momentsRoutes = require('./routes/moments.routes');
+const communityRoutes = require('./routes/community.routes');
+const adminRoutes = require('./routes/admin.routes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
@@ -64,6 +68,8 @@ app.use('/api/friends', friendRoutes);
 app.use('/api/chats', chatRoutes);
 app.use('/api/points', pointsRoutes);
 app.use('/api/moments', momentsRoutes);
+app.use('/api/community', communityRoutes);
+app.use('/api/admin', adminRoutes);
 
 // 健康检查
 app.get('/health', (req, res) => {

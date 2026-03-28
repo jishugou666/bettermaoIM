@@ -114,7 +114,11 @@
     "members_count": "{count} members",
     "unsupported_type": "[Unsupported message type]",
     "no_actions": "No actions available",
-    "editing": "Editing..."
+    "editing": "Editing...",
+    "group_name_required": "Please enter group name",
+    "members_required": "Please select at least one member",
+    "group_created": "Group created successfully",
+    "group_create_failed": "Failed to create group"
   },
   "friends": {
     "title": "Friends",
@@ -195,5 +199,14 @@
     "title": "Notifications",
     "no_notifications": "No notifications yet",
     "mark_all_read": "Mark all as read"
+  },
+  "status": {
+    "system_online": "System Online",
+    "system_offline": "System Offline",
+    "online": "Online",
+    "offline": "Offline"
+  },
+  "home": {
+    "user_id": "User ID"
   }
 }

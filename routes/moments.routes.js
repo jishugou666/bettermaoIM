@@ -9,6 +9,9 @@ router.post('/', authMiddleware, momentsController.createMoment);
 // 获取朋友圈动态列表
 router.get('/', authMiddleware, momentsController.getMoments);
 
+// 获取动态详情
+router.get('/:id', authMiddleware, momentsController.getMomentDetail);
+
 // 点赞朋友圈动态
 router.post('/:id/like', authMiddleware, momentsController.likeMoment);
 

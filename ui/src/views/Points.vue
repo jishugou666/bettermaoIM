@@ -75,7 +75,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { useUserStore } from '../stores/user'
-import { usePointsStore } from '../stores/credit'
+import { useCreditStore } from '../stores/credit'
 import { useRouter } from 'vue-router'
 import Avatar from '../components/Avatar.vue'
 import { useI18n } from 'vue-i18n'
@@ -83,7 +83,7 @@ import { signIn } from '../api/points'
 
 const { t } = useI18n()
 const userStore = useUserStore()
-const pointsStore = usePointsStore()
+const creditStore = useCreditStore()
 const router = useRouter()
 
 const checkedIn = ref(false)

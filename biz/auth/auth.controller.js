@@ -3,17 +3,17 @@ const authService = require('./auth.service');
 class AuthController {
   async register(req, res, next) {
     try {
-      const { username, email, password, nickname } = req.body;
+      const { username, email, password } = req.body;
       
-      if (!username || !email || !password || !nickname) {
-        return res.status(400).json({ error: 'Missing required fields' });
+      if (!username || !email || !password) {
+        return res.status(400).json({ error: '请填写完整的注册信息' });
       }
 
-      const user = await authService.register(username, email, password, nickname);
+      const user = await authService.register(username, email, password);
       res.status(201).json({ user });
     } catch (error) {
       if (error.message.includes('Username already exists')) {
-        return res.status(400).json({ error: 'Username already exists' });
+        return res.status(400).json({ error: '用户名已存在' });
       } else if (error.message.includes('Email already exists')) {
         return res.status(400).json({ error: '邮箱已被注册，请更换邮箱' });
       }

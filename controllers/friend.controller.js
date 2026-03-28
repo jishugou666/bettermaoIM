@@ -168,6 +168,47 @@ class FriendController {
       res.status(500).json({ error: 'Internal server error' });
     }
   }
+
+  async updateFriendInfo(req, res) {
+    try {
+      const { userId } = req.user;
+      const { friendId } = req.params;
+      const { nickname, groupName } = req.body;
+      
+      // 更新好友信息
+      await friends.update(
+        { userId, friendId },
+        { nickname, groupName }
+      );
+      
+      res.status(200).json({ message: 'Friend info updated' });
+    } catch (error) {
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+
+  async getFriendGroups(req, res) {
+    try {
+      const { userId } = req.user;
+      
+      // 获取用户的所有好友分组
+      const friendList = await friends.read({ userId });
+      const groups = new Set();
+      
+      friendList.forEach(friend => {
+        if (friend.groupName) {
+          groups.add(friend.groupName);
+        }
+      });
+      
+      // 添加默认分组
+      groups.add('默认分组');
+      
+      res.status(200).json({ groups: Array.from(groups) });
+    } catch (error) {
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
 }
 
 module.exports = new FriendController();

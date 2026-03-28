@@ -3,7 +3,7 @@
     <div class="moments-content">
       <div class="header-section card">
         <button class="back-btn" @click="router.push('/')">← {{ $t('common.back') }}</button>
-        <h2>朋友圈</h2>
+        <h2>{{ $t('moments.title') }}</h2>
         <div class="search-bar">
           <input 
             v-model="searchQuery" 

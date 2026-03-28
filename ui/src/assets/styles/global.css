@@ -426,7 +426,32 @@ body {
 }
 
 /* 响应式设计 */
-@media (max-width: 640px) {
+@media (max-width: 1280px) {
+  .container {
+    max-width: 1024px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .container {
+    max-width: 768px;
+  }
+  
+  .grid-cols-4 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .container {
+    max-width: 640px;
+  }
+  
+  .grid-cols-4,
+  .grid-cols-3 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
   .modal {
     width: 95%;
     padding: var(--spacing-4);
@@ -444,6 +469,94 @@ body {
   .input {
     padding: var(--spacing-2) var(--spacing-3);
     font-size: var(--font-size-sm);
+  }
+  
+  h1 {
+    font-size: var(--font-size-2xl);
+  }
+  
+  h2 {
+    font-size: var(--font-size-xl);
+  }
+  
+  h3 {
+    font-size: var(--font-size-lg);
+  }
+}
+
+@media (max-width: 640px) {
+  .container {
+    max-width: 100%;
+    padding: 0 var(--spacing-2);
+  }
+  
+  .grid-cols-4,
+  .grid-cols-3,
+  .grid-cols-2 {
+    grid-template-columns: 1fr;
+  }
+  
+  .modal {
+    width: 98%;
+    padding: var(--spacing-3);
+    margin: var(--spacing-2);
+  }
+  
+  .btn {
+    padding: var(--spacing-2) var(--spacing-3);
+    font-size: var(--font-size-sm);
+    width: 100%;
+  }
+  
+  .card {
+    padding: var(--spacing-3);
+    margin-bottom: var(--spacing-3);
+  }
+  
+  .input {
+    padding: var(--spacing-2) var(--spacing-3);
+    font-size: var(--font-size-sm);
+  }
+  
+  h1 {
+    font-size: var(--font-size-xl);
+  }
+  
+  h2 {
+    font-size: var(--font-size-lg);
+  }
+  
+  h3 {
+    font-size: var(--font-size-md);
+  }
+  
+  .hide-mobile {
+    display: none !important;
+  }
+}
+
+@media (max-width: 480px) {
+  body {
+    font-size: var(--font-size-sm);
+  }
+  
+  .modal {
+    padding: var(--spacing-2);
+  }
+  
+  .card {
+    padding: var(--spacing-2);
+  }
+  
+  .btn {
+    padding: var(--spacing-1) var(--spacing-2);
+  }
+}
+
+/* 打印样式 */
+@media print {
+  .no-print {
+    display: none !important;
   }
 }
 

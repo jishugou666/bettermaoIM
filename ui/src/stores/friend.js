@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { sendFriendRequest, handleFriendRequest, getFriends, getFriendRequests, deleteFriend } from '../api/friend'
+import { sendFriendRequest, handleFriendRequest, getFriends, getFriendRequests, deleteFriend, searchUsers as searchUsersApi } from '../api/friend'
 
 export const useFriendStore = defineStore('friend', {
   state: () => ({
@@ -79,6 +79,66 @@ export const useFriendStore = defineStore('friend', {
       } catch (err) {
         this.error = err.message || 'Failed to delete friend';
         return false;
+      } finally {
+        this.loading = false;
+      }
+    },
+    async searchUsers(keyword) {
+      this.loading = true;
+      this.error = null;
+      try {
+        const response = await searchUsersApi(keyword);
+        this.searchResults = response.users || [];
+        return this.searchResults;
+      } catch (err) {
+        this.error = err.message || 'Failed to search users';
+        this.searchResults = [];
+        return [];
+      } finally {
+        this.loading = false;
+      }
+    },
+    async blockUser(userId) {
+      this.loading = true;
+      this.error = null;
+      try {
+        // 这里应该调用API来屏蔽用户
+        // 暂时只在本地更新
+        this.blockedUsers.push({ id: userId, username: 'User' });
+        return true;
+      } catch (err) {
+        this.error = err.message || 'Failed to block user';
+        return false;
+      } finally {
+        this.loading = false;
+      }
+    },
+    async unblockUser(userId) {
+      this.loading = true;
+      this.error = null;
+      try {
+        // 这里应该调用API来取消屏蔽用户
+        // 暂时只在本地更新
+        this.blockedUsers = this.blockedUsers.filter(user => user.id !== userId);
+        return true;
+      } catch (err) {
+        this.error = err.message || 'Failed to unblock user';
+        return false;
+      } finally {
+        this.loading = false;
+      }
+    },
+    async fetchBlockedUsers() {
+      this.loading = true;
+      this.error = null;
+      try {
+        // 这里应该调用API来获取屏蔽用户列表
+        // 暂时返回空数组
+        this.blockedUsers = [];
+        return this.blockedUsers;
+      } catch (err) {
+        this.error = err.message || 'Failed to fetch blocked users';
+        return [];
       } finally {
         this.loading = false;
       }

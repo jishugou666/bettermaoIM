@@ -66,6 +66,28 @@ class PointsController {
       res.status(500).json({ error: 'Internal server error' });
     }
   }
+
+  async getRank(req, res) {
+    try {
+      // 获取积分排行榜
+      const userList = await users.read({}, { points: -1 });
+      
+      // 过滤出有积分的用户并排序
+      const rankedUsers = userList
+        .filter(user => user.points > 0)
+        .map(user => ({
+          id: user._id,
+          username: user.username,
+          avatar: user.avatar,
+          points: user.points
+        }))
+        .sort((a, b) => b.points - a.points);
+      
+      res.status(200).json({ rank: rankedUsers });
+    } catch (error) {
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
 }
 
 module.exports = new PointsController();

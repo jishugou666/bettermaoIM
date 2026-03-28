@@ -21,7 +21,7 @@ const getPoints = async () => {
 };
 
 // 每日签到
-const sign = async () => {
+const signIn = async () => {
   const token = localStorage.getItem('token');
   
   const response = await fetch(`/api/points/sign`, {
@@ -40,4 +40,4 @@ const sign = async () => {
   return await response.json();
 };
 
-export { getPoints, sign };
+export { getPoints, signIn };

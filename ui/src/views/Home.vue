@@ -8,14 +8,34 @@
       
       <div class="home-stats card">
         <h2>{{ $t('home.status_title') }}</h2>
+        <div class="user-profile-section">
+          <div class="user-avatar-large">
+            <Avatar :username="authStore.user?.username || 'User'" :src="authStore.user?.avatar" size="80" />
+          </div>
+          <div class="user-info-detailed">
+            <div class="user-name-large">{{ authStore.user?.username || authStore.user?.nickname || 'User' }}</div>
+            <div class="user-online-status">
+              <span class="status-dot online"></span>
+              {{ $t('common.online') }}
+            </div>
+          </div>
+        </div>
         <div class="stats-grid">
           <div class="stat-item">
             <span class="stat-label">{{ $t('home.user_id') }}</span>
-            <span class="stat-value">{{ authStore.user?.id || 'N/A' }}</span>
+            <span class="stat-value">{{ authStore.user?.id || authStore.user?._id || 'N/A' }}</span>
           </div>
           <div class="stat-item">
             <span class="stat-label">{{ $t('home.role') }}</span>
             <span class="stat-value">{{ authStore.user?.role || 'User' }}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">{{ $t('profile.nickname') }}</span>
+            <span class="stat-value">{{ authStore.user?.nickname || authStore.user?.username || 'N/A' }}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">{{ $t('auth.email') }}</span>
+            <span class="stat-value">{{ authStore.user?.email || 'N/A' }}</span>
           </div>
         </div>
       </div>
@@ -56,8 +76,11 @@
       </div>
       
       <div class="home-footer">
-        <button class="btn btn-primary" @click="authStore.logout">
-          {{ $t('nav.logout') }}
+        <button v-if="authStore.user?.role === 'admin'" class="btn btn-admin" @click="router.push('/admin')">
+          后台管理
+        </button>
+        <button class="btn btn-text" @click="handleLogout">
+          {{ $t('auth.logout') }}
         </button>
       </div>
     </div>
@@ -69,6 +92,7 @@ import { onMounted } from 'vue'
 import { useAuthStore } from '../stores/auth'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import Avatar from '../components/Avatar.vue'
 
 const { t } = useI18n()
 const authStore = useAuthStore()
@@ -79,6 +103,17 @@ onMounted(async () => {
     await authStore.fetchUser()
   }
 })
+
+const handleLogout = async () => {
+  try {
+    await authStore.logout()
+    router.push('/login')
+  } catch (error) {
+    console.error('退出登录失败:', error)
+    // 即使失败也清除本地状态并跳转
+    router.push('/login')
+  }
+}
 /* --- UI统一修改结束 --- */
 </script>
 
@@ -130,6 +165,48 @@ onMounted(async () => {
   margin-bottom: var(--spacing-4);
 }
 
+.user-profile-section {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-6);
+  padding: var(--spacing-6);
+  background: linear-gradient(135deg, var(--primary-50) 0%, var(--bg-color) 100%);
+  border-radius: var(--radius-xl);
+  margin-bottom: var(--spacing-6);
+}
+
+.user-avatar-large {
+  flex-shrink: 0;
+}
+
+.user-info-detailed {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+.user-name-large {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+}
+
+.user-online-status {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  font-size: var(--font-size-sm);
+  color: var(--success-color);
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--success-color);
+}
+
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -140,6 +217,9 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-1);
+  padding: var(--spacing-3);
+  background-color: var(--bg-color);
+  border-radius: var(--radius-md);
 }
 
 .stat-label {
@@ -200,7 +280,24 @@ onMounted(async () => {
 .home-footer {
   display: flex;
   justify-content: center;
+  gap: var(--spacing-4);
   margin-top: var(--spacing-8);
+}
+
+.btn-admin {
+  background: linear-gradient(135deg, #1e1e2e 0%, #2d2d44 100%);
+  color: white;
+  border: none;
+  padding: var(--spacing-3) var(--spacing-6);
+  border-radius: var(--radius-lg);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  transition: all var(--duration-normal) var(--ease-in-out);
+}
+
+.btn-admin:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
 }
 
 /* 响应式设计 */

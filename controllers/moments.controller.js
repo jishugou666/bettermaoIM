@@ -25,12 +25,14 @@ class MomentsController {
         ...moment,
         user: {
           id: user._id,
-          nickname: user.nickname,
+          username: user.username || user.nickname,
           avatar: user.avatar
         },
-        likes: 0,
-        comments: 0,
-        liked: false
+        _count: {
+          likes: 0,
+          comments: 0
+        },
+        isLiked: false
       };
       
       res.status(200).json({ moment: momentWithUser });
@@ -72,14 +74,18 @@ class MomentsController {
           
           return {
             ...moment,
+            id: moment._id,
             user: {
               id: user._id,
-              nickname: user.nickname,
+              username: user.username || user.nickname,
               avatar: user.avatar
             },
-            likes,
-            comments,
-            liked
+            _count: {
+              likes,
+              comments
+            },
+            isLiked: liked,
+            createdAt: moment.createTime
           };
         })
       );
@@ -203,6 +209,73 @@ class MomentsController {
       await momentComments.delete({ _id: commentId });
       
       res.status(200).json({ message: 'Comment deleted' });
+    } catch (error) {
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+
+  async getMomentDetail(req, res) {
+    try {
+      const { userId } = req.user;
+      const { id } = req.params;
+      
+      // 获取动态详情
+      const momentList = await moments.read({ _id: id });
+      if (momentList.length === 0) {
+        return res.status(404).json({ error: 'Moment not found' });
+      }
+      
+      const moment = momentList[0];
+      
+      // 获取用户信息
+      const userList = await users.read({ _id: moment.userId });
+      const user = userList[0];
+      
+      // 获取点赞数
+      const likeList = await momentLikes.read({ momentId: id });
+      const likes = likeList.length;
+      
+      // 获取评论列表
+      const commentList = await momentComments.read({ momentId: id }, { sort: { createTime: -1 } });
+      
+      // 获取评论的用户信息
+      const commentsWithUser = await Promise.all(
+        commentList.map(async (comment) => {
+          const commentUserList = await users.read({ _id: comment.userId });
+          const commentUser = commentUserList[0];
+          return {
+            ...comment,
+            user: {
+              id: commentUser._id,
+              nickname: commentUser.nickname,
+              avatar: commentUser.avatar
+            }
+          };
+        })
+      );
+      
+      // 检查当前用户是否点赞
+      const userLikeList = await momentLikes.read({ momentId: id, userId });
+      const liked = userLikeList.length > 0;
+      
+      const momentWithDetail = {
+        ...moment,
+        id: moment._id,
+        user: {
+          id: user._id,
+          username: user.username || user.nickname,
+          avatar: user.avatar
+        },
+        _count: {
+          likes,
+          comments: commentsWithUser.length
+        },
+        comments: commentsWithUser,
+        isLiked: liked,
+        createdAt: moment.createTime
+      };
+      
+      res.status(200).json({ moment: momentWithDetail });
     } catch (error) {
       res.status(500).json({ error: 'Internal server error' });
     }

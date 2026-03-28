@@ -2,6 +2,7 @@
   <div class="chat-layout">
     <div class="chat-sidebar">
       <div class="sidebar-header">
+        <button class="btn btn-text back-btn" @click="router.push('/')">←</button>
         <h2>{{ $t('chat.title') }}</h2>
         <button class="btn btn-text" @click="showCreateGroupModal = true">+</button>
       </div>
@@ -167,11 +168,13 @@ import { useChatStore } from '../stores/chat'
 import { useFriendStore } from '../stores/friend'
 import { useAuthStore } from '../stores/auth'
 import { useSocketStore } from '../stores/socket'
+import { useRouter } from 'vue-router'
 import Avatar from '../components/Avatar.vue'
 import Modal from '../components/Modal.vue'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
+const router = useRouter()
 const chatStore = useChatStore()
 const friendStore = useFriendStore()
 const authStore = useAuthStore()
@@ -208,15 +211,30 @@ const sendMessage = async () => {
 }
 
 const createGroup = async () => {
-  if (!groupName.value.trim() || selectedMembers.value.length === 0) return
+  if (!groupName.value.trim()) {
+    alert(t('chat.group_name_required') || '请输入群聊名称')
+    return
+  }
+  if (selectedMembers.value.length === 0) {
+    alert(t('chat.members_required') || '请选择至少一个成员')
+    return
+  }
   
-  const chatId = await chatStore.createChat('group', groupName.value, '', selectedMembers.value)
-  if (chatId) {
-    await chatStore.fetchChats()
-    showCreateGroupModal.value = false
-    groupName.value = ''
-    groupDescription.value = ''
-    selectedMembers.value = []
+  try {
+    const chatId = await chatStore.createChat('group', groupName.value, '', selectedMembers.value)
+    if (chatId) {
+      await chatStore.fetchChats()
+      showCreateGroupModal.value = false
+      groupName.value = ''
+      groupDescription.value = ''
+      selectedMembers.value = []
+      alert(t('chat.group_created') || '群聊创建成功')
+    } else {
+      alert(t('chat.group_create_failed') || '群聊创建失败')
+    }
+  } catch (error) {
+    console.error('Failed to create group:', error)
+    alert(error.message || t('chat.group_create_failed') || '群聊创建失败')
   }
 }
 
@@ -279,11 +297,18 @@ watch(() => authStore.token, async (newToken) => {
   align-items: center;
 }
 
+.back-btn {
+  font-size: var(--font-size-lg);
+  padding: var(--spacing-2);
+}
+
 .sidebar-header h2 {
+  flex: 1;
   font-size: var(--font-size-lg);
   font-weight: var(--font-weight-semibold);
   color: var(--text-primary);
   margin: 0;
+  text-align: center;
 }
 
 .chat-tabs {
