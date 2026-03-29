@@ -1,8 +1,8 @@
 -- BetterMao IM MySQL Database Schema (Dual Naming Support)
 -- 创建数据库
-CREATE DATABASE IF NOT EXISTS bettermao CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE IF NOT EXISTS bettermaoim CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
-USE bettermao;
+USE bettermaoim;
 
 -- 用户表
 CREATE TABLE IF NOT EXISTS users (

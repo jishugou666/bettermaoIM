@@ -12,7 +12,17 @@ if (typeof config !== 'function') {
     },
     database: {
       path: './db/bettermao.db',
-      backupPath: './db/backups'
+      backupPath: './db/backups',
+      mysql: {
+        host: process.env.MYSQL_HOST || 'localhost',
+        port: parseInt(process.env.MYSQL_PORT, 10) || 3306,
+        user: process.env.MYSQL_USER || 'root',
+        password: process.env.MYSQL_PASSWORD || '',
+        database: process.env.MYSQL_DATABASE || 'bettermaoim',
+        connectionLimit: 10,
+        waitForConnections: true,
+        queueLimit: 0
+      }
     },
     jwt: {
       secret: process.env.JWT_SECRET || 'your-secret-key-change-in-production',

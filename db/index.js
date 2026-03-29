@@ -22,7 +22,8 @@ class DatabaseManager {
         connectionLimit: mysqlConfig.connectionLimit,
         waitForConnections: mysqlConfig.waitForConnections,
         queueLimit: mysqlConfig.queueLimit,
-        charset: 'utf8mb4'
+        charset: 'utf8mb4',
+        namedPlaceholders: true
       });
 
       console.log('MySQL Database connected successfully');
@@ -261,31 +262,31 @@ class DatabaseManager {
     }
   }
 
-  // 兼容性方法：执行原生 SQL 查询
-  async query(sql, params = []) {
+  // 原生 SQL 查询方法
+  async sqlQuery(sql, params = []) {
     try {
       const [rows] = await this.pool.execute(sql, params);
       // 字段名兼容性处理：id -> _id, user_id -> userId, etc.
       return rows.map(row => this.normalizeRow(row));
     } catch (error) {
-      console.error('[DatabaseManager.query] SQL执行失败:', sql, params, error);
+      console.error('[DatabaseManager.sqlQuery] SQL执行失败:', sql, params, error);
       throw error;
     }
   }
 
-  // 兼容性方法：执行原生 SQL 写操作
-  async execute(sql, params = []) {
+  // 原生 SQL 写操作方法
+  async sqlExecute(sql, params = []) {
     try {
       const [result] = await this.pool.execute(sql, params);
       return result;
     } catch (error) {
-      console.error('[DatabaseManager.execute] SQL执行失败:', sql, params, error);
+      console.error('[DatabaseManager.sqlExecute] SQL执行失败:', sql, params, error);
       throw error;
     }
   }
 
-  // 兼容性方法：获取单条记录
-  async get(sql, params = []) {
+  // 原生 SQL 获取单条记录
+  async sqlGet(sql, params = []) {
     try {
       const [rows] = await this.pool.execute(sql, params);
       if (rows.length > 0) {
@@ -293,7 +294,7 @@ class DatabaseManager {
       }
       return null;
     } catch (error) {
-      console.error('[DatabaseManager.get] SQL执行失败:', sql, params, error);
+      console.error('[DatabaseManager.sqlGet] SQL执行失败:', sql, params, error);
       throw error;
     }
   }

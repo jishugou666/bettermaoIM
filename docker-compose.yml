@@ -1,8 +1,28 @@
 version: '3.8'
 
 services:
+  mysql:
+    image: mysql:8.0
+    container_name: bettermao-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: cyccodemao1234
+      MYSQL_DATABASE: bettermaoim
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    command: --default-authentication-plugin=mysql_native_password
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-pcyccodemao1234"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   bettermao-im:
     build: .
+    container_name: bettermao-im
     ports:
       - "3000:3000"
     environment:
@@ -10,14 +30,24 @@ services:
       - PORT=3000
       - FRONTEND_URL=http://localhost:3000
       - JWT_SECRET=your-secret-key-change-in-production
+      - MYSQL_HOST=mysql
+      - MYSQL_PORT=3306
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=cyccodemao1234
+      - MYSQL_DATABASE=bettermaoim
     volumes:
-      - ./db:/app/db
       - ./uploads:/app/uploads
       - ./logs:/app/logs
     restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 60s
+
+volumes:
+  mysql-data:

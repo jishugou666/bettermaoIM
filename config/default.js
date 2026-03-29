@@ -16,8 +16,8 @@ module.exports = {
       host: 'localhost',
       port: 3306,
       user: 'root',
-      password: '',
-      database: 'bettermao',
+      password: 'cyccodemao1234',
+      database: 'bettermaoim',
       connectionLimit: 10,
       waitForConnections: true,
       queueLimit: 0
