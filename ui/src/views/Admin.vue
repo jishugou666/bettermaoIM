@@ -67,7 +67,7 @@
               v-for="tab in tabs" 
               :key="tab.id"
               :class="['menu-item', { active: activeTab === tab.id }]"
-              @click="activeTab = tab.id"
+              @click="activeTab = tab.id; loadTabData(tab.id)"
             >
               <span class="menu-icon">{{ tab.icon }}</span>
               <span class="menu-label">{{ tab.label }}</span>
@@ -149,28 +149,83 @@
               <h2>👥 用户管理</h2>
             </div>
             <div class="search-bar">
-              <input v-model="userSearch" placeholder="搜索用户名/邮箱/昵称..." @input="searchUsers" />
-              <button class="search-btn" @click="searchUsers">🔍</button>
+              <input v-model="userSearch" placeholder="搜索用户名/邮箱/昵称..." @keyup.enter="searchUsers(1)" />
+              <button class="search-btn" @click="searchUsers(1)">🔍</button>
             </div>
-            <div v-if="users.length === 0" class="empty-state">暂无用户</div>
-            <div v-else class="users-list">
-              <div v-for="user in users" :key="user._id" class="user-card">
-                <div class="user-avatar">{{ (user.nickname || user.username || 'U').charAt(0) }}</div>
-                <div class="user-info">
-                  <div class="user-name-row">
-                    <span class="user-name">{{ user.nickname || user.username }}</span>
-                    <span :class="['user-badge', user.role]">{{ user.role || 'user' }}</span>
-                    <span v-if="user.isBanned" class="user-badge banned">已封禁</span>
-                  </div>
-                  <div class="user-detail">
-                    <span>@{{ user.username }}</span>
-                    <span v-if="user.email">· {{ user.email }}</span>
+            
+            <!-- 用户详情视图 -->
+            <div v-if="selectedUserDetail" class="user-detail-view">
+              <button class="btn btn-sm back-btn" @click="backToUserList">← 返回用户列表</button>
+              <div class="user-detail-card">
+                <div class="user-detail-header">
+                  <div class="user-avatar-large">{{ (selectedUserDetail.nickname || selectedUserDetail.username || 'U').charAt(0) }}</div>
+                  <div class="user-detail-info">
+                    <h3>{{ selectedUserDetail.nickname || selectedUserDetail.username }}</h3>
+                    <p>@{{ selectedUserDetail.username }}</p>
+                    <p v-if="selectedUserDetail.email">{{ selectedUserDetail.email }}</p>
+                    <div class="user-badges">
+                      <span :class="['user-badge', selectedUserDetail.role]">{{ selectedUserDetail.role || 'user' }}</span>
+                      <span v-if="selectedUserDetail.isBanned" class="user-badge banned">已封禁</span>
+                    </div>
                   </div>
                 </div>
-                <div class="user-actions">
-                  <button class="btn btn-sm" @click="editUser(user)">编辑</button>
-                  <button class="btn btn-sm btn-danger" @click="deleteUser(user._id)">删除</button>
+                <div class="user-stats">
+                  <div class="stat-item">
+                    <span class="stat-number">{{ selectedUserDetail.stats?.friendCount || 0 }}</span>
+                    <span class="stat-label">好友</span>
+                  </div>
+                  <div class="stat-item">
+                    <span class="stat-number">{{ selectedUserDetail.stats?.chatCount || 0 }}</span>
+                    <span class="stat-label">聊天</span>
+                  </div>
+                  <div class="stat-item">
+                    <span class="stat-number">{{ selectedUserDetail.stats?.momentCount || 0 }}</span>
+                    <span class="stat-label">朋友圈</span>
+                  </div>
+                  <div class="stat-item">
+                    <span class="stat-number">{{ selectedUserDetail.stats?.postCount || 0 }}</span>
+                    <span class="stat-label">帖子</span>
+                  </div>
                 </div>
+                <div class="user-detail-actions">
+                  <button class="btn btn-primary" @click="editUser(selectedUserDetail)">编辑信息</button>
+                  <button class="btn btn-warning" @click="toggleUserBan(selectedUserDetail)">
+                    {{ selectedUserDetail.isBanned ? '解封' : '封禁' }}
+                  </button>
+                  <button class="btn btn-danger" @click="deleteUser(selectedUserDetail._id)">删除用户</button>
+                </div>
+              </div>
+            </div>
+            
+            <!-- 用户列表视图 -->
+            <div v-else>
+              <div v-if="usersData.users?.length === 0" class="empty-state">暂无用户</div>
+              <div v-else class="users-list">
+                <div v-for="user in usersData.users" :key="user._id" class="user-card" @click="viewUserDetail(user._id)">
+                  <div class="user-avatar">{{ (user.nickname || user.username || 'U').charAt(0) }}</div>
+                  <div class="user-info">
+                    <div class="user-name-row">
+                      <span class="user-name">{{ user.nickname || user.username }}</span>
+                      <span :class="['user-badge', user.role]">{{ user.role || 'user' }}</span>
+                      <span v-if="user.isBanned" class="user-badge banned">已封禁</span>
+                    </div>
+                    <div class="user-detail">
+                      <span>@{{ user.username }}</span>
+                      <span v-if="user.email">· {{ user.email }}</span>
+                    </div>
+                  </div>
+                  <div class="user-actions" @click.stop>
+                    <button class="btn btn-sm" @click="editUser(user)">编辑</button>
+                    <button class="btn btn-sm btn-danger" @click="deleteUser(user._id)">删除</button>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- 分页 -->
+              <div v-if="usersData.total > usersData.limit" class="pagination">
+                <button class="btn btn-sm" :disabled="usersData.page <= 1" @click="changePage(usersData.page - 1)">上一页</button>
+                <span class="page-info">第 {{ usersData.page }} 页 / 共 {{ Math.ceil(usersData.total / usersData.limit) }} 页</span>
+                <button class="btn btn-sm" :disabled="usersData.page >= Math.ceil(usersData.total / usersData.limit)" @click="changePage(usersData.page + 1)">下一页</button>
               </div>
             </div>
           </div>
@@ -180,17 +235,69 @@
             <div class="content-header">
               <h2>💬 私聊管理</h2>
             </div>
-            <div v-if="privateChats.length === 0" class="empty-state">暂无私聊</div>
-            <div v-else class="chats-list">
-              <div v-for="chat in privateChats" :key="chat._id" class="chat-card">
-                <div class="chat-info">
-                  <div class="chat-members">
-                    <span v-for="(member, i) in chat.members" :key="member._id">
-                      {{ member.nickname || member.username }}
-                      <span v-if="i < chat.members.length - 1"> & </span>
-                    </span>
+            
+            <!-- 聊天记录视图 -->
+            <div v-if="selectedChat" class="chat-detail-view">
+              <button class="btn btn-sm back-btn" @click="backToChatList">← 返回聊天列表</button>
+              <div class="chat-detail-header">
+                <div class="chat-members-title">
+                  <span v-for="(member, i) in selectedChat.members" :key="member._id">
+                    {{ member.nickname || member.username }}
+                    <span v-if="i < selectedChat.members.length - 1"> & </span>
+                  </span>
+                </div>
+                <span class="chat-meta">{{ chatMessages.total }} 条消息</span>
+              </div>
+              
+              <div class="chat-messages-container">
+                <div v-if="chatMessagesLoading" class="loader-wrapper">
+                  <div class="loader"></div>
+                </div>
+                <div v-else class="chat-messages">
+                  <div v-for="msg in chatMessages.messages" :key="msg._id" class="chat-message">
+                    <div class="message-avatar">{{ (msg.sender?.nickname || msg.sender?.username || 'U').charAt(0) }}</div>
+                    <div class="message-content">
+                      <div class="message-header">
+                        <span class="message-sender">{{ msg.sender?.nickname || msg.sender?.username }}</span>
+                        <span class="message-time">{{ formatDate(msg.createdAt) }}</span>
+                      </div>
+                      <div class="message-text">{{ msg.content }}</div>
+                    </div>
                   </div>
-                  <div class="chat-time">{{ formatDate(chat.createdAt) }}</div>
+                </div>
+              </div>
+              
+              <!-- 消息分页 -->
+              <div v-if="chatMessages.total > chatMessages.limit" class="pagination">
+                <button class="btn btn-sm" :disabled="chatMessages.page <= 1" @click="changeChatPage(chatMessages.page - 1)">上一页</button>
+                <span class="page-info">第 {{ chatMessages.page }} 页 / 共 {{ Math.ceil(chatMessages.total / chatMessages.limit) }} 页</span>
+                <button class="btn btn-sm" :disabled="chatMessages.page >= Math.ceil(chatMessages.total / chatMessages.limit)" @click="changeChatPage(chatMessages.page + 1)">下一页</button>
+              </div>
+            </div>
+            
+            <!-- 聊天列表视图 -->
+            <div v-else>
+              <div v-if="privateChats.length === 0" class="empty-state">暂无私聊</div>
+              <div v-else class="chats-list">
+                <div v-for="chat in privateChats" :key="chat._id" class="chat-card" @click="viewChatDetail(chat)">
+                  <div class="chat-info">
+                    <div class="chat-members">
+                      <span v-for="(member, i) in chat.members" :key="member._id">
+                        {{ member.nickname || member.username }}
+                        <span v-if="i < chat.members.length - 1"> & </span>
+                      </span>
+                    </div>
+                    <div class="chat-preview" v-if="chat.lastMessage">
+                      {{ chat.lastMessage.content?.substring(0, 50) }}{{ chat.lastMessage.content?.length > 50 ? '...' : '' }}
+                    </div>
+                    <div class="chat-meta-row">
+                      <span class="chat-time">{{ formatDate(chat.createdAt) }}</span>
+                      <span class="chat-count">{{ chat.messageCount }} 条消息</span>
+                    </div>
+                  </div>
+                  <div class="chat-action">
+                    <span class="view-icon">→</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -201,15 +308,49 @@
             <div class="content-header">
               <h2>👨‍👩‍👧‍👦 群组管理</h2>
             </div>
-            <div v-if="groups.length === 0" class="empty-state">暂无群组</div>
-            <div v-else class="groups-list">
-              <div v-for="group in groups" :key="group._id" class="group-card">
-                <div class="group-icon">👥</div>
-                <div class="group-info">
-                  <div class="group-name">{{ group.name || '未命名群组' }}</div>
-                  <div class="group-meta">{{ group.memberCount }} 成员</div>
+            <div v-if="!selectedGroup">
+              <div v-if="groups.length === 0" class="empty-state">暂无群组</div>
+              <div v-else class="groups-list">
+                <div v-for="group in groups" :key="group._id" class="group-card" @click="viewGroupDetails(group._id)">
+                  <div class="group-icon">👥</div>
+                  <div class="group-info">
+                    <div class="group-name">{{ group.name || '未命名群组' }}</div>
+                    <div class="group-meta">{{ group.memberCount }} 成员</div>
+                  </div>
+                  <button class="btn btn-sm btn-danger" @click.stop="deleteGroup(group._id)">解散</button>
                 </div>
-                <button class="btn btn-sm btn-danger" @click="deleteGroup(group._id)">解散</button>
+              </div>
+            </div>
+            <div v-else class="group-detail-view">
+              <button class="btn btn-sm back-btn" @click="backToGroups">← 返回群组列表</button>
+              <div class="group-detail-header">
+                <div class="group-icon-large">👥</div>
+                <div class="group-detail-info">
+                  <h3>{{ selectedGroup.name || '未命名群组' }}</h3>
+                  <p>{{ selectedGroup.description || '暂无描述' }}</p>
+                  <span class="group-meta">{{ selectedGroup.members?.length || 0 }} 成员</span>
+                </div>
+              </div>
+              <div class="group-members-section">
+                <h4>群组成员</h4>
+                <div v-if="selectedGroup.members?.length === 0" class="empty-state">暂无成员</div>
+                <div v-else class="group-members-list">
+                  <div v-for="member in selectedGroup.members" :key="member._id" class="group-member-card">
+                    <div class="member-avatar">{{ (member.nickname || member.username || 'U').charAt(0) }}</div>
+                    <div class="member-info">
+                      <div class="member-name">{{ member.nickname || member.username }}</div>
+                      <div class="member-username">@{{ member.username }}</div>
+                    </div>
+                    <div class="member-role">
+                      <select v-model="member.role" @change="updateMemberRole(member._id, member.role)" class="role-select">
+                        <option value="member">成员</option>
+                        <option value="admin">管理员</option>
+                        <option value="owner">群主</option>
+                      </select>
+                    </div>
+                    <button class="btn btn-sm btn-danger" @click="removeMember(member._id)">移除</button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -219,9 +360,9 @@
             <div class="content-header">
               <h2>📸 朋友圈管理</h2>
             </div>
-            <div v-if="moments.length === 0" class="empty-state">暂无朋友圈</div>
+            <div v-if="momentsData.moments?.length === 0" class="empty-state">暂无朋友圈</div>
             <div v-else class="moments-list">
-              <div v-for="moment in moments" :key="moment._id" class="moment-card">
+              <div v-for="moment in momentsData.moments" :key="moment._id" class="moment-card">
                 <div class="moment-header">
                   <div class="moment-user">
                     <span class="user-avatar-sm">{{ (moment.user?.nickname || moment.user?.username || 'U').charAt(0) }}</span>
@@ -234,8 +375,49 @@
                   <span>❤️ {{ moment.likeCount }}</span>
                   <span>💬 {{ moment.commentCount }}</span>
                 </div>
-                <button class="delete-btn-sm" @click="deleteMoment(moment._id)">删除</button>
+                <div class="moment-actions">
+                  <button class="btn btn-sm" @click="toggleMomentComments(moment._id)">
+                    {{ expandedMoments.includes(moment._id) ? '收起评论' : '查看评论' }}
+                  </button>
+                  <button class="delete-btn-sm" @click="deleteMoment(moment._id)">删除</button>
+                </div>
+                
+                <!-- 评论展开区域 -->
+                <div v-if="expandedMoments.includes(moment._id)" class="comments-section">
+                  <div v-if="momentCommentsLoading === moment._id" class="loader-wrapper">
+                    <div class="loader"></div>
+                  </div>
+                  <div v-else-if="momentDetails[moment._id]">
+                    <div v-if="momentDetails[moment._id].comments?.length === 0" class="empty-state small">暂无评论</div>
+                    <div v-else class="comments-list">
+                      <div v-for="comment in momentDetails[moment._id].comments" :key="comment._id" class="comment-card">
+                        <div class="comment-avatar">{{ (comment.user?.nickname || comment.user?.username || 'U').charAt(0) }}</div>
+                        <div class="comment-content">
+                          <div class="comment-header">
+                            <span class="comment-author">{{ comment.user?.nickname || comment.user?.username }}</span>
+                            <span class="comment-time">{{ formatDate(comment.createdAt) }}</span>
+                          </div>
+                          <div class="comment-text">{{ comment.content }}</div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <!-- 评论分页 -->
+                    <div v-if="momentDetails[moment._id].totalComments > momentDetails[moment._id].commentLimit" class="pagination small">
+                      <button class="btn btn-sm" :disabled="momentDetails[moment._id].commentPage <= 1" @click="changeMomentCommentPage(moment._id, momentDetails[moment._id].commentPage - 1)">上一页</button>
+                      <span class="page-info">第 {{ momentDetails[moment._id].commentPage }} 页 / 共 {{ Math.ceil(momentDetails[moment._id].totalComments / momentDetails[moment._id].commentLimit) }} 页</span>
+                      <button class="btn btn-sm" :disabled="momentDetails[moment._id].commentPage >= Math.ceil(momentDetails[moment._id].totalComments / momentDetails[moment._id].commentLimit)" @click="changeMomentCommentPage(moment._id, momentDetails[moment._id].commentPage + 1)">下一页</button>
+                    </div>
+                  </div>
+                </div>
               </div>
+            </div>
+            
+            <!-- 分页 -->
+            <div v-if="momentsData.total > momentsData.limit" class="pagination">
+              <button class="btn btn-sm" :disabled="momentsData.page <= 1" @click="changeMomentsPage(momentsData.page - 1)">上一页</button>
+              <span class="page-info">第 {{ momentsData.page }} 页 / 共 {{ Math.ceil(momentsData.total / momentsData.limit) }} 页</span>
+              <button class="btn btn-sm" :disabled="momentsData.page >= Math.ceil(momentsData.total / momentsData.limit)" @click="changeMomentsPage(momentsData.page + 1)">下一页</button>
             </div>
           </div>
 
@@ -244,9 +426,9 @@
             <div class="content-header">
               <h2>📝 帖子管理</h2>
             </div>
-            <div v-if="posts.length === 0" class="empty-state">暂无帖子</div>
+            <div v-if="postsData.posts?.length === 0" class="empty-state">暂无帖子</div>
             <div v-else class="posts-list">
-              <div v-for="post in posts" :key="post._id" class="post-card">
+              <div v-for="post in postsData.posts" :key="post._id" class="post-card">
                 <div class="post-header">
                   <div class="post-user">
                     <span class="user-avatar-sm">{{ (post.user?.nickname || post.user?.username || 'U').charAt(0) }}</span>
@@ -260,11 +442,86 @@
                   <span>❤️ {{ post.likeCount }}</span>
                   <span>💬 {{ post.commentCount }}</span>
                 </div>
-                <button class="delete-btn-sm" @click="deletePost(post._id)">删除</button>
+                <div class="post-actions">
+                  <button class="btn btn-sm" @click="togglePostComments(post._id)">
+                    {{ expandedPosts.includes(post._id) ? '收起评论' : '查看评论' }}
+                  </button>
+                  <button class="delete-btn-sm" @click="deletePost(post._id)">删除</button>
+                </div>
+                
+                <!-- 评论展开区域 -->
+                <div v-if="expandedPosts.includes(post._id)" class="comments-section">
+                  <div v-if="postCommentsLoading === post._id" class="loader-wrapper">
+                    <div class="loader"></div>
+                  </div>
+                  <div v-else-if="postDetails[post._id]">
+                    <div v-if="postDetails[post._id].comments?.length === 0" class="empty-state small">暂无评论</div>
+                    <div v-else class="comments-list">
+                      <div v-for="comment in postDetails[post._id].comments" :key="comment._id" class="comment-card">
+                        <div class="comment-avatar">{{ (comment.user?.nickname || comment.user?.username || 'U').charAt(0) }}</div>
+                        <div class="comment-content">
+                          <div class="comment-header">
+                            <span class="comment-author">{{ comment.user?.nickname || comment.user?.username }}</span>
+                            <span class="comment-time">{{ formatDate(comment.createdAt) }}</span>
+                          </div>
+                          <div class="comment-text">{{ comment.content }}</div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <!-- 评论分页 -->
+                    <div v-if="postDetails[post._id].totalComments > postDetails[post._id].commentLimit" class="pagination small">
+                      <button class="btn btn-sm" :disabled="postDetails[post._id].commentPage <= 1" @click="changePostCommentPage(post._id, postDetails[post._id].commentPage - 1)">上一页</button>
+                      <span class="page-info">第 {{ postDetails[post._id].commentPage }} 页 / 共 {{ Math.ceil(postDetails[post._id].totalComments / postDetails[post._id].commentLimit) }} 页</span>
+                      <button class="btn btn-sm" :disabled="postDetails[post._id].commentPage >= Math.ceil(postDetails[post._id].totalComments / postDetails[post._id].commentLimit)" @click="changePostCommentPage(post._id, postDetails[post._id].commentPage + 1)">下一页</button>
+                    </div>
+                  </div>
+                </div>
               </div>
+            </div>
+            
+            <!-- 分页 -->
+            <div v-if="postsData.total > postsData.limit" class="pagination">
+              <button class="btn btn-sm" :disabled="postsData.page <= 1" @click="changePostsPage(postsData.page - 1)">上一页</button>
+              <span class="page-info">第 {{ postsData.page }} 页 / 共 {{ Math.ceil(postsData.total / postsData.limit) }} 页</span>
+              <button class="btn btn-sm" :disabled="postsData.page >= Math.ceil(postsData.total / postsData.limit)" @click="changePostsPage(postsData.page + 1)">下一页</button>
             </div>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- 用户编辑模态框 -->
+    <div v-if="showUserEditModal" class="modal-overlay" @click.self="showUserEditModal = false">
+      <div class="modal large">
+        <h3>编辑用户</h3>
+        <form @submit.prevent="saveUserEdit" class="edit-form">
+          <div class="form-group">
+            <label>昵称</label>
+            <input v-model="userEditForm.nickname" type="text" />
+          </div>
+          <div class="form-group">
+            <label>邮箱</label>
+            <input v-model="userEditForm.email" type="email" />
+          </div>
+          <div class="form-group">
+            <label>角色</label>
+            <select v-model="userEditForm.role">
+              <option value="user">普通用户</option>
+              <option value="admin">管理员</option>
+            </select>
+          </div>
+          <div class="form-group checkbox">
+            <label>
+              <input type="checkbox" v-model="userEditForm.isBanned" />
+              封禁用户
+            </label>
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="btn" @click="showUserEditModal = false">取消</button>
+            <button type="submit" class="btn btn-primary">保存</button>
+          </div>
+        </form>
       </div>
     </div>
 
@@ -330,17 +587,32 @@ const tableData = ref([])
 const tableFields = ref([])
 const tableLoading = ref(false)
 
-const users = ref([])
+const usersData = ref({ users: [], total: 0, page: 1, limit: 20 })
 const userSearch = ref('')
+const selectedUserDetail = ref(null)
 const privateChats = ref([])
+const selectedChat = ref(null)
+const chatMessages = ref({ messages: [], total: 0, page: 1, limit: 50 })
+const chatMessagesLoading = ref(false)
 const groups = ref([])
-const moments = ref([])
-const posts = ref([])
+const selectedGroup = ref(null)
+const momentsData = ref({ moments: [], total: 0, page: 1, limit: 20 })
+const expandedMoments = ref([])
+const momentDetails = ref({})
+const momentCommentsLoading = ref(null)
+const postsData = ref({ posts: [], total: 0, page: 1, limit: 20 })
+const expandedPosts = ref([])
+const postDetails = ref({})
+const postCommentsLoading = ref(null)
 
 const showConfirm = ref(false)
 const confirmTitle = ref('')
 const confirmMessage = ref('')
 const confirmCallback = ref(null)
+
+const showUserEditModal = ref(false)
+const userEditForm = ref({})
+const editingUserId = ref(null)
 
 const getRoleLabel = (role) => {
   const labels = {
@@ -424,6 +696,30 @@ onMounted(() => {
   }
 })
 
+// 加载标签页数据
+const loadTabData = (tabId) => {
+  switch (tabId) {
+    case 'database':
+      loadDatabaseStats()
+      break
+    case 'users':
+      searchUsers(1)
+      break
+    case 'chats':
+      loadPrivateChats()
+      break
+    case 'groups':
+      loadGroups()
+      break
+    case 'moments':
+      loadMoments()
+      break
+    case 'posts':
+      loadPosts()
+      break
+  }
+}
+
 // 管理员登录
 const handleLogin = async () => {
   loading.value = true
@@ -460,7 +756,7 @@ const handleLogout = () => {
 }
 
 const loadAllData = () => {
-  searchUsers()
+  searchUsers(1)
   loadPrivateChats()
   loadGroups()
   loadMoments()
@@ -570,21 +866,85 @@ const confirmClearDatabase = () => {
 }
 
 // 搜索用户
-const searchUsers = async () => {
+const searchUsers = async (page = 1) => {
   try {
     const res = await axios.get('/api/admin/users', {
-      params: { search: userSearch.value },
+      params: { search: userSearch.value, page, limit: usersData.value.limit },
       headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` }
     })
-    users.value = res.data
+    usersData.value = res.data
   } catch (err) {
-    users.value = []
+    usersData.value = { users: [], total: 0, page: 1, limit: 20 }
   }
+}
+
+// 切换页码
+const changePage = (page) => {
+  usersData.value.page = page
+  searchUsers(page)
+}
+
+// 查看用户详情
+const viewUserDetail = async (userId) => {
+  try {
+    const res = await axios.get(`/api/admin/users/${userId}`, {
+      headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` }
+    })
+    selectedUserDetail.value = res.data
+  } catch (err) {
+    showToast('获取用户详情失败')
+  }
+}
+
+// 返回用户列表
+const backToUserList = () => {
+  selectedUserDetail.value = null
+  searchUsers()
 }
 
 // 编辑用户
 const editUser = (user) => {
-  showToast('编辑功能开发中')
+  editingUserId.value = user._id
+  userEditForm.value = {
+    nickname: user.nickname || '',
+    email: user.email || '',
+    role: user.role || 'user',
+    isBanned: user.isBanned || false
+  }
+  showUserEditModal.value = true
+}
+
+// 保存用户编辑
+const saveUserEdit = async () => {
+  try {
+    await axios.put(`/api/admin/users/${editingUserId.value}`, userEditForm.value, {
+      headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` }
+    })
+    showToast('保存成功')
+    showUserEditModal.value = false
+    
+    // 刷新数据
+    if (selectedUserDetail.value && selectedUserDetail.value._id === editingUserId.value) {
+      viewUserDetail(editingUserId.value)
+    }
+    searchUsers(usersData.value.page)
+  } catch (err) {
+    showToast('保存失败')
+  }
+}
+
+// 切换用户封禁状态
+const toggleUserBan = async (user) => {
+  try {
+    await axios.put(`/api/admin/users/${user._id}`, { isBanned: !user.isBanned }, {
+      headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` }
+    })
+    showToast(user.isBanned ? '已解封' : '已封禁')
+    viewUserDetail(user._id)
+    searchUsers(usersData.value.page)
+  } catch (err) {
+    showToast('操作失败')
+  }
 }
 
 // 删除用户
@@ -597,6 +957,7 @@ const deleteUser = (userId) => {
         headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` }
       })
       showToast('用户已删除')
+      selectedUserDetail.value = null
       searchUsers()
       loadDatabaseStats()
     } catch (err) {
@@ -616,6 +977,40 @@ const loadPrivateChats = async () => {
   } catch (err) {
     privateChats.value = []
   }
+}
+
+// 查看聊天详情
+const viewChatDetail = async (chat) => {
+  selectedChat.value = chat
+  chatMessages.value = { messages: [], total: 0, page: 1, limit: 50 }
+  loadChatMessages(chat._id, 1)
+}
+
+// 加载聊天记录
+const loadChatMessages = async (chatId, page = 1) => {
+  chatMessagesLoading.value = true
+  try {
+    const res = await axios.get(`/api/admin/chats/private/${chatId}/messages`, {
+      params: { page, limit: chatMessages.value.limit },
+      headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` }
+    })
+    chatMessages.value = res.data
+  } catch (err) {
+    showToast('获取聊天记录失败')
+  } finally {
+    chatMessagesLoading.value = false
+  }
+}
+
+// 切换聊天页码
+const changeChatPage = (page) => {
+  loadChatMessages(selectedChat.value._id, page)
+}
+
+// 返回聊天列表
+const backToChatList = () => {
+  selectedChat.value = null
+  loadPrivateChats()
 }
 
 // 加载群组
@@ -649,16 +1044,105 @@ const deleteGroup = (groupId) => {
   showConfirm.value = true
 }
 
-// 加载朋友圈
-const loadMoments = async () => {
+// 查看群组详情
+const viewGroupDetails = async (groupId) => {
   try {
-    const res = await axios.get('/api/admin/moments', {
+    const res = await axios.get(`/api/admin/groups/${groupId}`, {
       headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` }
     })
-    moments.value = res.data
+    selectedGroup.value = res.data
   } catch (err) {
-    moments.value = []
+    showToast('获取群组详情失败')
   }
+}
+
+// 返回群组列表
+const backToGroups = () => {
+  selectedGroup.value = null
+  loadGroups()
+}
+
+// 更新成员角色
+const updateMemberRole = async (userId, role) => {
+  try {
+    await axios.put(`/api/admin/groups/${selectedGroup.value._id}/members/${userId}/role`, 
+      { role },
+      { headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` } }
+    )
+    showToast('角色更新成功')
+  } catch (err) {
+    showToast('更新角色失败')
+    viewGroupDetails(selectedGroup.value._id)
+  }
+}
+
+// 移除成员
+const removeMember = (userId) => {
+  confirmTitle.value = '确认移除'
+  confirmMessage.value = '确定要移除这个成员吗？'
+  confirmCallback.value = async () => {
+    try {
+      await axios.delete(`/api/admin/groups/${selectedGroup.value._id}/members/${userId}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` }
+      })
+      showToast('成员已移除')
+      viewGroupDetails(selectedGroup.value._id)
+    } catch (err) {
+      showToast('移除失败')
+    }
+  }
+  showConfirm.value = true
+}
+
+// 加载朋友圈
+const loadMoments = async (page = 1) => {
+  try {
+    const res = await axios.get('/api/admin/moments', {
+      params: { page, limit: momentsData.value.limit },
+      headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` }
+    })
+    momentsData.value = res.data
+  } catch (err) {
+    momentsData.value = { moments: [], total: 0, page: 1, limit: 20 }
+  }
+}
+
+// 切换朋友圈页码
+const changeMomentsPage = (page) => {
+  momentsData.value.page = page
+  loadMoments(page)
+}
+
+// 展开/收起朋友圈评论
+const toggleMomentComments = async (momentId) => {
+  const index = expandedMoments.value.indexOf(momentId)
+  if (index > -1) {
+    expandedMoments.value.splice(index, 1)
+  } else {
+    expandedMoments.value.push(momentId)
+    loadMomentComments(momentId, 1)
+  }
+}
+
+// 加载朋友圈评论
+const loadMomentComments = async (momentId, page = 1) => {
+  momentCommentsLoading.value = momentId
+  try {
+    const res = await axios.get(`/api/admin/moments/${momentId}`, {
+      params: { commentPage: page, commentLimit: 20 },
+      headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` }
+    })
+    momentDetails.value[momentId] = res.data
+  } catch (err) {
+    showToast('获取评论失败')
+  } finally {
+    momentCommentsLoading.value = null
+  }
+}
+
+// 切换朋友圈评论页码
+const changeMomentCommentPage = (momentId, page) => {
+  loadMomentComments(momentId, page)
 }
 
 // 删除朋友圈
@@ -671,7 +1155,7 @@ const deleteMoment = (momentId) => {
         headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` }
       })
       showToast('已删除')
-      loadMoments()
+      loadMoments(momentsData.value.page)
       loadDatabaseStats()
     } catch (err) {
       showToast('删除失败')
@@ -681,15 +1165,54 @@ const deleteMoment = (momentId) => {
 }
 
 // 加载帖子
-const loadPosts = async () => {
+const loadPosts = async (page = 1) => {
   try {
     const res = await axios.get('/api/admin/posts', {
+      params: { page, limit: postsData.value.limit },
       headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` }
     })
-    posts.value = res.data
+    postsData.value = res.data
   } catch (err) {
-    posts.value = []
+    postsData.value = { posts: [], total: 0, page: 1, limit: 20 }
   }
+}
+
+// 切换帖子页码
+const changePostsPage = (page) => {
+  postsData.value.page = page
+  loadPosts(page)
+}
+
+// 展开/收起帖子评论
+const togglePostComments = async (postId) => {
+  const index = expandedPosts.value.indexOf(postId)
+  if (index > -1) {
+    expandedPosts.value.splice(index, 1)
+  } else {
+    expandedPosts.value.push(postId)
+    loadPostComments(postId, 1)
+  }
+}
+
+// 加载帖子评论
+const loadPostComments = async (postId, page = 1) => {
+  postCommentsLoading.value = postId
+  try {
+    const res = await axios.get(`/api/admin/posts/${postId}`, {
+      params: { commentPage: page, commentLimit: 20 },
+      headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` }
+    })
+    postDetails.value[postId] = res.data
+  } catch (err) {
+    showToast('获取评论失败')
+  } finally {
+    postCommentsLoading.value = null
+  }
+}
+
+// 切换帖子评论页码
+const changePostCommentPage = (postId, page) => {
+  loadPostComments(postId, page)
 }
 
 // 删除帖子
@@ -702,7 +1225,7 @@ const deletePost = (postId) => {
         headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` }
       })
       showToast('已删除')
-      loadPosts()
+      loadPosts(postsData.value.page)
       loadDatabaseStats()
     } catch (err) {
       showToast('删除失败')
@@ -801,7 +1324,8 @@ const confirmAction = () => {
   font-size: 1.1rem;
 }
 
-.input-wrapper input {
+.input-wrapper input,
+.input-wrapper select {
   width: 100%;
   padding: 0.875rem 1rem 0.875rem 3rem;
   border: 2px solid #e5e7eb;
@@ -811,7 +1335,8 @@ const confirmAction = () => {
   background: #f9fafb;
 }
 
-.input-wrapper input:focus {
+.input-wrapper input:focus,
+.input-wrapper select:focus {
   outline: none;
   border-color: #6366f1;
   box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
@@ -894,10 +1419,6 @@ const confirmAction = () => {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-}
-
-.logo-icon {
-  font-size: 1.75rem;
 }
 
 .logo-text {
@@ -1267,7 +1788,173 @@ const confirmAction = () => {
   cursor: pointer;
 }
 
-/* 用户列表 */
+/* 用户详情、聊天详情、群组详情视图 */
+.back-btn {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  margin-bottom: 1.5rem;
+}
+
+.user-detail-card,
+.chat-detail-header,
+.group-detail-header {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.user-detail-header,
+.group-detail-header {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.user-avatar-large,
+.group-icon-large {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+.user-detail-info h3,
+.group-detail-info h3 {
+  color: white;
+  font-size: 1.5rem;
+  margin: 0 0 0.5rem 0;
+}
+
+.user-detail-info p,
+.group-detail-info p {
+  color: #9ca3af;
+  margin: 0 0 0.5rem 0;
+}
+
+.user-badges {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.user-stats {
+  display: flex;
+  gap: 2rem;
+  padding: 1.5rem 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  margin: 1.5rem 0;
+}
+
+.stat-item {
+  text-align: center;
+}
+
+.stat-number {
+  display: block;
+  color: white;
+  font-size: 1.75rem;
+  font-weight: 700;
+}
+
+.stat-label {
+  color: #9ca3af;
+  font-size: 0.85rem;
+}
+
+.user-detail-actions,
+.chat-detail-header {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.chat-detail-header {
+  justify-content: space-between;
+  align-items: center;
+}
+
+.chat-members-title {
+  color: white;
+  font-weight: 600;
+  font-size: 1.25rem;
+}
+
+.chat-meta {
+  color: #9ca3af;
+}
+
+.chat-messages-container {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 1.5rem;
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.chat-messages {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.chat-message {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+}
+
+.message-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.message-content {
+  flex: 1;
+}
+
+.message-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.message-sender {
+  color: white;
+  font-weight: 600;
+}
+
+.message-time {
+  color: #6b7280;
+  font-size: 0.8rem;
+}
+
+.message-text {
+  color: #d1d5db;
+}
+
+/* 用户列表、聊天列表、群组列表 */
 .users-list,
 .chats-list,
 .groups-list,
@@ -1294,8 +1981,10 @@ const confirmAction = () => {
 }
 
 .user-card:hover,
+.chat-card:hover,
 .group-card:hover {
   background: rgba(255, 255, 255, 0.08);
+  cursor: pointer;
 }
 
 .user-avatar,
@@ -1313,7 +2002,9 @@ const confirmAction = () => {
   flex-shrink: 0;
 }
 
-.user-info {
+.user-info,
+.chat-info,
+.group-info {
   flex: 1;
 }
 
@@ -1324,7 +2015,9 @@ const confirmAction = () => {
   margin-bottom: 0.25rem;
 }
 
-.user-name {
+.user-name,
+.chat-members,
+.group-name {
   color: white;
   font-weight: 600;
   font-size: 1rem;
@@ -1357,28 +2050,127 @@ const confirmAction = () => {
   font-size: 0.85rem;
 }
 
-.user-actions {
+.user-actions,
+.moment-actions,
+.post-actions {
   display: flex;
   gap: 0.5rem;
 }
 
-/* 私聊、群组 */
-.chat-info,
-.group-info {
-  flex: 1;
+.chat-preview {
+  color: #9ca3af;
+  font-size: 0.9rem;
+  margin-top: 0.25rem;
+  margin-bottom: 0.5rem;
 }
 
-.chat-members,
-.group-name {
-  color: white;
-  font-weight: 600;
-  margin-bottom: 0.25rem;
+.chat-meta-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .chat-time,
 .group-meta {
   color: #9ca3af;
   font-size: 0.85rem;
+}
+
+.chat-count {
+  color: #6366f1;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.chat-action {
+  color: #9ca3af;
+  font-size: 1.5rem;
+}
+
+/* 群组详情 */
+.group-members-section {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 1.5rem;
+}
+
+.group-members-section h4 {
+  color: white;
+  margin: 0 0 1rem 0;
+  font-size: 1.2rem;
+}
+
+.group-members-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.group-member-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  transition: all 0.2s;
+}
+
+.group-member-card:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.member-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.member-info {
+  flex: 1;
+}
+
+.member-name {
+  color: white;
+  font-weight: 600;
+  font-size: 1rem;
+  margin-bottom: 0.25rem;
+}
+
+.member-username {
+  color: #9ca3af;
+  font-size: 0.85rem;
+}
+
+.role-select {
+  padding: 0.5rem 0.75rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: white;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.role-select:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.role-select:focus {
+  outline: none;
+  border-color: rgba(99, 102, 241, 0.5);
 }
 
 /* 朋友圈、帖子 */
@@ -1445,6 +2237,7 @@ const confirmAction = () => {
   gap: 1rem;
   color: #6b7280;
   font-size: 0.85rem;
+  margin-bottom: 0.5rem;
 }
 
 .delete-btn-sm {
@@ -1456,7 +2249,69 @@ const confirmAction = () => {
   border-radius: 8px;
   cursor: pointer;
   font-size: 0.8rem;
-  margin-top: 0.5rem;
+}
+
+/* 评论区域 */
+.comments-section {
+  width: 100%;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.comments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.comment-card {
+  display: flex;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+}
+
+.comment-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.comment-content {
+  flex: 1;
+}
+
+.comment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.25rem;
+}
+
+.comment-author {
+  color: white;
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.comment-time {
+  color: #6b7280;
+  font-size: 0.75rem;
+}
+
+.comment-text {
+  color: #d1d5db;
+  font-size: 0.9rem;
 }
 
 /* 空状态 */
@@ -1467,6 +2322,29 @@ const confirmAction = () => {
   background: rgba(255, 255, 255, 0.03);
   border-radius: 16px;
   border: 1px dashed rgba(255, 255, 255, 0.1);
+}
+
+.empty-state.small {
+  padding: 1.5rem;
+  font-size: 0.9rem;
+}
+
+/* 分页 */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.pagination.small {
+  margin-top: 1rem;
+}
+
+.page-info {
+  color: #9ca3af;
+  font-size: 0.9rem;
 }
 
 /* 模态框 */
@@ -1494,6 +2372,10 @@ const confirmAction = () => {
   animation: modalIn 0.3s ease;
 }
 
+.modal.large {
+  max-width: 500px;
+}
+
 @keyframes modalIn {
   from { opacity: 0; transform: scale(0.95); }
   to { opacity: 1; transform: scale(1); }
@@ -1509,10 +2391,59 @@ const confirmAction = () => {
   margin-bottom: 1.5rem;
 }
 
+.edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.edit-form .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.edit-form .form-group label {
+  color: #9ca3af;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.edit-form .form-group input,
+.edit-form .form-group select {
+  padding: 0.75rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  font-size: 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  color: white;
+}
+
+.edit-form .form-group input:focus,
+.edit-form .form-group select:focus {
+  outline: none;
+  border-color: rgba(99, 102, 241, 0.5);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.edit-form .form-group.checkbox {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.edit-form .form-group.checkbox label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
 .modal-actions {
   display: flex;
   justify-content: flex-end;
   gap: 0.75rem;
+  margin-top: 1rem;
 }
 
 /* Toast */

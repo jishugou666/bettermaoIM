@@ -305,8 +305,8 @@
                 <!-- 功能按钮下拉菜单 -->
                 <transition name="fade">
                   <div v-if="isCurrentUserAdminOrOwner && expandedMemberId === member.id" class="member-actions-dropdown">
-                    <!-- 群主可以设置管理员和删除 -->
-                    <button v-if="isCurrentUserOwner && member.id !== currentGroup?.creatorId" class="action-btn" @click.stop="setAsAdmin(member)">
+                    <!-- 群主可以设置/移除管理员 -->
+                    <button v-if="isCurrentUserOwner && member.id !== currentGroup?.creatorId && member.role !== 'ADMIN'" class="action-btn" @click.stop="setAsAdmin(member)">
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
                         <circle cx="9" cy="7" r="4"/>
@@ -314,6 +314,16 @@
                         <path d="M16 3.13a4 4 0 010 7.75"/>
                       </svg>
                       设置管理员
+                    </button>
+                    <!-- 群主可以移除管理员 -->
+                    <button v-if="isCurrentUserOwner && member.id !== currentGroup?.creatorId && member.role === 'ADMIN'" class="action-btn" @click.stop="removeAdmin(member)">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+                        <circle cx="9" cy="7" r="4"/>
+                        <path d="M23 21v-2a4 4 0 00-3-3.87"/>
+                        <line x1="12" y1="8" x2="12" y2="12"/>
+                      </svg>
+                      移除管理员
                     </button>
                     <!-- 群主和管理员都可以删除 -->
                     <button v-if="member.id !== currentGroup?.creatorId" class="action-btn danger" @click.stop="removeGroupMember(member)">
@@ -729,6 +739,19 @@ const setAsAdmin = async (member) => {
   const success = await chatStore.setMemberRoleAction(chatId, member.id, 'ADMIN');
   if (success) {
     alert('已设置为管理员');
+    await loadGroupDetails(chatId);
+    expandedMemberId.value = null;
+  }
+};
+
+// 移除管理员
+const removeAdmin = async (member) => {
+  if (!currentGroup.value || !chatStore.currentChat) return;
+  
+  const chatId = chatStore.currentChat._id || chatStore.currentChat.id;
+  const success = await chatStore.setMemberRoleAction(chatId, member.id, 'MEMBER');
+  if (success) {
+    alert('已移除管理员');
     await loadGroupDetails(chatId);
     expandedMemberId.value = null;
   }

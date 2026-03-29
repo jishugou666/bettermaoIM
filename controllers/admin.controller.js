@@ -351,7 +351,7 @@ class AdminController {
     }
   }
 
-  // 获取用户列表
+  // 获取用户列表（带分页）
   async getUsers(req, res) {
     try {
       const { search, page = 1, limit = 20 } = req.query;
@@ -372,9 +372,54 @@ class AdminController {
         const { password, ...safeUser } = user;
         return safeUser;
       });
-      res.json(safeUsers);
+      
+      // 分页处理
+      const start = (page - 1) * limit;
+      const end = start + parseInt(limit);
+      const paginatedUsers = safeUsers.slice(start, end);
+      
+      res.json({
+        users: paginatedUsers,
+        total: safeUsers.length,
+        page: parseInt(page),
+        limit: parseInt(limit)
+      });
     } catch (error) {
       res.status(500).json({ message: '获取用户失败' });
+    }
+  }
+
+  // 获取用户详情
+  async getUserDetail(req, res) {
+    try {
+      const { userId } = req.params;
+      
+      const userList = await users.read({ _id: userId });
+      if (userList.length === 0) {
+        return res.status(404).json({ message: '用户不存在' });
+      }
+      
+      const user = userList[0];
+      const { password, ...safeUser } = user;
+      
+      // 获取用户相关数据
+      const friendCount = (await friends.read({ $or: [{ userId }, { friendId: userId }] })).length;
+      const chatCount = (await chatMembers.read({ userId })).length;
+      const momentCount = (await moments.read({ userId })).length;
+      const postCount = (await communityPosts.read({ userId })).length;
+      
+      res.json({
+        ...safeUser,
+        stats: {
+          friendCount,
+          chatCount,
+          momentCount,
+          postCount
+        }
+      });
+    } catch (error) {
+      console.error('获取用户详情失败:', error);
+      res.status(500).json({ message: '获取用户详情失败' });
     }
   }
 
@@ -427,10 +472,10 @@ class AdminController {
   // 获取私聊列表
   async getPrivateChats(req, res) {
     try {
-      // 获取所有私聊（非群组）
-      const allChats = await chats.read({ isGroup: { $ne: true } });
+      // 获取所有私聊（使用 type 字段）
+      const allChats = await chats.read({ type: 'private' });
       
-      // 获取私聊详情，包含成员信息
+      // 获取私聊详情，包含成员信息和最新消息
       const chatsWithMembers = await Promise.all(
         allChats.map(async (chat) => {
           const members = await chatMembers.read({ chatId: chat._id });
@@ -440,23 +485,90 @@ class AdminController {
               return userList[0] ? { _id: userList[0]._id, username: userList[0].username, nickname: userList[0].nickname } : null;
             })
           );
+          
+          // 获取最新消息 - 兼容字段名 createTime/createdAt
+          const allMessages = await messages.read({ chatId: chat._id });
+          // 按时间排序（兼容两种时间字段）
+          allMessages.sort((a, b) => {
+            const timeA = new Date(a.createdAt || a.createTime).getTime();
+            const timeB = new Date(b.createdAt || b.createTime).getTime();
+            return timeB - timeA;
+          });
+          const lastMessage = allMessages[0] || null;
+          
           return {
             ...chat,
-            members: memberUsers.filter(u => u !== null)
+            members: memberUsers.filter(u => u !== null),
+            lastMessage,
+            messageCount: allMessages.length
           };
         })
       );
       
       res.json(chatsWithMembers);
     } catch (error) {
+      console.error('获取私聊失败:', error);
       res.status(500).json({ message: '获取私聊失败' });
+    }
+  }
+
+  // 获取私聊聊天记录
+  async getPrivateChatMessages(req, res) {
+    try {
+      const { chatId } = req.params;
+      const { page = 1, limit = 50 } = req.query;
+      
+      const chatList = await chats.read({ _id: chatId });
+      if (chatList.length === 0) {
+        return res.status(404).json({ message: '聊天不存在' });
+      }
+      
+      // 获取聊天记录 - 兼容字段名
+      const allMessages = await messages.read({ chatId });
+      // 手动排序 - 兼容 createTime/createdAt
+      allMessages.sort((a, b) => {
+        const timeA = new Date(a.createdAt || a.createTime).getTime();
+        const timeB = new Date(b.createdAt || b.createTime).getTime();
+        return timeB - timeA;
+      });
+      
+      const total = allMessages.length;
+      
+      // 分页
+      const start = (page - 1) * limit;
+      const end = start + parseInt(limit);
+      const paginatedMessages = allMessages.slice(start, end);
+      
+      // 获取发送者信息 - 兼容 senderId 和 userId 字段
+      const messagesWithUser = await Promise.all(
+        paginatedMessages.map(async (msg) => {
+          const userId = msg.senderId || msg.userId;
+          const userList = await users.read({ _id: userId });
+          const user = userList[0];
+          return {
+            ...msg,
+            createdAt: msg.createdAt || msg.createTime,
+            sender: user ? { _id: user._id, username: user.username, nickname: user.nickname } : null
+          };
+        })
+      );
+      
+      res.json({
+        messages: messagesWithUser.reverse(),
+        total,
+        page: parseInt(page),
+        limit: parseInt(limit)
+      });
+    } catch (error) {
+      console.error('获取聊天记录失败:', error);
+      res.status(500).json({ message: '获取聊天记录失败' });
     }
   }
 
   // 获取群组列表
   async getGroups(req, res) {
     try {
-      const groups = await chats.read({ isGroup: true });
+      const groups = await chats.read({ type: 'group' });
       
       const groupsWithDetails = await Promise.all(
         groups.map(async (group) => {
@@ -469,6 +581,85 @@ class AdminController {
       res.json(groupsWithDetails);
     } catch (error) {
       res.status(500).json({ message: '获取群组失败' });
+    }
+  }
+
+  // 获取群聊详情
+  async getGroupDetails(req, res) {
+    try {
+      const { groupId } = req.params;
+      
+      const groupList = await chats.read({ _id: groupId });
+      const group = groupList[0];
+      
+      if (!group) {
+        return res.status(404).json({ message: '群组不存在' });
+      }
+      
+      const members = await chatMembers.read({ chatId: groupId });
+      const memberUsers = await Promise.all(
+        members.map(async (member) => {
+          const userList = await users.read({ _id: member.userId });
+          if (userList[0]) {
+            const { password, ...safeUser } = userList[0];
+            return {
+              ...safeUser,
+              role: member.role || 'member'
+            };
+          }
+          return null;
+        })
+      );
+      
+      const groupWithMembers = {
+        ...group,
+        members: memberUsers.filter(u => u !== null)
+      };
+      
+      res.json(groupWithMembers);
+    } catch (error) {
+      console.error('获取群组详情失败:', error);
+      res.status(500).json({ message: '获取群组详情失败' });
+    }
+  }
+
+  // 设置成员角色
+  async setMemberRole(req, res) {
+    try {
+      const { groupId, userId } = req.params;
+      const { role } = req.body;
+      
+      if (!role || !['member', 'admin', 'owner'].includes(role)) {
+        return res.status(400).json({ message: '无效的角色' });
+      }
+      
+      const updateResult = await chatMembers.update(
+        { chatId: groupId, userId },
+        { role }
+      );
+      
+      if (updateResult === 0) {
+        return res.status(404).json({ message: '成员不存在' });
+      }
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error('设置成员角色失败:', error);
+      res.status(500).json({ message: '设置成员角色失败' });
+    }
+  }
+
+  // 删除成员
+  async removeMember(req, res) {
+    try {
+      const { groupId, userId } = req.params;
+      
+      await chatMembers.delete({ chatId: groupId, userId });
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error('删除成员失败:', error);
+      res.status(500).json({ message: '删除成员失败' });
     }
   }
 
@@ -487,19 +678,34 @@ class AdminController {
     }
   }
 
-  // 获取朋友圈列表
+  // 获取朋友圈列表（带分页）
   async getMoments(req, res) {
     try {
-      const allMoments = await moments.read({}, { sort: { createdAt: -1 } });
+      const { page = 1, limit = 20 } = req.query;
+      const allMoments = await moments.read({});
+      // 手动排序 - 兼容 createTime/createdAt
+      allMoments.sort((a, b) => {
+        const timeA = new Date(a.createdAt || a.createTime).getTime();
+        const timeB = new Date(b.createdAt || b.createTime).getTime();
+        return timeB - timeA;
+      });
+      
+      const total = allMoments.length;
+      
+      // 分页
+      const start = (page - 1) * limit;
+      const end = start + parseInt(limit);
+      const paginatedMoments = allMoments.slice(start, end);
       
       const momentsWithUser = await Promise.all(
-        allMoments.map(async (moment) => {
+        paginatedMoments.map(async (moment) => {
           const userList = await users.read({ _id: moment.userId });
           const user = userList[0];
           const likes = await momentLikes.read({ momentId: moment._id });
           const comments = await momentComments.read({ momentId: moment._id });
           return {
             ...moment,
+            createdAt: moment.createdAt || moment.createTime,
             user: user ? { username: user.username, nickname: user.nickname } : null,
             likeCount: likes.length,
             commentCount: comments.length
@@ -507,9 +713,84 @@ class AdminController {
         })
       );
       
-      res.json(momentsWithUser);
+      res.json({
+        moments: momentsWithUser,
+        total,
+        page: parseInt(page),
+        limit: parseInt(limit)
+      });
     } catch (error) {
+      console.error('获取朋友圈失败:', error);
       res.status(500).json({ message: '获取朋友圈失败' });
+    }
+  }
+
+  // 获取朋友圈详情（含评论）
+  async getMomentDetail(req, res) {
+    try {
+      const { momentId } = req.params;
+      const { commentPage = 1, commentLimit = 20 } = req.query;
+      
+      const momentList = await moments.read({ _id: momentId });
+      if (momentList.length === 0) {
+        return res.status(404).json({ message: '朋友圈不存在' });
+      }
+      
+      const moment = momentList[0];
+      
+      // 获取用户信息
+      const userList = await users.read({ _id: moment.userId });
+      const user = userList[0];
+      
+      // 获取点赞
+      const likes = await momentLikes.read({ momentId });
+      const likesWithUser = await Promise.all(
+        likes.map(async (like) => {
+          const likeUserList = await users.read({ _id: like.userId });
+          return likeUserList[0] ? { ...like, user: { username: likeUserList[0].username, nickname: likeUserList[0].nickname } } : like;
+        })
+      );
+      
+      // 获取评论（带分页）
+      const allComments = await momentComments.read({ momentId });
+      // 手动排序评论
+      allComments.sort((a, b) => {
+        const timeA = new Date(a.createdAt || a.createTime).getTime();
+        const timeB = new Date(b.createdAt || b.createTime).getTime();
+        return timeA - timeB;
+      });
+      const totalComments = allComments.length;
+      
+      const commentStart = (commentPage - 1) * commentLimit;
+      const commentEnd = commentStart + parseInt(commentLimit);
+      const paginatedComments = allComments.slice(commentStart, commentEnd);
+      
+      const commentsWithUser = await Promise.all(
+        paginatedComments.map(async (comment) => {
+          const commentUserList = await users.read({ _id: comment.userId });
+          return commentUserList[0] ? { 
+            ...comment, 
+            createdAt: comment.createdAt || comment.createTime,
+            user: { username: commentUserList[0].username, nickname: commentUserList[0].nickname } 
+          } : comment;
+        })
+      );
+      
+      res.json({
+        moment: {
+          ...moment,
+          createdAt: moment.createdAt || moment.createTime,
+          user: user ? { username: user.username, nickname: user.nickname } : null
+        },
+        likes: likesWithUser,
+        comments: commentsWithUser,
+        totalComments,
+        commentPage: parseInt(commentPage),
+        commentLimit: parseInt(commentLimit)
+      });
+    } catch (error) {
+      console.error('获取朋友圈详情失败:', error);
+      res.status(500).json({ message: '获取朋友圈详情失败' });
     }
   }
 
@@ -528,13 +809,27 @@ class AdminController {
     }
   }
 
-  // 获取帖子列表
+  // 获取帖子列表（带分页）
   async getPosts(req, res) {
     try {
-      const allPosts = await communityPosts.read({}, { sort: { createdAt: -1 } });
+      const { page = 1, limit = 20 } = req.query;
+      const allPosts = await communityPosts.read({});
+      // 手动排序
+      allPosts.sort((a, b) => {
+        const timeA = new Date(a.createdAt).getTime();
+        const timeB = new Date(b.createdAt).getTime();
+        return timeB - timeA;
+      });
+      
+      const total = allPosts.length;
+      
+      // 分页
+      const start = (page - 1) * limit;
+      const end = start + parseInt(limit);
+      const paginatedPosts = allPosts.slice(start, end);
       
       const postsWithUser = await Promise.all(
-        allPosts.map(async (post) => {
+        paginatedPosts.map(async (post) => {
           const userList = await users.read({ _id: post.userId });
           const user = userList[0];
           const likes = await communityLikes.read({ postId: post._id });
@@ -548,9 +843,83 @@ class AdminController {
         })
       );
       
-      res.json(postsWithUser);
+      res.json({
+        posts: postsWithUser,
+        total,
+        page: parseInt(page),
+        limit: parseInt(limit)
+      });
     } catch (error) {
+      console.error('获取帖子失败:', error);
       res.status(500).json({ message: '获取帖子失败' });
+    }
+  }
+
+  // 获取帖子详情（含评论）
+  async getPostDetail(req, res) {
+    try {
+      const { postId } = req.params;
+      const { commentPage = 1, commentLimit = 20 } = req.query;
+      
+      const postList = await communityPosts.read({ _id: postId });
+      if (postList.length === 0) {
+        return res.status(404).json({ message: '帖子不存在' });
+      }
+      
+      const post = postList[0];
+      
+      // 获取用户信息
+      const userList = await users.read({ _id: post.userId });
+      const user = userList[0];
+      
+      // 获取点赞
+      const likes = await communityLikes.read({ postId });
+      const likesWithUser = await Promise.all(
+        likes.map(async (like) => {
+          const likeUserList = await users.read({ _id: like.userId });
+          return likeUserList[0] ? { ...like, user: { username: likeUserList[0].username, nickname: likeUserList[0].nickname } } : like;
+        })
+      );
+      
+      // 获取评论（带分页）
+      const allComments = await communityComments.read({ postId });
+      // 手动排序评论
+      allComments.sort((a, b) => {
+        const timeA = new Date(a.createdAt || a.createTime).getTime();
+        const timeB = new Date(b.createdAt || b.createTime).getTime();
+        return timeA - timeB;
+      });
+      const totalComments = allComments.length;
+      
+      const commentStart = (commentPage - 1) * commentLimit;
+      const commentEnd = commentStart + parseInt(commentLimit);
+      const paginatedComments = allComments.slice(commentStart, commentEnd);
+      
+      const commentsWithUser = await Promise.all(
+        paginatedComments.map(async (comment) => {
+          const commentUserList = await users.read({ _id: comment.userId });
+          return commentUserList[0] ? { 
+            ...comment, 
+            createdAt: comment.createdAt || comment.createTime,
+            user: { username: commentUserList[0].username, nickname: commentUserList[0].nickname } 
+          } : comment;
+        })
+      );
+      
+      res.json({
+        post: {
+          ...post,
+          user: user ? { username: user.username, nickname: user.nickname } : null
+        },
+        likes: likesWithUser,
+        comments: commentsWithUser,
+        totalComments,
+        commentPage: parseInt(commentPage),
+        commentLimit: parseInt(commentLimit)
+      });
+    } catch (error) {
+      console.error('获取帖子详情失败:', error);
+      res.status(500).json({ message: '获取帖子详情失败' });
     }
   }
 
