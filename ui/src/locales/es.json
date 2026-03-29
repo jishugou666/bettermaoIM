@@ -40,7 +40,7 @@
     "logout": "Cerrar sesión"
   },
   "home": {
-    "welcome": "¡Hola, {name}! 👋",
+    "welcome": "¡Hola, {name}!",
     "welcome_sub": "Bienvenido a la comunidad de BetterMao.",
     "status_title": "Estado del sistema",
     "user_id": "ID de usuario",

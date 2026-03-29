@@ -34,21 +34,21 @@
             :class="{ active: moment.isLiked }"
             @click="momentStore.toggleLike(moment.id)"
           >
-            <span class="icon">❤️</span>
+            <SvgIcon name="heart" size="18px" />
             <span class="count">{{ moment._count.likes }}</span>
           </button>
           <button 
             class="action-btn" 
             @click="scrollToComments"
           >
-            <span class="icon">💬</span>
+            <SvgIcon name="message-circle" size="18px" />
             <span class="count">{{ moment._count.comments }}</span>
           </button>
           <button 
             class="action-btn" 
             @click="openTipModal(moment.user.id)"
           >
-            <span class="icon">💰</span>
+            <SvgIcon name="dollar-sign" size="18px" />
             <span class="label">{{ $t('moments.tip') }}</span>
           </button>
         </div>
@@ -107,6 +107,7 @@ import { useAuthStore } from '../stores/auth'
 import { useRouter, useRoute } from 'vue-router'
 import Avatar from '../components/Avatar.vue'
 import TipModal from '../components/TipModal.vue'
+import SvgIcon from '../components/SvgIcon.vue'
 
 const momentStore = useMomentStore()
 const authStore = useAuthStore()

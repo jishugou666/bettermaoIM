@@ -4,7 +4,9 @@
       <button class="back-btn" @click="router.push('/')">← {{ $t('common.back') }}</button>
       <h2>{{ $t('community.title') }}</h2>
       <p class="subtitle">{{ $t('home.community_desc') }}</p>
-      <button class="new-post-btn" @click="showCreatePost = true">✍️ {{ $t('community.new_post') }}</button>
+      <button class="new-post-btn" @click="showCreatePost = true">
+        <SvgIcon name="pen-tool" size="16px" /> {{ $t('community.new_post') }}
+      </button>
     </div>
 
     <div class="content-grid">
@@ -17,7 +19,9 @@
             <Avatar :username="post.user.username" :src="post.user.avatar" />
             <div class="user-info">
               <span class="username">{{ post.user.username }}</span>
-              <span v-if="post.user.isVip" class="vip-badge">👑</span>
+              <span v-if="post.user.isVip" class="vip-badge">
+                <SvgIcon name="crown" size="14px" />
+              </span>
               <span class="time">{{ formatDate(post.createdAt) }}</span>
             </div>
             <span class="category-tag">{{ $t(`community.categories.${post.category}`) }}</span>
@@ -28,16 +32,16 @@
           
           <div class="post-actions">
             <button class="action-btn" @click="toggleLike(post.id)">
-              ❤️ {{ post._count.likes }}
+              <SvgIcon name="heart" size="16px" /> {{ post._count.likes }}
             </button>
             <button class="action-btn" @click="showComments(post.id)">
-              💬 {{ post._count.comments }}
+              <SvgIcon name="message-circle" size="16px" /> {{ post._count.comments }}
             </button>
             <button class="action-btn" @click="messageAuthor(post.user.id, post.user.username)">
-              📨 私信
+              <SvgIcon name="mail-open" size="16px" /> 私信
             </button>
             <button class="action-btn" @click="createDiscussionGroup(post.id, post.title, post.user.id)">
-              👥 讨论群
+              <SvgIcon name="users-group" size="16px" /> 讨论群
             </button>
           </div>
         </div>
@@ -74,7 +78,9 @@
             <div class="comment-content">
               <div class="comment-header">
                 <span class="comment-username">{{ comment.user.username }}</span>
-                <span v-if="comment.user.isVip" class="vip-badge">👑</span>
+                <span v-if="comment.user.isVip" class="vip-badge">
+                  <SvgIcon name="crown" size="12px" />
+                </span>
               </div>
               <div class="comment-text">{{ comment.content }}</div>
             </div>
@@ -102,6 +108,7 @@ import axios from 'axios'
 import Avatar from '../components/Avatar.vue'
 import { useAuthStore } from '../stores/auth'
 import { useChatStore } from '../stores/chat'
+import SvgIcon from '../components/SvgIcon.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()

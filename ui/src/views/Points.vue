@@ -8,15 +8,15 @@
       
       <div class="points-balance card">
         <h3>{{ $t('credit.balance') }}</h3>
-        <div class="balance-amount">{{ userStore.points || 0 }} 💰</div>
-        <div class="balance-sub">{{ $t('credit.total_earned') }}: {{ totalEarned }} 💰</div>
+        <div class="balance-amount">{{ userStore.points || 0 }} <SvgIcon name="dollar-sign" size="1.2rem" /></div>
+        <div class="balance-sub">{{ $t('credit.total_earned') }}: {{ totalEarned }} <SvgIcon name="dollar-sign" size="0.85rem" /></div>
       </div>
       
       <div class="points-actions card">
         <h3>{{ $t('credit.daily_tasks') }}</h3>
         <div class="task-item" @click="handleCheckIn">
           <div class="task-info">
-            <span class="task-icon">📅</span>
+            <span class="task-icon"><SvgIcon name="calendar" size="1.25rem" /></span>
             <span class="task-name">{{ $t('credit.task_daily_login') }}</span>
           </div>
           <button 
@@ -44,7 +44,7 @@
               <Avatar :username="user.nickname || user.username" :src="user.avatar" />
               <span class="rank-username">{{ user.nickname || user.username }}</span>
             </div>
-            <div class="rank-points">{{ user.points }} 💰</div>
+            <div class="rank-points">{{ user.points }} <SvgIcon name="dollar-sign" size="0.85rem" /></div>
           </div>
         </div>
       </div>
@@ -63,7 +63,7 @@
               <span class="history-time">{{ formatTime(item.createTime) }}</span>
             </div>
             <div class="history-amount" :class="{ 'positive': item.amount > 0 }">
-              {{ item.amount > 0 ? '+' : '' }}{{ item.amount }} 💰
+              {{ item.amount > 0 ? '+' : '' }}{{ item.amount }} <SvgIcon name="dollar-sign" size="0.75rem" />
             </div>
           </div>
         </div>
@@ -79,6 +79,7 @@ import { useCreditStore } from '../stores/credit'
 import { useRouter } from 'vue-router'
 import Avatar from '../components/Avatar.vue'
 import { useI18n } from 'vue-i18n'
+import SvgIcon from '../components/SvgIcon.vue'
 // --- 修改开始 ---
 import { signIn, checkSignInStatus, getPoints } from '../api/points'
 // --- 修改结束 ---

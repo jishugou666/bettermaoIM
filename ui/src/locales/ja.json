@@ -40,7 +40,7 @@
     "logout": "ログアウト"
   },
   "home": {
-    "welcome": "こんにちは, {name}! 👋",
+    "welcome": "こんにちは, {name}!",
     "welcome_sub": "BetterMaoコミュニティへようこそ。",
     "status_title": "システムステータス",
     "user_id": "ユーザーID",

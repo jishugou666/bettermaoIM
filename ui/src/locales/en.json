@@ -46,7 +46,7 @@
     "logout": "Logout"
   },
   "home": {
-    "welcome": "Hello, {name}! 👋",
+    "welcome": "Hello, {name}!",
     "welcome_sub": "Welcome to the BetterMao community.",
     "status_title": "System Status",
     "user_id": "User ID",
@@ -63,7 +63,7 @@
     "title": "Community",
     "my_posts": "My Posts",
     "find_teams": "Find Teams",
-    "coming_soon": "Coming Soon! 🚧",
+    "coming_soon": "Coming Soon!",
     "categories": {
       "general": "General",
       "tech": "Tech",
@@ -165,11 +165,11 @@
     "done": "Done",
     "vip_title": "Become VIP",
     "vip_desc": "Get exclusive badge and features",
-    "vip_buy": "Buy VIP (5000 💰)",
+    "vip_buy": "Buy VIP (5000)",
     "vip_member": "VIP Member",
     "insufficient_balance": "Insufficient balance!",
     "purchase_vip_confirm": "Confirm spending 5000 credits to buy VIP?",
-    "vip_purchased": "VIP purchased successfully! 👑",
+    "vip_purchased": "VIP purchased successfully!",
     "tip_sent": "Successfully sent {amount} credits!"
   },
   "profile": {

@@ -40,7 +40,7 @@
     "logout": "Выйти"
   },
   "home": {
-    "welcome": "Привет, {name}! 👋",
+    "welcome": "Привет, {name}!",
     "welcome_sub": "Добро пожаловать в сообщество BetterMao.",
     "status_title": "Статус системы",
     "user_id": "ID пользователя",

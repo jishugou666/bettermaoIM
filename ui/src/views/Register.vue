@@ -67,7 +67,7 @@
         </div>
 
         <div v-if="authStore.error" class="error-alert">
-          <span class="icon">⚠️</span>
+          <SvgIcon name="alert-triangle" size="18px" />
           {{ authStore.error }}
         </div>
 
@@ -92,6 +92,7 @@ import { ref, reactive } from 'vue'
 import { useAuthStore } from '../stores/auth'
 import { useRouter } from 'vue-router'
 import LanguageSwitcher from '../components/LanguageSwitcher.vue'
+import SvgIcon from '../components/SvgIcon.vue'
 
 const username = ref('')
 const email = ref('')

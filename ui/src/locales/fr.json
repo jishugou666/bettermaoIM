@@ -40,7 +40,7 @@
     "logout": "Déconnexion"
   },
   "home": {
-    "welcome": "Bonjour, {name}! 👋",
+    "welcome": "Bonjour, {name}!",
     "welcome_sub": "Bienvenue dans la communauté BetterMao.",
     "status_title": "État du système",
     "user_id": "ID utilisateur",

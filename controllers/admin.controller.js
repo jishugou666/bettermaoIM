@@ -565,6 +565,59 @@ class AdminController {
     }
   }
 
+  // 获取群组聊天记录（复用私聊逻辑）
+  async getGroupChatMessages(req, res) {
+    try {
+      const { groupId } = req.params;
+      const { page = 1, limit = 50 } = req.query;
+      
+      const chatList = await chats.read({ _id: groupId });
+      if (chatList.length === 0) {
+        return res.status(404).json({ message: '群组不存在' });
+      }
+      
+      // 获取聊天记录 - 兼容字段名
+      const allMessages = await messages.read({ chatId: groupId });
+      // 手动排序 - 兼容 createTime/createdAt
+      allMessages.sort((a, b) => {
+        const timeA = new Date(a.createdAt || a.createTime).getTime();
+        const timeB = new Date(b.createdAt || b.createTime).getTime();
+        return timeB - timeA;
+      });
+      
+      const total = allMessages.length;
+      
+      // 分页
+      const start = (page - 1) * limit;
+      const end = start + parseInt(limit);
+      const paginatedMessages = allMessages.slice(start, end);
+      
+      // 获取发送者信息 - 兼容 senderId 和 userId 字段
+      const messagesWithUser = await Promise.all(
+        paginatedMessages.map(async (msg) => {
+          const userId = msg.senderId || msg.userId;
+          const userList = await users.read({ _id: userId });
+          const user = userList[0];
+          return {
+            ...msg,
+            createdAt: msg.createdAt || msg.createTime,
+            sender: user ? { _id: user._id, username: user.username, nickname: user.nickname } : null
+          };
+        })
+      );
+      
+      res.json({
+        messages: messagesWithUser.reverse(),
+        total,
+        page: parseInt(page),
+        limit: parseInt(limit)
+      });
+    } catch (error) {
+      console.error('获取群组聊天记录失败:', error);
+      res.status(500).json({ message: '获取群组聊天记录失败' });
+    }
+  }
+
   // 获取群组列表
   async getGroups(req, res) {
     try {
@@ -574,12 +627,34 @@ class AdminController {
         groups.map(async (group) => {
           const members = await chatMembers.read({ chatId: group._id });
           const memberCount = members.length;
-          return { ...group, memberCount };
+          
+          // 获取成员用户信息
+          const memberUsers = await Promise.all(
+            members.map(async (member) => {
+              const userList = await users.read({ _id: member.userId });
+              return userList[0] ? { _id: userList[0]._id, username: userList[0].username, nickname: userList[0].nickname } : null;
+            })
+          );
+          
+          // 获取最新消息
+          const groupMessages = await messages.read({ chatId: group._id }, { sort: { createTime: -1, createdAt: -1 }, limit: 1 });
+          
+          // 获取消息总数
+          const allMessages = await messages.read({ chatId: group._id });
+          
+          return { 
+            ...group, 
+            memberCount, 
+            members: memberUsers.filter(u => u !== null),
+            lastMessage: groupMessages[0] || null,
+            messageCount: allMessages.length
+          };
         })
       );
       
       res.json(groupsWithDetails);
     } catch (error) {
+      console.error('获取群组失败:', error);
       res.status(500).json({ message: '获取群组失败' });
     }
   }

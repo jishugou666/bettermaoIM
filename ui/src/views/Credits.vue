@@ -6,7 +6,10 @@
           <div class="balance-container">
             <div class="balance-item">
               <span class="label">{{ $t('credit.balance') }}</span>
-              <span class="value gold">{{ creditStore.balance }} 💰</span>
+              <span class="value gold">
+                {{ creditStore.balance }}
+                <SvgIcon name="dollar-sign" size="20px" />
+              </span>
             </div>
             <div class="balance-divider"></div>
             <div class="balance-item">
@@ -16,7 +19,9 @@
           </div>
           <div class="vip-banner" v-if="!authStore.user?.isVip">
             <div class="vip-info">
-              <span class="vip-icon">👑</span>
+              <span class="vip-icon">
+                <SvgIcon name="crown" size="32px" />
+              </span>
               <div class="vip-text">
                 <h4>{{ $t('credit.vip_title') }}</h4>
                 <p>{{ $t('credit.vip_desc') }}</p>
@@ -27,7 +32,9 @@
             </button>
           </div>
           <div class="vip-status" v-else>
-            <span class="vip-badge">👑 {{ $t('credit.vip_member') }}</span>
+            <span class="vip-badge">
+              <SvgIcon name="crown" size="18px" /> {{ $t('credit.vip_member') }}
+            </span>
           </div>
         </div>
 
@@ -38,7 +45,9 @@
             <div v-for="task in creditStore.tasks" :key="task.key" class="task-item" :class="{ 'completed': task.completed }">
               <div class="task-info">
                 <span class="task-name">{{ $t(`credit.task_${task.key}`) }}</span>
-                <span class="task-reward">+{{ task.reward }} 💰</span>
+                <span class="task-reward">
+                  +{{ task.reward }} <SvgIcon name="dollar-sign" size="14px" />
+                </span>
               </div>
               <button 
                 v-if="!task.completed" 
@@ -79,7 +88,7 @@
     <!-- Reward Toast -->
     <Transition name="fade">
       <div v-if="rewardToast" class="reward-toast">
-        <span class="toast-icon">✨</span>
+        <SvgIcon name="sparkles" size="20px" />
         <span class="toast-msg">{{ rewardToast }}</span>
       </div>
     </Transition>
@@ -108,6 +117,7 @@ import { useAuthStore } from '../stores/auth'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import Modal from '../components/Modal.vue'
+import SvgIcon from '../components/SvgIcon.vue'
 
 const { t } = useI18n()
 const creditStore = useCreditStore()

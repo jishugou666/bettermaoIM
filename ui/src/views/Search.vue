@@ -13,7 +13,9 @@
           :placeholder="$t('friends.search_placeholder')" 
           class="search-input"
         />
-        <button class="search-btn" @click="handleSearch">🔍</button>
+        <button class="search-btn" @click="handleSearch">
+          <SvgIcon name="search" size="18px" />
+        </button>
       </div>
       
       <div class="search-results">
@@ -49,6 +51,7 @@ import { useFriendStore } from '../stores/friend'
 import { useRouter } from 'vue-router'
 import Avatar from '../components/Avatar.vue'
 import { useI18n } from 'vue-i18n'
+import SvgIcon from '../components/SvgIcon.vue'
 
 const { t } = useI18n()
 const userStore = useUserStore()

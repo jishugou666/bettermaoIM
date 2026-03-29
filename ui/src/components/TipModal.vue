@@ -9,7 +9,7 @@
 
         <div class="modal-body">
           <p class="balance-info">
-            {{ $t('credit.balance') }}: <span class="gold">{{ creditStore.balance }} 💰</span>
+            {{ $t('credit.balance') }}: <span class="gold">{{ creditStore.balance }} <SvgIcon name="dollar-sign" size="0.85rem" /></span>
           </p>
 
           <div class="amount-grid">
@@ -20,7 +20,7 @@
               :class="{ selected: selectedAmount === amt }"
               @click="selectedAmount = amt"
             >
-              {{ amt }} 💰
+              {{ amt }} <SvgIcon name="dollar-sign" size="0.75rem" />
             </button>
             <div class="custom-amount">
               <input 
@@ -52,6 +52,7 @@
 import { ref, computed } from 'vue'
 import { useCreditStore } from '../stores/credit'
 import { useI18n } from 'vue-i18n'
+import SvgIcon from './SvgIcon.vue'
 
 const props = defineProps({
   show: Boolean,

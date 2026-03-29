@@ -4,13 +4,14 @@
     @click="toggleTheme"
     :title="isDark ? '切换到浅色模式' : '切换到深色模式'"
   >
-    <span v-if="isDark">☀️</span>
-    <span v-else>🌙</span>
+    <SvgIcon v-if="isDark" name="sun" size="1.25rem" />
+    <SvgIcon v-else name="moon" size="1.25rem" />
   </button>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import SvgIcon from './SvgIcon.vue'
 
 const isDark = ref(false)
 

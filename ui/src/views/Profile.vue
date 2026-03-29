@@ -7,7 +7,9 @@
           <div class="avatar-large" :style="avatarUrl ? { backgroundImage: `url(${avatarUrl})`, backgroundSize: 'cover', color: 'transparent' } : {}">
             {{ profile?.username?.charAt(0).toUpperCase() }}
           </div>
-          <button class="edit-avatar-btn" @click="triggerFileInput" :title="$t('profile.change_avatar')">📷</button>
+          <button class="edit-avatar-btn" @click="triggerFileInput" :title="$t('profile.change_avatar')">
+            <SvgIcon name="camera" size="16px" />
+          </button>
           <input type="file" ref="fileInput" class="hidden" @change="handleFileChange" accept="image/*" />
         </div>
         <h2>{{ profile?.username }}</h2>
@@ -90,6 +92,7 @@ import { ref, onMounted, reactive, computed } from 'vue'
 import { useUserStore } from '../stores/user'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import SvgIcon from '../components/SvgIcon.vue'
 
 const { t } = useI18n()
 const userStore = useUserStore()

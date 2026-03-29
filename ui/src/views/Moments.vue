@@ -12,7 +12,9 @@
           />
           <span v-if="isSearching" class="search-loader">...</span>
         </div>
-        <button class="new-post-btn" @click="showPostModal = true" title="发布动态">✍️</button>
+        <button class="new-post-btn" @click="showPostModal = true" title="发布动态">
+          <SvgIcon name="pen-tool" size="18px" />
+        </button>
       </div>
 
       <div class="feed-container">
@@ -52,21 +54,21 @@
               :class="{ active: moment.isLiked }"
               @click.stop="momentStore.toggleLike(moment.id)"
             >
-              <span class="icon">❤️</span>
+              <SvgIcon name="heart" size="18px" />
               <span class="count">{{ moment._count.likes }}</span>
             </button>
             <button 
               class="action-btn" 
               @click.stop="navigateToMoment(moment.id)"
             >
-              <span class="icon">💬</span>
+              <SvgIcon name="message-circle" size="18px" />
               <span class="count">{{ moment._count.comments }}</span>
             </button>
             <button 
               class="action-btn" 
               @click.stop="openTipModal(moment.user.id)"
             >
-              <span class="icon">💰</span>
+              <SvgIcon name="dollar-sign" size="18px" />
               <span class="label">{{ $t('moments.tip') }}</span>
             </button>
           </div>
@@ -92,7 +94,7 @@
             <button class="remove-btn" @click="removeFile">×</button>
           </div>
           <button v-else class="upload-btn" @click="triggerFileInput">
-            📷 {{ $t('moments.add_photo') }}
+            <SvgIcon name="camera" size="18px" /> {{ $t('moments.add_photo') }}
           </button>
           <input 
             type="file" 
@@ -126,6 +128,7 @@ import { useRouter } from 'vue-router'
 import uploadApi from '../api/upload'
 import Avatar from '../components/Avatar.vue'
 import TipModal from '../components/TipModal.vue'
+import SvgIcon from '../components/SvgIcon.vue'
 
 const momentStore = useMomentStore()
 const router = useRouter()

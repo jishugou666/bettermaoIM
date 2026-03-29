@@ -48,7 +48,7 @@
     "logout": "退出登录"
   },
   "home": {
-    "welcome": "你好, {name}! 👋",
+    "welcome": "你好, {name}!",
     "welcome_sub": "欢迎来到 BetterMao 社区。",
     "status_title": "系统状态",
     "user_id": "用户 ID",
@@ -65,7 +65,7 @@
     "title": "社区",
     "my_posts": "我的帖子",
     "find_teams": "组队中心",
-    "coming_soon": "敬请期待！🚧",
+    "coming_soon": "敬请期待！",
     "categories": {
       "general": "综合",
       "tech": "技术",
@@ -167,11 +167,11 @@
     "done": "已完成",
     "vip_title": "成为VIP",
     "vip_desc": "获得专属徽章和功能",
-    "vip_buy": "购买VIP (5000 💰)",
+    "vip_buy": "购买VIP (5000)",
     "vip_member": "VIP会员",
     "insufficient_balance": "余额不足！",
     "purchase_vip_confirm": "确认花费5000积分购买VIP？",
-    "vip_purchased": "VIP购买成功！👑",
+    "vip_purchased": "VIP购买成功！",
     "tip_sent": "成功发送 {amount} 积分！"
   },
   "profile": {

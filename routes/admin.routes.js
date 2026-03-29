@@ -34,6 +34,7 @@ router.get('/chats/private/:chatId/messages', adminController.getPrivateChatMess
 // 群组管理
 router.get('/groups', adminController.getGroups);
 router.get('/groups/:groupId', adminController.getGroupDetails);
+router.get('/groups/:groupId/messages', adminController.getGroupChatMessages);
 router.delete('/groups/:groupId', adminController.deleteGroup);
 router.put('/groups/:groupId/members/:userId/role', adminController.setMemberRole);
 router.delete('/groups/:groupId/members/:userId', adminController.removeMember);

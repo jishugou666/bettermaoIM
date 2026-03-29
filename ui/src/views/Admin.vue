@@ -4,7 +4,7 @@
     <div v-if="!isLoggedIn" class="login-container">
       <div class="login-card card">
         <div class="login-header">
-          <div class="logo-icon">🔐</div>
+          <div class="logo-icon"><SvgIcon name="shield" size="3rem" /></div>
           <h1>BetterMao Admin</h1>
           <p>后台管理系统</p>
         </div>
@@ -12,17 +12,17 @@
           <div class="form-group">
             <label>用户名</label>
             <div class="input-wrapper">
-              <span class="input-icon">👤</span>
+              <span class="input-icon"><SvgIcon name="user" size="1.1rem" /></span>
               <input v-model="loginForm.username" type="text" placeholder="请输入管理员用户名" required />
             </div>
           </div>
           <div class="form-group">
             <label>密码</label>
             <div class="input-wrapper">
-              <span class="input-icon">🔒</span>
+              <span class="input-icon"><SvgIcon name="lock" size="1.1rem" /></span>
               <input v-model="loginForm.password" :type="showPassword ? 'text' : 'password'" placeholder="请输入密码" required />
               <button type="button" class="toggle-password" @click="showPassword = !showPassword">
-                {{ showPassword ? '🙈' : '👁️' }}
+                <SvgIcon :name="showPassword ? 'eye-off' : 'eye'" size="1.2rem" />
               </button>
             </div>
           </div>
@@ -41,7 +41,7 @@
       <div class="admin-header">
         <div class="header-left">
           <div class="logo">
-            <span class="logo-icon">⚡</span>
+            <span class="logo-icon"><SvgIcon name="zap" size="1.5rem" /></span>
             <span class="logo-text">BetterMao Admin</span>
           </div>
         </div>
@@ -54,7 +54,7 @@
             </div>
           </div>
           <button class="logout-btn" @click="handleLogout">
-            <span>🚪</span> 退出
+            <SvgIcon name="log-out" size="1rem" /> 退出
           </button>
         </div>
       </div>
@@ -69,7 +69,7 @@
               :class="['menu-item', { active: activeTab === tab.id }]"
               @click="activeTab = tab.id; loadTabData(tab.id)"
             >
-              <span class="menu-icon">{{ tab.icon }}</span>
+              <span class="menu-icon"><SvgIcon :name="tab.icon" size="1.25rem" /></span>
               <span class="menu-label">{{ tab.label }}</span>
             </button>
           </div>
@@ -80,17 +80,17 @@
           <!-- 数据库管理 -->
           <div v-if="activeTab === 'database'" class="tab-content">
             <div class="content-header">
-              <h2>📊 数据库管理</h2>
+              <h2><SvgIcon name="bar-chart" size="1.5rem" /> 数据库管理</h2>
               <div class="header-actions">
-                <button class="btn btn-primary" @click="loadDatabaseStats">🔄 刷新统计</button>
-                <button class="btn btn-warning" @click="exportDatabase">📥 导出数据库</button>
-                <button v-if="adminRole === 'super_admin'" class="btn btn-danger" @click="confirmClearDatabase">⚠️ 清空数据库</button>
+                <button class="btn btn-primary" @click="loadDatabaseStats"><SvgIcon name="refresh-cw" size="1rem" /> 刷新统计</button>
+                <button class="btn btn-warning" @click="exportDatabase"><SvgIcon name="download" size="1rem" /> 导出数据库</button>
+                <button v-if="adminRole === 'super_admin'" class="btn btn-danger" @click="confirmClearDatabase"><SvgIcon name="alert-triangle" size="1rem" /> 清空数据库</button>
               </div>
             </div>
 
             <div v-if="dbStats" class="stats-dashboard">
               <div v-for="(count, table) in dbStats" :key="table" class="stat-card">
-                <div class="stat-icon">{{ getTableIcon(table) }}</div>
+                <div class="stat-icon"><SvgIcon :name="getTableIcon(table)" size="2rem" /></div>
                 <div class="stat-info">
                   <span class="stat-value">{{ count }}</span>
                   <span class="stat-label">{{ getTableLabel(table) }}</span>
@@ -104,7 +104,7 @@
                 <div v-for="table in tables" :key="table.id" class="table-card">
                   <div class="table-card-header">
                     <div class="table-title">
-                      <span class="table-icon">{{ table.icon }}</span>
+                      <span class="table-icon"><SvgIcon :name="table.icon" size="1.25rem" /></span>
                       <span>{{ table.label }}</span>
                     </div>
                     <button class="view-btn" @click="viewTableData(table.id)">
@@ -146,11 +146,11 @@
           <!-- 用户管理 -->
           <div v-if="activeTab === 'users'" class="tab-content">
             <div class="content-header">
-              <h2>👥 用户管理</h2>
+              <h2><SvgIcon name="users" size="1.5rem" /> 用户管理</h2>
             </div>
             <div class="search-bar">
               <input v-model="userSearch" placeholder="搜索用户名/邮箱/昵称..." @keyup.enter="searchUsers(1)" />
-              <button class="search-btn" @click="searchUsers(1)">🔍</button>
+              <button class="search-btn" @click="searchUsers(1)"><SvgIcon name="search" size="1.25rem" /></button>
             </div>
             
             <!-- 用户详情视图 -->
@@ -233,7 +233,7 @@
           <!-- 私聊管理 -->
           <div v-if="activeTab === 'chats'" class="tab-content">
             <div class="content-header">
-              <h2>💬 私聊管理</h2>
+              <h2><SvgIcon name="message-square" size="1.5rem" /> 私聊管理</h2>
             </div>
             
             <!-- 聊天记录视图 -->
@@ -306,13 +306,13 @@
           <!-- 群组管理 -->
           <div v-if="activeTab === 'groups'" class="tab-content">
             <div class="content-header">
-              <h2>👨‍👩‍👧‍👦 群组管理</h2>
+              <h2><SvgIcon name="family" size="1.5rem" /> 群组管理</h2>
             </div>
             <div v-if="!selectedGroup">
               <div v-if="groups.length === 0" class="empty-state">暂无群组</div>
               <div v-else class="groups-list">
                 <div v-for="group in groups" :key="group._id" class="group-card" @click="viewGroupDetails(group._id)">
-                  <div class="group-icon">👥</div>
+                  <div class="group-icon"><SvgIcon name="users" size="1.25rem" /></div>
                   <div class="group-info">
                     <div class="group-name">{{ group.name || '未命名群组' }}</div>
                     <div class="group-meta">{{ group.memberCount }} 成员</div>
@@ -324,7 +324,9 @@
             <div v-else class="group-detail-view">
               <button class="btn btn-sm back-btn" @click="backToGroups">← 返回群组列表</button>
               <div class="group-detail-header">
-                <div class="group-icon-large">👥</div>
+                <div class="group-icon-large">
+                  <SvgIcon name="users-group" size="3rem" />
+                </div>
                 <div class="group-detail-info">
                   <h3>{{ selectedGroup.name || '未命名群组' }}</h3>
                   <p>{{ selectedGroup.description || '暂无描述' }}</p>
@@ -358,7 +360,7 @@
           <!-- 朋友圈管理 -->
           <div v-if="activeTab === 'moments'" class="tab-content">
             <div class="content-header">
-              <h2>📸 朋友圈管理</h2>
+              <h2><SvgIcon name="camera" size="1.5rem" /> 朋友圈管理</h2>
             </div>
             <div v-if="momentsData.moments?.length === 0" class="empty-state">暂无朋友圈</div>
             <div v-else class="moments-list">
@@ -372,8 +374,8 @@
                 </div>
                 <div class="moment-content">{{ moment.content }}</div>
                 <div class="moment-stats">
-                  <span>❤️ {{ moment.likeCount }}</span>
-                  <span>💬 {{ moment.commentCount }}</span>
+                  <span><SvgIcon name="heart" size="0.85rem" /> {{ moment.likeCount }}</span>
+                  <span><SvgIcon name="message-circle" size="0.85rem" /> {{ moment.commentCount }}</span>
                 </div>
                 <div class="moment-actions">
                   <button class="btn btn-sm" @click="toggleMomentComments(moment._id)">
@@ -424,7 +426,7 @@
           <!-- 帖子管理 -->
           <div v-if="activeTab === 'posts'" class="tab-content">
             <div class="content-header">
-              <h2>📝 帖子管理</h2>
+              <h2><SvgIcon name="file-text" size="1.5rem" /> 帖子管理</h2>
             </div>
             <div v-if="postsData.posts?.length === 0" class="empty-state">暂无帖子</div>
             <div v-else class="posts-list">
@@ -439,8 +441,8 @@
                 <div class="post-title">{{ post.title }}</div>
                 <div class="post-content">{{ post.content }}</div>
                 <div class="post-stats">
-                  <span>❤️ {{ post.likeCount }}</span>
-                  <span>💬 {{ post.commentCount }}</span>
+                  <span><SvgIcon name="heart" size="0.85rem" /> {{ post.likeCount }}</span>
+                  <span><SvgIcon name="message-circle" size="0.85rem" /> {{ post.commentCount }}</span>
                 </div>
                 <div class="post-actions">
                   <button class="btn btn-sm" @click="togglePostComments(post._id)">
@@ -548,6 +550,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
+import SvgIcon from '../components/SvgIcon.vue'
 
 const router = useRouter()
 const isLoggedIn = ref(false)
@@ -564,23 +567,23 @@ const loginForm = ref({
 })
 
 const tabs = [
-  { id: 'database', label: '数据库', icon: '📊' },
-  { id: 'users', label: '用户管理', icon: '👥' },
-  { id: 'chats', label: '私聊管理', icon: '💬' },
-  { id: 'groups', label: '群组管理', icon: '👨‍👩‍👧‍👦' },
-  { id: 'moments', label: '朋友圈', icon: '📸' },
-  { id: 'posts', label: '帖子管理', icon: '📝' }
+  { id: 'database', label: '数据库', icon: 'bar-chart' },
+  { id: 'users', label: '用户管理', icon: 'users' },
+  { id: 'chats', label: '私聊管理', icon: 'message-square' },
+  { id: 'groups', label: '群组管理', icon: 'family' },
+  { id: 'moments', label: '朋友圈', icon: 'camera' },
+  { id: 'posts', label: '帖子管理', icon: 'file-text' }
 ]
 
 const activeTab = ref('database')
 const dbStats = ref(null)
 const tables = [
-  { id: 'users', label: '用户表', icon: '👤' },
-  { id: 'friends', label: '好友关系', icon: '🤝' },
-  { id: 'chats', label: '聊天', icon: '💬' },
-  { id: 'messages', label: '消息', icon: '📨' },
-  { id: 'moments', label: '动态', icon: '📸' },
-  { id: 'communityPosts', label: '帖子', icon: '📝' }
+  { id: 'users', label: '用户表', icon: 'user' },
+  { id: 'friends', label: '好友关系', icon: 'handshake' },
+  { id: 'chats', label: '聊天', icon: 'message-square' },
+  { id: 'messages', label: '消息', icon: 'mail' },
+  { id: 'moments', label: '动态', icon: 'camera' },
+  { id: 'communityPosts', label: '帖子', icon: 'file-text' }
 ]
 const expandedTable = ref(null)
 const tableData = ref([])
@@ -625,21 +628,21 @@ const getRoleLabel = (role) => {
 
 const getTableIcon = (table) => {
   const icons = {
-    users: '👤',
-    friends: '🤝',
-    friendRequests: '📩',
-    chats: '💬',
-    chatMembers: '👥',
-    messages: '📨',
-    points: '💰',
-    moments: '📸',
-    momentLikes: '❤️',
-    momentComments: '💬',
-    communityPosts: '📝',
-    communityComments: '💭',
-    communityLikes: '👍'
+    users: 'user',
+    friends: 'handshake',
+    friendRequests: 'inbox',
+    chats: 'message-square',
+    chatMembers: 'users',
+    messages: 'mail',
+    points: 'dollar-sign',
+    moments: 'camera',
+    momentLikes: 'heart',
+    momentComments: 'message-circle',
+    communityPosts: 'file-text',
+    communityComments: 'message-circle',
+    communityLikes: 'thumbs-up'
   }
-  return icons[table] || '📋'
+  return icons[table] || 'clipboard'
 }
 
 const getTableLabel = (table) => {
@@ -1246,7 +1249,7 @@ const confirmAction = () => {
 <style scoped>
 .admin-layout {
   min-height: 100vh;
-  background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 100%);
+  background: #f8fafc;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
@@ -1410,9 +1413,9 @@ const confirmAction = () => {
   justify-content: space-between;
   align-items: center;
   padding: 1rem 2rem;
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .header-left .logo {
@@ -1422,7 +1425,7 @@ const confirmAction = () => {
 }
 
 .logo-text {
-  color: white;
+  color: #1e293b;
   font-weight: 700;
   font-size: 1.25rem;
 }
@@ -1457,13 +1460,13 @@ const confirmAction = () => {
 }
 
 .admin-name {
-  color: white;
+  color: #1e293b;
   font-weight: 600;
   font-size: 0.95rem;
 }
 
 .admin-role {
-  color: #9ca3af;
+  color: #64748b;
   font-size: 0.8rem;
 }
 
@@ -1493,8 +1496,8 @@ const confirmAction = () => {
 
 .sidebar {
   width: 240px;
-  background: rgba(255, 255, 255, 0.03);
-  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  background: #ffffff;
+  border-right: 1px solid #e2e8f0;
   padding: 1.5rem 0;
 }
 
@@ -1513,21 +1516,21 @@ const confirmAction = () => {
   background: transparent;
   border: none;
   border-radius: 12px;
-  color: #9ca3af;
+  color: #64748b;
   cursor: pointer;
   transition: all 0.2s;
   text-align: left;
 }
 
 .menu-item:hover {
-  background: rgba(255, 255, 255, 0.05);
-  color: white;
+  background: #f1f5f9;
+  color: #1e293b;
 }
 
 .menu-item.active {
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.2));
-  color: white;
-  border: 1px solid rgba(99, 102, 241, 0.3);
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1));
+  color: #6366f1;
+  border: 1px solid rgba(99, 102, 241, 0.2);
 }
 
 .menu-icon {
@@ -1562,7 +1565,7 @@ const confirmAction = () => {
 }
 
 .content-header h2 {
-  color: white;
+  color: #1e293b;
   font-size: 1.5rem;
   margin: 0;
 }
@@ -1616,19 +1619,21 @@ const confirmAction = () => {
 }
 
 .stat-card {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
   border-radius: 16px;
   padding: 1.25rem;
   display: flex;
   align-items: center;
   gap: 1rem;
   transition: all 0.2s;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .stat-card:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: #ffffff;
   transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .stat-icon {
@@ -1641,19 +1646,19 @@ const confirmAction = () => {
 }
 
 .stat-value {
-  color: white;
+  color: #1e293b;
   font-size: 1.75rem;
   font-weight: 700;
 }
 
 .stat-label {
-  color: #9ca3af;
+  color: #64748b;
   font-size: 0.85rem;
 }
 
 /* 表格管理 */
 .table-list h3 {
-  color: white;
+  color: #1e293b;
   margin-bottom: 1rem;
 }
 
@@ -1664,10 +1669,11 @@ const confirmAction = () => {
 }
 
 .table-card {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
   border-radius: 16px;
   overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .table-card-header {
@@ -1675,21 +1681,22 @@ const confirmAction = () => {
   justify-content: space-between;
   align-items: center;
   padding: 1rem 1.5rem;
-  background: rgba(255, 255, 255, 0.03);
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
 }
 
 .table-title {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  color: white;
+  color: #1e293b;
   font-weight: 600;
 }
 
 .view-btn {
-  background: rgba(99, 102, 241, 0.2);
-  color: #a5b4fc;
-  border: 1px solid rgba(99, 102, 241, 0.3);
+  background: rgba(99, 102, 241, 0.1);
+  color: #6366f1;
+  border: 1px solid rgba(99, 102, 241, 0.2);
   padding: 0.375rem 0.875rem;
   border-radius: 8px;
   cursor: pointer;
@@ -1698,7 +1705,7 @@ const confirmAction = () => {
 }
 
 .view-btn:hover {
-  background: rgba(99, 102, 241, 0.3);
+  background: rgba(99, 102, 241, 0.2);
 }
 
 .table-card-content {
@@ -1719,14 +1726,14 @@ const confirmAction = () => {
 .data-table td {
   padding: 0.75rem;
   text-align: left;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  color: #e5e7eb;
+  border-bottom: 1px solid #e2e8f0;
+  color: #374151;
 }
 
 .data-table th {
-  background: rgba(255, 255, 255, 0.03);
+  background: #f8fafc;
   font-weight: 600;
-  color: #9ca3af;
+  color: #64748b;
 }
 
 .data-cell {
@@ -1762,21 +1769,22 @@ const confirmAction = () => {
 .search-bar input {
   flex: 1;
   padding: 0.875rem 1.25rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid #e2e8f0;
   border-radius: 12px;
   font-size: 1rem;
-  background: rgba(255, 255, 255, 0.05);
-  color: white;
+  background: #ffffff;
+  color: #1e293b;
 }
 
 .search-bar input::placeholder {
-  color: #6b7280;
+  color: #94a3b8;
 }
 
 .search-bar input:focus {
   outline: none;
-  border-color: rgba(99, 102, 241, 0.5);
-  background: rgba(255, 255, 255, 0.08);
+  border-color: #6366f1;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+  background: #ffffff;
 }
 
 .search-btn {
@@ -1790,19 +1798,20 @@ const confirmAction = () => {
 
 /* 用户详情、聊天详情、群组详情视图 */
 .back-btn {
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
+  background: #f1f5f9;
+  color: #374151;
   margin-bottom: 1.5rem;
 }
 
 .user-detail-card,
 .chat-detail-header,
 .group-detail-header {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
   border-radius: 16px;
   padding: 1.5rem;
   margin-bottom: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .user-detail-header,
@@ -1829,14 +1838,14 @@ const confirmAction = () => {
 
 .user-detail-info h3,
 .group-detail-info h3 {
-  color: white;
+  color: #1e293b;
   font-size: 1.5rem;
   margin: 0 0 0.5rem 0;
 }
 
 .user-detail-info p,
 .group-detail-info p {
-  color: #9ca3af;
+  color: #64748b;
   margin: 0 0 0.5rem 0;
 }
 
@@ -1850,8 +1859,8 @@ const confirmAction = () => {
   display: flex;
   gap: 2rem;
   padding: 1.5rem 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid #e2e8f0;
+  border-bottom: 1px solid #e2e8f0;
   margin: 1.5rem 0;
 }
 
@@ -1861,13 +1870,13 @@ const confirmAction = () => {
 
 .stat-number {
   display: block;
-  color: white;
+  color: #1e293b;
   font-size: 1.75rem;
   font-weight: 700;
 }
 
 .stat-label {
-  color: #9ca3af;
+  color: #64748b;
   font-size: 0.85rem;
 }
 
@@ -1884,18 +1893,18 @@ const confirmAction = () => {
 }
 
 .chat-members-title {
-  color: white;
+  color: #1e293b;
   font-weight: 600;
   font-size: 1.25rem;
 }
 
 .chat-meta {
-  color: #9ca3af;
+  color: #64748b;
 }
 
 .chat-messages-container {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
   border-radius: 16px;
   padding: 1.5rem;
   max-height: 500px;
@@ -1912,7 +1921,8 @@ const confirmAction = () => {
   display: flex;
   gap: 1rem;
   padding: 1rem;
-  background: rgba(255, 255, 255, 0.03);
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
   border-radius: 12px;
 }
 
@@ -1941,17 +1951,17 @@ const confirmAction = () => {
 }
 
 .message-sender {
-  color: white;
+  color: #1e293b;
   font-weight: 600;
 }
 
 .message-time {
-  color: #6b7280;
+  color: #94a3b8;
   font-size: 0.8rem;
 }
 
 .message-text {
-  color: #d1d5db;
+  color: #374151;
 }
 
 /* 用户列表、聊天列表、群组列表 */
@@ -1970,21 +1980,23 @@ const confirmAction = () => {
 .group-card,
 .moment-card,
 .post-card {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
   border-radius: 16px;
   padding: 1.25rem;
   display: flex;
   align-items: center;
   gap: 1rem;
   transition: all 0.2s;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .user-card:hover,
 .chat-card:hover,
 .group-card:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: #f8fafc;
   cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .user-avatar,
@@ -2018,7 +2030,7 @@ const confirmAction = () => {
 .user-name,
 .chat-members,
 .group-name {
-  color: white;
+  color: #1e293b;
   font-weight: 600;
   font-size: 1rem;
 }
@@ -2046,7 +2058,7 @@ const confirmAction = () => {
 }
 
 .user-detail {
-  color: #9ca3af;
+  color: #64748b;
   font-size: 0.85rem;
 }
 
@@ -2058,7 +2070,7 @@ const confirmAction = () => {
 }
 
 .chat-preview {
-  color: #9ca3af;
+  color: #64748b;
   font-size: 0.9rem;
   margin-top: 0.25rem;
   margin-bottom: 0.5rem;
@@ -2072,7 +2084,7 @@ const confirmAction = () => {
 
 .chat-time,
 .group-meta {
-  color: #9ca3af;
+  color: #64748b;
   font-size: 0.85rem;
 }
 
@@ -2083,20 +2095,21 @@ const confirmAction = () => {
 }
 
 .chat-action {
-  color: #9ca3af;
+  color: #64748b;
   font-size: 1.5rem;
 }
 
 /* 群组详情 */
 .group-members-section {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
   border-radius: 16px;
   padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .group-members-section h4 {
-  color: white;
+  color: #1e293b;
   margin: 0 0 1rem 0;
   font-size: 1.2rem;
 }
@@ -2112,15 +2125,15 @@ const confirmAction = () => {
   align-items: center;
   gap: 1rem;
   padding: 1rem;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
   border-radius: 12px;
   transition: all 0.2s;
 }
 
 .group-member-card:hover {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.1);
+  background: #f1f5f9;
+  border-color: #cbd5e1;
 }
 
 .member-avatar {
@@ -2142,35 +2155,36 @@ const confirmAction = () => {
 }
 
 .member-name {
-  color: white;
+  color: #1e293b;
   font-weight: 600;
   font-size: 1rem;
   margin-bottom: 0.25rem;
 }
 
 .member-username {
-  color: #9ca3af;
+  color: #64748b;
   font-size: 0.85rem;
 }
 
 .role-select {
   padding: 0.5rem 0.75rem;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
   border-radius: 8px;
-  color: white;
+  color: #1e293b;
   font-size: 0.85rem;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .role-select:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: #f8fafc;
 }
 
 .role-select:focus {
   outline: none;
-  border-color: rgba(99, 102, 241, 0.5);
+  border-color: #6366f1;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
 }
 
 /* 朋友圈、帖子 */
@@ -2194,7 +2208,7 @@ const confirmAction = () => {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  color: white;
+  color: #1e293b;
   font-weight: 500;
 }
 
@@ -2213,12 +2227,12 @@ const confirmAction = () => {
 
 .moment-time,
 .post-time {
-  color: #6b7280;
+  color: #94a3b8;
   font-size: 0.8rem;
 }
 
 .post-title {
-  color: white;
+  color: #1e293b;
   font-weight: 600;
   font-size: 1.1rem;
   margin-bottom: 0.5rem;
@@ -2226,7 +2240,7 @@ const confirmAction = () => {
 
 .moment-content,
 .post-content {
-  color: #d1d5db;
+  color: #374151;
   margin-bottom: 0.75rem;
   line-height: 1.6;
 }
@@ -2235,16 +2249,16 @@ const confirmAction = () => {
 .post-stats {
   display: flex;
   gap: 1rem;
-  color: #6b7280;
+  color: #64748b;
   font-size: 0.85rem;
   margin-bottom: 0.5rem;
 }
 
 .delete-btn-sm {
   align-self: flex-end;
-  background: rgba(239, 68, 68, 0.2);
-  color: #fca5a5;
-  border: 1px solid rgba(239, 68, 68, 0.3);
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.2);
   padding: 0.375rem 0.75rem;
   border-radius: 8px;
   cursor: pointer;
@@ -2256,7 +2270,7 @@ const confirmAction = () => {
   width: 100%;
   margin-top: 1rem;
   padding-top: 1rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid #e2e8f0;
 }
 
 .comments-list {
@@ -2269,7 +2283,8 @@ const confirmAction = () => {
   display: flex;
   gap: 0.75rem;
   padding: 1rem;
-  background: rgba(255, 255, 255, 0.03);
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
   border-radius: 12px;
 }
 
@@ -2299,18 +2314,18 @@ const confirmAction = () => {
 }
 
 .comment-author {
-  color: white;
+  color: #1e293b;
   font-weight: 500;
   font-size: 0.9rem;
 }
 
 .comment-time {
-  color: #6b7280;
+  color: #94a3b8;
   font-size: 0.75rem;
 }
 
 .comment-text {
-  color: #d1d5db;
+  color: #374151;
   font-size: 0.9rem;
 }
 
@@ -2318,10 +2333,10 @@ const confirmAction = () => {
 .empty-state {
   text-align: center;
   padding: 3rem;
-  color: #6b7280;
-  background: rgba(255, 255, 255, 0.03);
+  color: #94a3b8;
+  background: #f8fafc;
   border-radius: 16px;
-  border: 1px dashed rgba(255, 255, 255, 0.1);
+  border: 1px dashed #e2e8f0;
 }
 
 .empty-state.small {
@@ -2343,7 +2358,7 @@ const confirmAction = () => {
 }
 
 .page-info {
-  color: #9ca3af;
+  color: #64748b;
   font-size: 0.9rem;
 }
 
@@ -2354,7 +2369,7 @@ const confirmAction = () => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2363,13 +2378,14 @@ const confirmAction = () => {
 }
 
 .modal {
-  background: #1f2937;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
   padding: 2rem;
   border-radius: 20px;
   width: 100%;
   max-width: 420px;
   animation: modalIn 0.3s ease;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
 }
 
 .modal.large {
@@ -2382,12 +2398,12 @@ const confirmAction = () => {
 }
 
 .modal h3 {
-  color: white;
+  color: #1e293b;
   margin-bottom: 0.75rem;
 }
 
 .modal p {
-  color: #9ca3af;
+  color: #64748b;
   margin-bottom: 1.5rem;
 }
 
@@ -2404,7 +2420,7 @@ const confirmAction = () => {
 }
 
 .edit-form .form-group label {
-  color: #9ca3af;
+  color: #374151;
   font-size: 0.9rem;
   font-weight: 500;
 }
@@ -2412,18 +2428,19 @@ const confirmAction = () => {
 .edit-form .form-group input,
 .edit-form .form-group select {
   padding: 0.75rem 1rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid #e2e8f0;
   border-radius: 10px;
   font-size: 1rem;
-  background: rgba(255, 255, 255, 0.05);
-  color: white;
+  background: #f9fafb;
+  color: #1e293b;
 }
 
 .edit-form .form-group input:focus,
 .edit-form .form-group select:focus {
   outline: none;
-  border-color: rgba(99, 102, 241, 0.5);
-  background: rgba(255, 255, 255, 0.08);
+  border-color: #6366f1;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+  background: #ffffff;
 }
 
 .edit-form .form-group.checkbox {
@@ -2452,11 +2469,11 @@ const confirmAction = () => {
   bottom: 2rem;
   left: 50%;
   transform: translateX(-50%);
-  background: #111827;
+  background: #1f2937;
   color: white;
   padding: 1rem 2rem;
   border-radius: 50px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
   z-index: 1001;
   font-weight: 500;
 }
@@ -2469,7 +2486,7 @@ const confirmAction = () => {
 }
 
 .loader {
-  border: 3px solid rgba(255, 255, 255, 0.1);
+  border: 3px solid #f1f5f9;
   border-radius: 50%;
   border-top: 3px solid #6366f1;
   width: 32px;
