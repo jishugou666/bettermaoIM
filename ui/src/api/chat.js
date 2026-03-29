@@ -1,7 +1,7 @@
 // 聊天 API 调用
 
 // 创建聊天会话
-const createChat = async (type, name, avatar, memberIds) => {
+const createChat = async (type, name, avatar, memberIds, description = '') => {
   const token = localStorage.getItem('token');
   
   const response = await fetch(`/api/chats`, {
@@ -10,7 +10,7 @@ const createChat = async (type, name, avatar, memberIds) => {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`
     },
-    body: JSON.stringify({ type, name, avatar, memberIds })
+    body: JSON.stringify({ type, name, avatar, memberIds, description })
   });
   
   if (!response.ok) {
@@ -102,6 +102,68 @@ const getAllUsers = async () => {
   
   return await response.json();
 };
+
+// 获取群聊详情
+const getGroupDetails = async (chatId) => {
+  const token = localStorage.getItem('token');
+  
+  const response = await fetch(`/api/chats/${chatId}/group-details`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    }
+  });
+  
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.error || 'Failed to get group details');
+  }
+  
+  return await response.json();
+};
+
+// 设置成员角色
+const setMemberRole = async (chatId, targetUserId, role) => {
+  const token = localStorage.getItem('token');
+  
+  const response = await fetch(`/api/chats/${chatId}/set-role`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+    body: JSON.stringify({ targetUserId, role })
+  });
+  
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.error || 'Failed to set member role');
+  }
+  
+  return await response.json();
+};
+
+// 删除成员
+const removeMember = async (chatId, targetUserId) => {
+  const token = localStorage.getItem('token');
+  
+  const response = await fetch(`/api/chats/${chatId}/remove-member`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+    body: JSON.stringify({ targetUserId })
+  });
+  
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.error || 'Failed to remove member');
+  }
+  
+  return await response.json();
+};
 // --- 修改结束 ---
 
-export { createChat, getChats, getMessages, sendMessage, getAllUsers };
+export { createChat, getChats, getMessages, sendMessage, getAllUsers, getGroupDetails, setMemberRole, removeMember };

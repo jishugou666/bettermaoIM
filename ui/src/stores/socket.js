@@ -44,14 +44,31 @@ export const useSocketStore = defineStore('socket', {
         const chatStore = useChatStore();
         const authStore = useAuthStore();
         
-        console.log('Received new message:', message);
+        console.log('[Socket] 收到新消息:', message);
+        
+        // 确保消息有 id 字段
+        if (message && !message.id && message._id) {
+          message.id = message._id;
+        }
         
         // 避免重复添加自己发送的消息
         const messageSenderId = message.sender_id || message.sender?.id || message.userId;
         const currentUserId = authStore.user?._id || authStore.user?.id;
         
+        // 检查消息是否属于当前聊天
+        const isCurrentChat = chatStore.currentChat && 
+          (chatStore.currentChat.id === message.chatId || 
+          chatStore.currentChat._id === message.chatId);
+        
         if (authStore.user && String(messageSenderId) !== String(currentUserId)) {
-          chatStore.addMessage(message);
+          if (isCurrentChat) {
+            console.log('[Socket] 添加新消息到当前聊天');
+            chatStore.addMessage(message);
+          } else {
+            console.log('[Socket] 消息不属于当前聊天，暂不添加');
+          }
+        } else {
+          console.log('[Socket] 忽略自己发送的消息');
         }
       });
 

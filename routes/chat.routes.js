@@ -12,6 +12,15 @@ router.get('/', authMiddleware, chatController.getChats);
 // --- 修改开始 ---
 // 获取所有已注册用户（开放性IM功能）
 router.get('/users', authMiddleware, chatController.getAllUsers);
+
+// 获取群聊详情
+router.get('/:id/group-details', authMiddleware, chatController.getGroupDetails);
+
+// 设置成员角色
+router.post('/:id/set-role', authMiddleware, chatController.setMemberRole);
+
+// 删除成员
+router.post('/:id/remove-member', authMiddleware, chatController.removeMember);
 // --- 修改结束 ---
 
 // 获取聊天会话的消息记录

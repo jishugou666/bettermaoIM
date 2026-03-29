@@ -65,7 +65,7 @@ body {
 /* 主内容区域 */
 .main-content {
   flex: 1;
-  padding: var(--spacing-4);
+  padding: 0;
 }
 
 /* 页面过渡动画 */

@@ -38,10 +38,10 @@ app.use(morgan('combined'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// 配置速率限制
+// 配置速率限制 - 开发环境提高限制
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15分钟
-  max: 100, // 每个IP限制100个请求
+  max: 1000, // 每个IP限制1000个请求
   standardHeaders: true,
   legacyHeaders: false,
 });

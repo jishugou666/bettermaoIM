@@ -6,9 +6,9 @@ class ChatController {
   async createChat(req, res) {
     try {
       const { userId } = req.user;
-      const { type, name, avatar, memberIds } = req.body;
+      const { type, name, avatar, memberIds, description } = req.body;
       
-      console.log('[createChat] 开始创建聊天:', { userId, type, name, memberIds });
+      console.log('[createChat] 开始创建聊天:', { userId, type, name, memberIds, description });
       
       // 参数验证
       if (!type || !['private', 'group'].includes(type)) {
@@ -27,11 +27,37 @@ class ChatController {
         return res.status(400).json({ error: 'At least one member is required' });
       }
       
+      // --- 关键修复：如果是私聊，先检查是否已存在相同两个用户的会话 ---
+      if (type === 'private' && memberIds.length === 1) {
+        const otherUserId = memberIds[0];
+        console.log('[createChat] 检查是否已存在私聊会话:', userId, otherUserId);
+        
+        // 获取当前用户的所有私聊会话
+        const userChatMembers = await chatMembers.read({ userId });
+        const userChatIds = userChatMembers.map(m => m.chatId);
+        
+        // 遍历检查每个聊天会话
+        for (const chatId of userChatIds) {
+          const chatList = await chats.read({ _id: chatId, type: 'private' });
+          if (chatList.length === 0) continue;
+          
+          // 检查这个私聊会话的另一个成员是不是目标用户
+          const otherMembers = await chatMembers.read({ chatId, userId: { $ne: userId } });
+          if (otherMembers.length === 1 && otherMembers[0].userId === otherUserId) {
+            console.log('[createChat] 找到已存在的私聊会话:', chatId);
+            return res.status(200).json({ chatId: chatId, existed: true });
+          }
+        }
+        console.log('[createChat] 未找到已存在的私聊会话，创建新的');
+      }
+      
       // 创建聊天会话
       const chatData = { 
         type, 
         name: type === 'private' ? '' : name, 
         avatar: type === 'private' ? '' : avatar,
+        description: type === 'group' ? (description || '') : '',
+        creatorId: type === 'group' ? userId : null,
         createTime: new Date().toISOString()
       };
       console.log('[createChat] 创建聊天数据:', chatData);
@@ -50,10 +76,12 @@ class ChatController {
       const members = [userId, ...memberIds];
       console.log('[createChat] 添加成员:', members);
       
-      for (const memberId of members) {
+      for (let i = 0; i < members.length; i++) {
+        const memberId = members[i];
         const memberData = { 
           chatId: chatId, 
           userId: memberId,
+          role: type === 'group' && i === 0 ? 'ADMIN' : 'MEMBER',
           joinTime: new Date().toISOString()
         };
         console.log('[createChat] 添加成员数据:', memberData);
@@ -128,6 +156,14 @@ class ChatController {
                   };
                 }
               }
+            } else if (chat.type === 'group') {
+              // 如果是群聊，获取群成员数量
+              const membersList = await chatMembers.read({ chatId: chat._id });
+              chatInfo = {
+                ...chat,
+                id: chat._id,
+                memberCount: membersList.length
+              };
             }
             
             return {
@@ -159,42 +195,66 @@ class ChatController {
       const { userId } = req.user;
       const { id } = req.params;
       
+      console.log('[getMessages] 获取消息记录, chatId:', id, 'userId:', userId);
+      
       // 检查用户是否是聊天成员
       const memberList = await chatMembers.read({ chatId: id, userId });
       if (memberList.length === 0) {
+        console.warn('[getMessages] 用户不是聊天成员:', userId, id);
         return res.status(403).json({ error: 'Not a member of this chat' });
       }
       
-      // 获取消息记录
-      const messagesList = await messages.read({ chatId: id }, { sort: { createTime: 1 } });
+      // 获取消息记录 - 先查询再排序确保兼容性
+      let messagesList = await messages.read({ chatId: id });
+      
+      console.log('[getMessages] 原始消息列表:', JSON.stringify(messagesList, null, 2));
+      
+      // 确保按时间升序排序（从旧到新）
+      messagesList = messagesList.sort((a, b) => {
+        const timeA = new Date(a.createTime || a.createdAt || a.created_at).getTime();
+        const timeB = new Date(b.createTime || b.createdAt || b.created_at).getTime();
+        return timeA - timeB;
+      });
+      
+      console.log('[getMessages] 找到消息数量:', messagesList.length);
       
       // 获取消息发送者信息
       const messagesWithSender = await Promise.all(
         messagesList.map(async (message) => {
-          const userList = await users.read({ _id: message.userId });
-          const user = userList[0];
-          const msgWithId = {
-            ...message,
-            id: message._id
-          };
-          if (user) {
+          try {
+            const userList = await users.read({ _id: message.userId });
+            const user = userList && userList.length > 0 ? userList[0] : null;
+            const msgWithId = {
+              ...message,
+              id: message._id
+            };
+            if (user) {
+              return {
+                ...msgWithId,
+                sender: {
+                  id: user._id,
+                  nickname: user.nickname,
+                  username: user.username,
+                  avatar: user.avatar
+                }
+              };
+            }
+            return msgWithId;
+          } catch (err) {
+            console.warn('[getMessages] 获取发送者信息失败:', message.userId, err);
             return {
-              ...msgWithId,
-              sender: {
-                id: user._id,
-                nickname: user.nickname,
-                username: user.username,
-                avatar: user.avatar
-              }
+              ...message,
+              id: message._id
             };
           }
-          return msgWithId;
         })
       );
       
       res.status(200).json({ messages: messagesWithSender });
     } catch (error) {
-      res.status(500).json({ error: 'Internal server error' });
+      console.error('[getMessages] 获取消息失败:', error);
+      console.error('[getMessages] 错误堆栈:', error.stack);
+      res.status(500).json({ error: 'Internal server error', message: error.message });
     }
   }
 
@@ -298,6 +358,189 @@ class ChatController {
       res.status(200).json({ users: otherUsers });
     } catch (error) {
       console.error('[getAllUsers] Error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+
+  // 获取群聊详情
+  async getGroupDetails(req, res) {
+    try {
+      const { userId } = req.user;
+      const { id } = req.params;
+      
+      console.log('[getGroupDetails] 获取群聊详情, chatId:', id, 'userId:', userId);
+      
+      // 检查用户是否是聊天成员
+      const memberList = await chatMembers.read({ chatId: id, userId });
+      if (memberList.length === 0) {
+        console.warn('[getGroupDetails] 用户不是聊天成员:', userId, id);
+        return res.status(403).json({ error: 'Not a member of this chat' });
+      }
+      
+      // 获取聊天信息
+      const chatDocs = await chats.read({ _id: id });
+      if (!chatDocs || chatDocs.length === 0) {
+        return res.status(404).json({ error: 'Chat not found' });
+      }
+      
+      const chat = chatDocs[0];
+      
+      // 获取所有成员信息
+      const allMembers = await chatMembers.read({ chatId: id });
+      const memberDetails = await Promise.all(
+        allMembers.map(async (member) => {
+          const userList = await users.read({ _id: member.userId });
+          const user = userList && userList.length > 0 ? userList[0] : null;
+          if (user) {
+            const { password, ...safeUser } = user;
+            return {
+              id: safeUser._id,
+              username: safeUser.username || '',
+              nickname: safeUser.nickname || safeUser.username || '',
+              avatar: safeUser.avatar || '',
+              role: member.role || 'MEMBER',
+              joinTime: member.joinTime
+            };
+          }
+          return null;
+        })
+      );
+      
+      // 过滤掉 null 成员
+      const validMembers = memberDetails.filter(m => m !== null);
+      
+      // 确定群主（创建者）
+      const creatorId = chat.creatorId || validMembers[0]?.id;
+      
+      res.status(200).json({
+        group: {
+          id: chat._id,
+          name: chat.name,
+          description: chat.description || '',
+          avatar: chat.avatar || '',
+          createTime: chat.createTime,
+          creatorId: creatorId,
+          members: validMembers
+        }
+      });
+    } catch (error) {
+      console.error('[getGroupDetails] Error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+
+  // 设置成员角色
+  async setMemberRole(req, res) {
+    try {
+      const { userId } = req.user;
+      const { id } = req.params;
+      const { targetUserId, role } = req.body;
+      
+      console.log('[setMemberRole] 设置成员角色, chatId:', id, 'userId:', userId, 'targetUserId:', targetUserId, 'role:', role);
+      
+      // 验证 role 值
+      if (!['MEMBER', 'ADMIN'].includes(role)) {
+        return res.status(400).json({ error: 'Invalid role' });
+      }
+      
+      // 获取聊天信息
+      const chatDocs = await chats.read({ _id: id });
+      if (!chatDocs || chatDocs.length === 0) {
+        return res.status(404).json({ error: 'Chat not found' });
+      }
+      
+      const chat = chatDocs[0];
+      
+      // 获取当前用户的成员信息
+      const currentMemberList = await chatMembers.read({ chatId: id, userId });
+      if (currentMemberList.length === 0) {
+        return res.status(403).json({ error: 'Not a member of this chat' });
+      }
+      
+      const currentMember = currentMemberList[0];
+      
+      // 只有群主（creatorId）可以设置管理员
+      if (chat.creatorId && chat.creatorId !== userId) {
+        return res.status(403).json({ error: 'Only group creator can set admin' });
+      }
+      
+      // 获取目标成员信息
+      const targetMemberList = await chatMembers.read({ chatId: id, userId: targetUserId });
+      if (targetMemberList.length === 0) {
+        return res.status(404).json({ error: 'Target member not found' });
+      }
+      
+      // 更新角色
+      await chatMembers.update(
+        { chatId: id, userId: targetUserId },
+        { role }
+      );
+      
+      res.status(200).json({ success: true });
+    } catch (error) {
+      console.error('[setMemberRole] Error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+
+  // 删除成员
+  async removeMember(req, res) {
+    try {
+      const { userId } = req.user;
+      const { id } = req.params;
+      const { targetUserId } = req.body;
+      
+      console.log('[removeMember] 删除成员, chatId:', id, 'userId:', userId, 'targetUserId:', targetUserId);
+      
+      // 获取聊天信息
+      const chatDocs = await chats.read({ _id: id });
+      if (!chatDocs || chatDocs.length === 0) {
+        return res.status(404).json({ error: 'Chat not found' });
+      }
+      
+      const chat = chatDocs[0];
+      
+      // 获取当前用户的成员信息
+      const currentMemberList = await chatMembers.read({ chatId: id, userId });
+      if (currentMemberList.length === 0) {
+        return res.status(403).json({ error: 'Not a member of this chat' });
+      }
+      
+      const currentMember = currentMemberList[0];
+      const currentRole = currentMember.role || 'MEMBER';
+      
+      // 获取目标成员信息
+      const targetMemberList = await chatMembers.read({ chatId: id, userId: targetUserId });
+      if (targetMemberList.length === 0) {
+        return res.status(404).json({ error: 'Target member not found' });
+      }
+      
+      const targetMember = targetMemberList[0];
+      const targetRole = targetMember.role || 'MEMBER';
+      
+      // 权限检查
+      const isCreator = chat.creatorId && chat.creatorId === userId;
+      const isAdmin = currentRole === 'ADMIN';
+      const isTargetAdmin = targetRole === 'ADMIN';
+      const isTargetCreator = chat.creatorId && chat.creatorId === targetUserId;
+      
+      // 群主可以删除任何人
+      // 管理员可以删除普通成员，但不能删除群主和其他管理员
+      if (!isCreator) {
+        if (!isAdmin) {
+          return res.status(403).json({ error: 'Only admins can remove members' });
+        }
+        if (isTargetCreator || isTargetAdmin) {
+          return res.status(403).json({ error: 'Cannot remove creator or other admins' });
+        }
+      }
+      
+      // 删除成员
+      await chatMembers.delete({ chatId: id, userId: targetUserId });
+      
+      res.status(200).json({ success: true });
+    } catch (error) {
+      console.error('[removeMember] Error:', error);
       res.status(500).json({ error: 'Internal server error' });
     }
   }

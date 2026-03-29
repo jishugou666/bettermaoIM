@@ -71,6 +71,17 @@ class ChatService {
         [sessionId, limit, offset]
       );
 
+      // 为每条消息附加发送者信息
+      for (const message of messageList) {
+        const sender = await users.getById(message.sender_id);
+        if (sender) {
+          delete sender.password;
+          message.sender = sender;
+        }
+        // 同时设置 userId 字段以确保兼容性
+        message.userId = message.sender_id;
+      }
+
       // 按时间正序返回
       return messageList.reverse();
     } catch (error) {
@@ -107,6 +118,8 @@ class ChatService {
         delete sender.password;
         message.sender = sender;
       }
+      // 同时设置 userId 字段以确保兼容性
+      message.userId = userId;
 
       // --- 修改开始 ---
       // 通过Socket.IO推送消息给会话中的所有成员
