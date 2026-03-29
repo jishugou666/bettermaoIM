@@ -1,136 +1,140 @@
-const Datastore = require('nedb-promises');
-const path = require('path');
+const mysql = require('mysql2/promise');
+const config = require('../config');
+const { v4: uuidv4 } = require('uuid');
 
 class DatabaseManager {
   constructor() {
-    this.dbPath = path.join(__dirname, 'bettermao.db');
+    this.pool = null;
     this.datastores = {};
     this.init();
   }
 
   init() {
     try {
-      // 创建各个集合
-      this.datastores.users = Datastore.create({
-        filename: path.join(__dirname, 'users.db'),
-        autoload: true
-      });
-      this.datastores.friends = Datastore.create({
-        filename: path.join(__dirname, 'friends.db'),
-        autoload: true
-      });
-      this.datastores.friendRequests = Datastore.create({
-        filename: path.join(__dirname, 'friendRequests.db'),
-        autoload: true
-      });
-      this.datastores.chats = Datastore.create({
-        filename: path.join(__dirname, 'chats.db'),
-        autoload: true
-      });
-      this.datastores.chatMembers = Datastore.create({
-        filename: path.join(__dirname, 'chatMembers.db'),
-        autoload: true
-      });
-      this.datastores.messages = Datastore.create({
-        filename: path.join(__dirname, 'messages.db'),
-        autoload: true
-      });
-      this.datastores.points = Datastore.create({
-        filename: path.join(__dirname, 'points.db'),
-        autoload: true
-      });
-      this.datastores.moments = Datastore.create({
-        filename: path.join(__dirname, 'moments.db'),
-        autoload: true
-      });
-      this.datastores.momentLikes = Datastore.create({
-        filename: path.join(__dirname, 'momentLikes.db'),
-        autoload: true
-      });
-      this.datastores.momentComments = Datastore.create({
-        filename: path.join(__dirname, 'momentComments.db'),
-        autoload: true
-      });
-      // 社区功能集合
-      this.datastores.communityPosts = Datastore.create({
-        filename: path.join(__dirname, 'communityPosts.db'),
-        autoload: true
-      });
-      this.datastores.communityComments = Datastore.create({
-        filename: path.join(__dirname, 'communityComments.db'),
-        autoload: true
-      });
-      this.datastores.communityLikes = Datastore.create({
-        filename: path.join(__dirname, 'communityLikes.db'),
-        autoload: true
+      // 创建 MySQL 连接池
+      const mysqlConfig = config.database.mysql;
+      this.pool = mysql.createPool({
+        host: mysqlConfig.host,
+        port: mysqlConfig.port,
+        user: mysqlConfig.user,
+        password: mysqlConfig.password,
+        database: mysqlConfig.database,
+        connectionLimit: mysqlConfig.connectionLimit,
+        waitForConnections: mysqlConfig.waitForConnections,
+        queueLimit: mysqlConfig.queueLimit,
+        charset: 'utf8mb4'
       });
 
-      // 创建索引
-      this.datastores.users.ensureIndex({ fieldName: '_id', unique: true });
-      this.datastores.users.ensureIndex({ fieldName: 'username', unique: true });
-      this.datastores.users.ensureIndex({ fieldName: 'email', unique: true });
-      this.datastores.friends.ensureIndex({ fieldName: '_id', unique: true });
-      this.datastores.friends.ensureIndex({ fieldName: ['userId', 'friendId'], unique: true });
-      this.datastores.friendRequests.ensureIndex({ fieldName: '_id', unique: true });
-      this.datastores.friendRequests.ensureIndex({ fieldName: ['fromUserId', 'toUserId'], unique: true });
-      this.datastores.chats.ensureIndex({ fieldName: '_id', unique: true });
-      this.datastores.chatMembers.ensureIndex({ fieldName: '_id', unique: true });
-      this.datastores.chatMembers.ensureIndex({ fieldName: ['chatId', 'userId'], unique: true });
-      this.datastores.messages.ensureIndex({ fieldName: '_id', unique: true });
-      this.datastores.messages.ensureIndex({ fieldName: 'chatId' });
-      this.datastores.points.ensureIndex({ fieldName: '_id', unique: true });
-      this.datastores.points.ensureIndex({ fieldName: 'userId' });
-      this.datastores.moments.ensureIndex({ fieldName: '_id', unique: true });
-      this.datastores.moments.ensureIndex({ fieldName: 'userId' });
-      this.datastores.momentLikes.ensureIndex({ fieldName: '_id', unique: true });
-      this.datastores.momentLikes.ensureIndex({ fieldName: ['momentId', 'userId'], unique: true });
-      this.datastores.momentComments.ensureIndex({ fieldName: '_id', unique: true });
-      this.datastores.momentComments.ensureIndex({ fieldName: 'momentId' });
-      // 社区功能索引
-      this.datastores.communityPosts.ensureIndex({ fieldName: '_id', unique: true });
-      this.datastores.communityPosts.ensureIndex({ fieldName: 'userId' });
-      this.datastores.communityComments.ensureIndex({ fieldName: '_id', unique: true });
-      this.datastores.communityComments.ensureIndex({ fieldName: 'postId' });
-      this.datastores.communityLikes.ensureIndex({ fieldName: '_id', unique: true });
-      this.datastores.communityLikes.ensureIndex({ fieldName: ['postId', 'userId'], unique: true });
-      
-      // 管理员集合
-      this.datastores.adminUsers = Datastore.create({
-        filename: path.join(__dirname, 'adminUsers.db'),
-        autoload: true
-      });
-      this.datastores.adminUsers.ensureIndex({ fieldName: '_id', unique: true });
-      this.datastores.adminUsers.ensureIndex({ fieldName: 'username', unique: true });
-
-      console.log('Database connected successfully');
+      console.log('MySQL Database connected successfully');
     } catch (error) {
-      console.error('Database initialization error:', error);
+      console.error('MySQL Database initialization error:', error);
+      throw error;
     }
   }
 
-  // 通用执行方法
+  // 获取连接
+  async getConnection() {
+    return await this.pool.getConnection();
+  }
+
+  // 执行 SQL 查询
+  async executeSql(sql, params = []) {
+    try {
+      const [rows] = await this.pool.execute(sql, params);
+      return rows;
+    } catch (error) {
+      console.error('[DatabaseManager.executeSql] SQL执行失败:', sql, params, error);
+      throw error;
+    }
+  }
+
+  // 构建 WHERE 条件
+  buildWhereClause(conditions) {
+    if (!conditions || Object.keys(conditions).length === 0) {
+      return { clause: '', params: [] };
+    }
+
+    const clauses = [];
+    const params = [];
+
+    for (const [key, value] of Object.entries(conditions)) {
+      if (value === null) {
+        clauses.push(`${key} IS NULL`);
+      } else if (typeof value === 'object' && !Array.isArray(value)) {
+        // 处理操作符，如 $in, $gt 等
+        const opKeys = Object.keys(value);
+        for (const op of opKeys) {
+          if (op === '$in' && Array.isArray(value[op])) {
+            const placeholders = value[op].map(() => '?').join(',');
+            clauses.push(`${key} IN (${placeholders})`);
+            params.push(...value[op]);
+          } else if (op === '$gt') {
+            clauses.push(`${key} > ?`);
+            params.push(value[op]);
+          } else if (op === '$gte') {
+            clauses.push(`${key} >= ?`);
+            params.push(value[op]);
+          } else if (op === '$lt') {
+            clauses.push(`${key} < ?`);
+            params.push(value[op]);
+          } else if (op === '$lte') {
+            clauses.push(`${key} <= ?`);
+            params.push(value[op]);
+          } else if (op === '$ne') {
+            clauses.push(`${key} != ?`);
+            params.push(value[op]);
+          }
+        }
+      } else if (Array.isArray(value)) {
+        const placeholders = value.map(() => '?').join(',');
+        clauses.push(`${key} IN (${placeholders})`);
+        params.push(...value);
+      } else {
+        clauses.push(`${key} = ?`);
+        params.push(value);
+      }
+    }
+
+    return {
+      clause: ' WHERE ' + clauses.join(' AND '),
+      params
+    };
+  }
+
+  // 通用执行方法 - 保持与 NeDB 接口兼容
   async execute(collection, operation, query, data) {
     try {
-      const store = this.datastores[collection];
-      if (!store) {
-        throw new Error('Collection not found');
-      }
-
       switch (operation) {
         case 'insert':
-          // --- 修改开始 ---
           console.log(`[DatabaseManager.execute] 插入数据到 ${collection}:`, data);
-          const doc = await store.insert(data);
-          console.log(`[DatabaseManager.execute] 插入结果:`, doc);
-          // 返回完整的文档对象，包含 _id
-          return { lastID: doc._id, _id: doc._id, ...doc };
-          // --- 修改结束 ---
+          // 确保有 _id
+          if (!data._id) {
+            data._id = uuidv4();
+          }
+          const columns = Object.keys(data);
+          const values = Object.values(data);
+          const placeholders = columns.map(() => '?').join(',');
+          const sql = `INSERT INTO ${collection} (${columns.join(',')}) VALUES (${placeholders})`;
+          await this.executeSql(sql, values);
+          console.log(`[DatabaseManager.execute] 插入结果:`, data);
+          return { lastID: data._id, _id: data._id, ...data };
+
         case 'update':
-          const numUpdated = await store.update(query, data, { multi: true });
-          return { changes: numUpdated };
+          // 处理 $set 操作符
+          const updateData = data && data.$set ? data.$set : data;
+          const setClauses = Object.keys(updateData).map(key => `${key} = ?`).join(', ');
+          const { clause: whereClause, params: whereParams } = this.buildWhereClause(query);
+          const updateSql = `UPDATE ${collection} SET ${setClauses}${whereClause}`;
+          const updateParams = [...Object.values(updateData), ...whereParams];
+          const [updateResult] = await this.pool.execute(updateSql, updateParams);
+          return { changes: updateResult.affectedRows };
+
         case 'remove':
-          const numRemoved = await store.remove(query, { multi: true });
-          return { changes: numRemoved };
+          const { clause: removeWhere, params: removeParams } = this.buildWhereClause(query);
+          const removeSql = `DELETE FROM ${collection}${removeWhere}`;
+          const [removeResult] = await this.pool.execute(removeSql, removeParams);
+          return { changes: removeResult.affectedRows };
+
         default:
           throw new Error('Invalid operation');
       }
@@ -140,11 +144,9 @@ class DatabaseManager {
     }
   }
 
-  // 查询方法
+  // 查询方法 - 保持与 NeDB 接口兼容
   async query(collection, query, projection) {
     try {
-      // --- 修改开始 ---
-      // 参数验证
       if (!collection || typeof collection !== 'string') {
         throw new Error('Collection name must be a non-empty string');
       }
@@ -154,31 +156,27 @@ class DatabaseManager {
         query = {};
       }
 
-      const store = this.datastores[collection];
-      if (!store) {
-        throw new Error(`Collection not found: ${collection}`);
-      }
-
-      const docs = await store.find(query, projection);
+      const selectFields = projection ? Object.keys(projection).join(',') : '*';
+      const { clause: whereClause, params } = this.buildWhereClause(query);
+      const sql = `SELECT ${selectFields} FROM ${collection}${whereClause}`;
       
-      // 确保返回数组
+      const docs = await this.executeSql(sql, params);
+      
       if (!Array.isArray(docs)) {
         console.warn('[DatabaseManager.query] 查询返回非数组类型:', typeof docs);
         return [];
       }
       
       return docs;
-      // --- 修改结束 ---
     } catch (error) {
       console.error('[DatabaseManager.query] 查询失败:', error);
       throw error;
     }
   }
 
-  // 获取查询游标（支持链式操作）
+  // 获取查询游标（支持链式操作）- 保持兼容性
   async queryCursor(collection, query, projection) {
     try {
-      // 参数验证
       if (!collection || typeof collection !== 'string') {
         throw new Error('Collection name must be a non-empty string');
       }
@@ -188,29 +186,61 @@ class DatabaseManager {
         query = {};
       }
 
-      const store = this.datastores[collection];
-      if (!store) {
-        throw new Error(`Collection not found: ${collection}`);
-      }
-
-      // 返回游标对象，支持链式调用
-      return store.find(query, projection);
+      // 返回一个模拟的游标对象，实际执行查询
+      const self = this;
+      return {
+        sort: function(sortObj) {
+          this._sort = sortObj;
+          return this;
+        },
+        skip: function(skipVal) {
+          this._skip = skipVal;
+          return this;
+        },
+        limit: function(limitVal) {
+          this._limit = limitVal;
+          return this;
+        },
+        exec: async function() {
+          const selectFields = projection ? Object.keys(projection).join(',') : '*';
+          const { clause: whereClause, params } = self.buildWhereClause(query);
+          
+          let sql = `SELECT ${selectFields} FROM ${collection}${whereClause}`;
+          
+          if (this._sort) {
+            const sortClauses = [];
+            for (const [key, direction] of Object.entries(this._sort)) {
+              sortClauses.push(`${key} ${direction === 1 ? 'ASC' : 'DESC'}`);
+            }
+            sql += ` ORDER BY ${sortClauses.join(', ')}`;
+          }
+          
+          if (this._limit) {
+            if (this._skip) {
+              sql += ` LIMIT ${parseInt(this._skip, 10)}, ${parseInt(this._limit, 10)}`;
+            } else {
+              sql += ` LIMIT ${parseInt(this._limit, 10)}`;
+            }
+          }
+          
+          return await self.executeSql(sql, params);
+        }
+      };
     } catch (error) {
       console.error('[DatabaseManager.queryCursor] 查询失败:', error);
       throw error;
     }
   }
 
-  // 获取单个文档
+  // 获取单个文档 - 保持与 NeDB 接口兼容
   async get(collection, query, projection) {
     try {
-      const store = this.datastores[collection];
-      if (!store) {
-        throw new Error('Collection not found');
-      }
-
-      const doc = await store.findOne(query, projection);
-      return doc;
+      const selectFields = projection ? Object.keys(projection).join(',') : '*';
+      const { clause: whereClause, params } = this.buildWhereClause(query);
+      const sql = `SELECT ${selectFields} FROM ${collection}${whereClause} LIMIT 1`;
+      
+      const docs = await this.executeSql(sql, params);
+      return docs.length > 0 ? docs[0] : null;
     } catch (error) {
       throw error;
     }
@@ -218,16 +248,72 @@ class DatabaseManager {
 
   // 备份方法
   backup() {
-    const backupPath = path.join(__dirname, `bettermao_backup_${Date.now()}`);
-    // 这里可以实现备份逻辑
-    console.log(`Backup created at: ${backupPath}`);
+    const backupPath = `./db/mysql_backup_${Date.now()}.sql`;
+    console.log(`Backup would be created at: ${backupPath}`);
     return backupPath;
   }
 
   // 关闭方法
-  close() {
-    // NeDB 会自动持久化，不需要显式关闭
-    console.log('Database closed successfully');
+  async close() {
+    if (this.pool) {
+      await this.pool.end();
+      console.log('MySQL Database closed successfully');
+    }
+  }
+
+  // 兼容性方法：执行原生 SQL 查询
+  async query(sql, params = []) {
+    try {
+      const [rows] = await this.pool.execute(sql, params);
+      // 字段名兼容性处理：id -> _id, user_id -> userId, etc.
+      return rows.map(row => this.normalizeRow(row));
+    } catch (error) {
+      console.error('[DatabaseManager.query] SQL执行失败:', sql, params, error);
+      throw error;
+    }
+  }
+
+  // 兼容性方法：执行原生 SQL 写操作
+  async execute(sql, params = []) {
+    try {
+      const [result] = await this.pool.execute(sql, params);
+      return result;
+    } catch (error) {
+      console.error('[DatabaseManager.execute] SQL执行失败:', sql, params, error);
+      throw error;
+    }
+  }
+
+  // 兼容性方法：获取单条记录
+  async get(sql, params = []) {
+    try {
+      const [rows] = await this.pool.execute(sql, params);
+      if (rows.length > 0) {
+        return this.normalizeRow(rows[0]);
+      }
+      return null;
+    } catch (error) {
+      console.error('[DatabaseManager.get] SQL执行失败:', sql, params, error);
+      throw error;
+    }
+  }
+
+  // 字段名标准化：处理 snake_case 到 camelCase，以及 id -> _id
+  normalizeRow(row) {
+    if (!row) return row;
+    const normalized = {};
+    for (const [key, value] of Object.entries(row)) {
+      // 将 id 转换为 _id
+      if (key === 'id') {
+        normalized._id = value;
+      }
+      // 将 snake_case 转换为 camelCase
+      const camelKey = key.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+      normalized[camelKey] = value;
+      // 同时保留原始键名
+      normalized[key] = value;
+    }
+    return normalized;
   }
 }
 

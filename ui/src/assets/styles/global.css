@@ -152,7 +152,7 @@
 }
 
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  font-family: 'Google Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   background: var(--bg-gradient);
   color: var(--text-primary);
   line-height: 1.6;
@@ -324,7 +324,7 @@ body {
 
 /* 标题样式 */
 h1 {
-  font-family: 'Outfit', sans-serif;
+  font-family: 'Google Sans', 'Outfit', sans-serif;
   font-size: var(--font-size-4xl);
   font-weight: var(--font-weight-bold);
   color: var(--text-primary);
@@ -332,14 +332,14 @@ h1 {
 }
 
 h2 {
-  font-family: 'Outfit', sans-serif;
+  font-family: 'Google Sans', 'Outfit', sans-serif;
   font-size: var(--font-size-2xl);
   font-weight: var(--font-weight-bold);
   color: var(--text-primary);
 }
 
 h3 {
-  font-family: 'Outfit', sans-serif;
+  font-family: 'Google Sans', 'Outfit', sans-serif;
   font-size: var(--font-size-xl);
   font-weight: var(--font-weight-bold);
   color: var(--text-primary);

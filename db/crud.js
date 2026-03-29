@@ -8,7 +8,6 @@ class CRUD {
 
   async create(data) {
     try {
-      // 使用 nedb 的 insert 操作
       const result = await db.execute(this.table, 'insert', null, data);
       return result;
     } catch (error) {
@@ -18,45 +17,44 @@ class CRUD {
 
   async read(conditions = {}, options = {}) {
     try {
-      // --- 修改开始 ---
-      // 参数验证
       if (!conditions || typeof conditions !== 'object') {
         console.warn('[CRUD.read] 无效的查询条件，使用空对象');
         conditions = {};
       }
 
-      // 支持选项参数：sort, limit, skip, projection
       const { sort, limit, skip, projection } = options;
       
-      // 使用 nedb-promises 的链式查询
-      let cursor = db.datastores[this.table].find(conditions, projection);
+      const selectFields = projection ? Object.keys(projection).join(',') : '*';
+      const { clause: whereClause, params } = db.buildWhereClause(conditions);
+      
+      let sql = `SELECT ${selectFields} FROM ${this.table}${whereClause}`;
       
       // 应用排序
       if (sort) {
-        cursor = cursor.sort(sort);
+        const sortClauses = [];
+        for (const [key, direction] of Object.entries(sort)) {
+          sortClauses.push(`${key} ${direction === 1 ? 'ASC' : 'DESC'}`);
+        }
+        sql += ` ORDER BY ${sortClauses.join(', ')}`;
       }
       
-      // 应用跳过
-      if (skip) {
-        cursor = cursor.skip(skip);
-      }
-      
-      // 应用限制
+      // 应用跳过和限制
       if (limit) {
-        cursor = cursor.limit(limit);
+        if (skip) {
+          sql += ` LIMIT ${parseInt(skip, 10)}, ${parseInt(limit, 10)}`;
+        } else {
+          sql += ` LIMIT ${parseInt(limit, 10)}`;
+        }
       }
       
-      // 执行查询
-      const docs = await cursor.exec();
+      const docs = await db.executeSql(sql, params);
       
-      // 确保返回数组
       if (!Array.isArray(docs)) {
         console.warn('[CRUD.read] 数据库返回非数组类型:', typeof docs);
         return [];
       }
       
       return docs;
-      // --- 修改结束 ---
     } catch (error) {
       console.error(`[CRUD.read] 查询失败 - 表: ${this.table}, 条件:`, conditions, '错误:', error);
       throw new Error(`Read failed: ${error.message}`);
@@ -65,7 +63,6 @@ class CRUD {
 
   async update(conditions, data) {
     try {
-      // 使用 nedb 的 update 操作
       const result = await db.execute(this.table, 'update', conditions, { $set: data });
       return result;
     } catch (error) {
@@ -75,7 +72,6 @@ class CRUD {
 
   async delete(conditions) {
     try {
-      // 使用 nedb 的 remove 操作
       const result = await db.execute(this.table, 'remove', conditions, null);
       return result;
     } catch (error) {
@@ -85,7 +81,6 @@ class CRUD {
 
   async getById(id) {
     try {
-      // 使用 nedb 的 findOne 操作
       const doc = await db.get(this.table, { _id: id }, {});
       return doc;
     } catch (error) {
@@ -114,8 +109,6 @@ class CRUD {
   }
 }
 
-// --- 修改开始 ---
-// 导出CRUD实例
 const users = new CRUD('users');
 const friends = new CRUD('friends');
 const friendRequests = new CRUD('friendRequests');
@@ -126,13 +119,11 @@ const points = new CRUD('points');
 const moments = new CRUD('moments');
 const momentLikes = new CRUD('momentLikes');
 const momentComments = new CRUD('momentComments');
-// 社区功能CRUD实例
 const communityPosts = new CRUD('communityPosts');
 const communityComments = new CRUD('communityComments');
 const communityLikes = new CRUD('communityLikes');
 const adminUsers = new CRUD('adminUsers');
 
-// 添加兼容的别名，支持两套命名系统
 const sessions = chats;
 const sessionMembers = chatMembers;
 
@@ -155,4 +146,3 @@ module.exports = {
   adminUsers,
   CRUD
 };
-// --- 修改结束 ---

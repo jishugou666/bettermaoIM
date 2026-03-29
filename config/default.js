@@ -10,7 +10,18 @@ module.exports = {
   // 数据库配置
   database: {
     path: './db/bettermao.db',
-    backupPath: './db/backups'
+    backupPath: './db/backups',
+    // MySQL 配置
+    mysql: {
+      host: 'localhost',
+      port: 3306,
+      user: 'root',
+      password: '',
+      database: 'bettermao',
+      connectionLimit: 10,
+      waitForConnections: true,
+      queueLimit: 0
+    }
   },
   
   // JWT配置

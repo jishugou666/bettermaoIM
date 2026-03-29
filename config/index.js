@@ -47,7 +47,17 @@ const configSchema = Joi.object({
   
   database: Joi.object({
     path: Joi.string().required(),
-    backupPath: Joi.string().required()
+    backupPath: Joi.string().required(),
+    mysql: Joi.object({
+      host: Joi.string().required(),
+      port: Joi.number().integer().min(1).max(65535).required(),
+      user: Joi.string().required(),
+      password: Joi.string().allow('').required(),
+      database: Joi.string().required(),
+      connectionLimit: Joi.number().integer().min(1).required(),
+      waitForConnections: Joi.boolean().required(),
+      queueLimit: Joi.number().integer().required()
+    }).optional()
   }).required(),
   
   jwt: Joi.object({
@@ -103,6 +113,28 @@ if (process.env.JWT_SECRET) {
 
 if (process.env.FRONTEND_URL) {
   value.cors.origin = process.env.FRONTEND_URL;
+}
+
+// MySQL 环境变量覆盖
+if (process.env.MYSQL_HOST) {
+  value.database.mysql = value.database.mysql || {};
+  value.database.mysql.host = process.env.MYSQL_HOST;
+}
+if (process.env.MYSQL_PORT) {
+  value.database.mysql = value.database.mysql || {};
+  value.database.mysql.port = parseInt(process.env.MYSQL_PORT, 10);
+}
+if (process.env.MYSQL_USER) {
+  value.database.mysql = value.database.mysql || {};
+  value.database.mysql.user = process.env.MYSQL_USER;
+}
+if (process.env.MYSQL_PASSWORD) {
+  value.database.mysql = value.database.mysql || {};
+  value.database.mysql.password = process.env.MYSQL_PASSWORD;
+}
+if (process.env.MYSQL_DATABASE) {
+  value.database.mysql = value.database.mysql || {};
+  value.database.mysql.database = process.env.MYSQL_DATABASE;
 }
 
 module.exports = value;
